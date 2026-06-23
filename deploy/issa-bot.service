@@ -1,0 +1,23 @@
+[Unit]
+Description=ISSA Inshore Skipper + SRC Telegram bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Папка, куда склонирован репозиторий (поправьте под свой путь/пользователя):
+WorkingDirectory=/opt/issa-bot
+# Виртуальное окружение с зависимостями:
+ExecStart=/opt/issa-bot/.venv/bin/python /opt/issa-bot/bot.py
+# Токен читается из .env в WorkingDirectory (или раскомментируйте строку ниже):
+# Environment=BOT_TOKEN=123456789:AA...
+Restart=always
+RestartSec=5
+User=issa
+Group=issa
+# Безопасность (мягкие ограничения):
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
