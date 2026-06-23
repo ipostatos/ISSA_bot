@@ -1,0 +1,9 @@
+.env
+progress/
+__pycache__/
+*.pyc
+*.tmp
+_*.json
+_*.txt
+.venv/
+venv/
