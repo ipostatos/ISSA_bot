@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Шпаргалки ISSA</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="content_data.js"></script>
+<style>
+  :root{
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --text: var(--tg-theme-text-color, #fff);
+    --hint: var(--tg-theme-hint-color, #8a9aa9);
+    --card: var(--tg-theme-secondary-bg-color, #232e3c);
+    --accent: var(--tg-theme-button-color, #50a8eb);
+    --accent-text: var(--tg-theme-button-text-color, #fff);
+    --border: rgba(255,255,255,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0; padding:14px 14px 40px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); -webkit-tap-highlight-color:transparent; line-height:1.5}
+  h1{font-size:19px; margin:0 0 12px}
+  .tiles{display:flex; flex-direction:column; gap:9px}
+  .tile{display:flex; align-items:center; width:100%; text-align:left; padding:14px;
+    border:1px solid var(--border); background:var(--card); color:var(--text);
+    border-radius:13px; font-size:16px; cursor:pointer}
+  .hidden{display:none !important}
+  .topbar{display:flex; gap:10px; align-items:center; margin-bottom:12px; position:sticky; top:0;
+    background:var(--bg); padding:8px 0; z-index:5}
+  .back{padding:9px 14px; border:1px solid var(--border); background:var(--card); color:var(--text);
+    border-radius:10px; cursor:pointer; font-size:14px}
+  .rtitle{font-size:14px; color:var(--hint)}
+  article{font-size:15px}
+  article b{color:var(--text)}
+  article code{background:var(--card); padding:1px 5px; border-radius:5px; font-size:13px;
+    font-family:ui-monospace,Menlo,Consolas,monospace}
+  article pre{background:var(--card); padding:10px; border-radius:10px; overflow-x:auto;
+    font-size:13px; border:1px solid var(--border)}
+  article img{width:100%; border-radius:12px; margin:12px 0; border:1px solid var(--border); background:#fff}
+  .knot{border:1px solid var(--border); border-radius:13px; padding:13px; margin:12px 0; background:var(--card)}
+  .knot h3{margin:0 0 6px; font-size:16px}
+  .knot .steps{display:flex; gap:8px; overflow-x:auto; padding:4px 0; -webkit-overflow-scrolling:touch}
+  .knot .steps figure{margin:0; flex:0 0 auto; width:130px}
+  .knot .steps img{width:130px; height:130px; object-fit:cover; border-radius:10px; background:#fff;
+    border:1px solid var(--border)}
+  .knot .steps figcaption{font-size:11px; color:var(--hint); text-align:center; margin-top:3px}
+  .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:20px}
+</style>
+</head>
+<body>
+
+<section id="list">
+  <h1>📌 Шпаргалки</h1>
+  <div class="tiles" id="tiles"></div>
+  <p class="foot">Учебные выжимки. Не является официальным материалом ISSA.</p>
+</section>
+
+<section id="reader" class="hidden">
+  <div class="topbar">
+    <button class="back" id="back">← Шпаргалки</button>
+    <span class="rtitle" id="rtitle"></span>
+  </div>
+  <article id="rbody"></article>
+  <p class="foot">Учебные выжимки.</p>
+</section>
+
+<script>
+"use strict";
+const tg = window.Telegram?.WebApp;
+if (tg){ tg.ready(); tg.expand(); }
+
+const SHEETS = (window.CONTENT_DATA && window.CONTENT_DATA.sheets) || [];
+const byKey = Object.fromEntries(SHEETS.map(s => [s.key, s]));
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+
+if (!SHEETS.length){
+  $("tiles").innerHTML = '<div class="foot">Не удалось загрузить шпаргалки '+
+    '(content_data.js не найден). Запусти deploy/update_webapp.sh.</div>';
+}
+
+SHEETS.forEach(s => {
+  const b = document.createElement("button");
+  b.className = "tile"; b.textContent = s.title;
+  b.onclick = () => open(s.key);
+  $("tiles").appendChild(b);
+});
+
+function open(key){
+  const s = byKey[key]; if (!s) return;
+  let html = s.html;
+  if (s.images && s.images.length)
+    html += s.images.map(f => `<img src="images/${f}" loading="lazy" alt="">`).join("");
+  if (s.knots && s.knots.length){
+    html += s.knots.map(k => `
+      <div class="knot">
+        <h3>${esc(k.title)}</h3>
+        <div>${k.html}</div>
+        <div class="steps">${k.steps.map((st,i)=>
+          `<figure><img src="images/${st}" loading="lazy" alt=""><figcaption>шаг ${i+1}</figcaption></figure>`
+        ).join("")}</div>
+      </div>`).join("");
+  }
+  $("rbody").innerHTML = html;
+  $("rtitle").textContent = s.title;
+  $("list").classList.add("hidden");
+  $("reader").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+
+$("back").onclick = () => {
+  $("reader").classList.add("hidden");
+  $("list").classList.remove("hidden");
+};
+</script>
+</body>
+</html>
