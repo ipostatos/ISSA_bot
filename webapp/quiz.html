@@ -50,6 +50,7 @@
     background:var(--bg); border-radius:10px; border:1px solid var(--border)}
   .next{width:100%; padding:14px; font-size:15px; font-weight:600; border:none; border-radius:12px;
     background:var(--accent); color:var(--accent-text); cursor:pointer}
+  .next.ghost{background:transparent; color:var(--text); border:1px solid var(--border); margin-bottom:9px}
 
   /* экзамен: навигация */
   .nav-row{display:flex; gap:10px; margin-top:4px}
@@ -110,7 +111,8 @@
   <div id="opts"></div>
   <div class="expl hidden" id="expl"></div>
 
-  <!-- тренировка: линейная кнопка Далее -->
+  <!-- тренировка: пропустить (до ответа) / Далее (после ответа) -->
+  <button class="next ghost hidden" id="trainSkip">Пропустить →</button>
   <button class="next hidden" id="nextBtn">Далее →</button>
 
   <!-- экзамен: свободная навигация -->
@@ -214,11 +216,13 @@ function renderQ(){
   });
 
   if (S.isExam){
-    hide("nextBtn");
+    hide("nextBtn"); hide("trainSkip");
     renderExamNav();
   } else {
-    // тренировка: после ответа — пояснение + кнопка Далее
+    const last = S.idx+1 >= S.queue.length;
     if (S.locked[S.idx]){
+      // после ответа — пояснение + кнопка Далее
+      hide("trainSkip");
       const ok = sel === q.answer;
       if (q.expl){
         const e = document.getElementById("expl");
@@ -226,10 +230,14 @@ function renderQ(){
         show("expl");
       }
       const nb = document.getElementById("nextBtn");
-      nb.textContent = (S.idx+1 < S.queue.length) ? "Далее →" : "Завершить";
+      nb.textContent = last ? "Завершить" : "Далее →";
       show("nextBtn");
     } else {
+      // до ответа — можно пропустить (без раскрытия правильного)
       hide("nextBtn");
+      const sk = document.getElementById("trainSkip");
+      sk.textContent = last ? "Пропустить и завершить" : "Пропустить →";
+      show("trainSkip");
     }
   }
 }
@@ -277,6 +285,12 @@ function answerTraining(i){
 
 // тренировка: Далее
 document.getElementById("nextBtn").onclick = ()=>{
+  if (S.idx+1 >= S.queue.length){ finish(); return; }
+  S.idx++; renderQ();
+};
+
+// тренировка: Пропустить (без ответа → засчитается как пропуск)
+document.getElementById("trainSkip").onclick = ()=>{
   if (S.idx+1 >= S.queue.length){ finish(); return; }
   S.idx++; renderQ();
 };
