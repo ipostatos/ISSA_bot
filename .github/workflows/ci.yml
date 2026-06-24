@@ -21,7 +21,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Compile all modules
-        run: python -m py_compile bot.py calc.py content.py glossary.py marine.py nav_tasks.py tides.py
+        run: python -m py_compile bot.py calc.py content.py glossary.py konspekt_text.py marine.py nav_tasks.py tides.py
 
       - name: Nav-tasks unit tests (incl. 0/360 boundary)
         run: python test_nav.py

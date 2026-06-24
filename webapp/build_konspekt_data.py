@@ -41,17 +41,26 @@ def first_heading(html: str) -> str:
 
 
 def main() -> None:
+    # ключ -> название раздела (для группировки/аккордеона)
+    sections = getattr(content, "KONSPEKT_SECTIONS", [("Темы", list(content.KONSPEKT))])
+    key_section = {k: name for name, keys in sections for k in keys}
+
     topics = []
     for key, (title, html) in content.KONSPEKT.items():
         topics.append({
             "key": key,
             "title": content.KONSPEKT_BTN.get(key, title),
+            "section": key_section.get(key, ""),
             "heading": first_heading(html),
             "html": html,
             "text": strip_tags(html),
             "images": content.KONSPEKT_IMAGES.get(key, []),
         })
-    payload = {"version": 1, "topics": topics}
+    payload = {
+        "version": 1,
+        "topics": topics,
+        "sections": [{"name": name, "keys": keys} for name, keys in sections],
+    }
     js = (
         "// АВТОГЕНЕРАЦИЯ — не редактировать вручную.\n"
         "// Источник: content.py (KONSPEKT). Перегенерация: "

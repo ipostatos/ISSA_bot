@@ -28,10 +28,19 @@
   .search input{width:100%; padding:12px 14px; font-size:15px; border-radius:12px;
     border:1px solid var(--border); background:var(--card); color:var(--text)}
   .search input:focus{outline:none; border-color:var(--accent)}
-  .tiles{display:flex; flex-direction:column; gap:9px}
+  .tiles{display:flex; flex-direction:column; gap:14px}
+  .section{display:flex; flex-direction:column; gap:8px}
+  .sechead{display:flex; justify-content:space-between; align-items:center; width:100%;
+    padding:11px 14px; border:none; border-radius:11px; cursor:pointer;
+    background:var(--accent); color:var(--accent-text); font-size:14px; font-weight:700;
+    text-transform:uppercase; letter-spacing:.02em}
+  .sechead .chev{transition:transform .15s}
+  .section.collapsed .chev{transform:rotate(-90deg)}
+  .secbody{display:flex; flex-direction:column; gap:8px}
+  .section.collapsed .secbody{display:none}
   .tile{display:flex; align-items:center; gap:10px; text-align:left; width:100%;
-    padding:14px; border:1px solid var(--border); background:var(--card); color:var(--text);
-    border-radius:13px; font-size:16px; cursor:pointer}
+    padding:13px 14px; border:1px solid var(--border); background:var(--card); color:var(--text);
+    border-radius:12px; font-size:16px; cursor:pointer}
   .tile:active{transform:scale(.995)}
   .hidden{display:none !important}
 
@@ -97,6 +106,7 @@ document.addEventListener("touchend", e => {
 }, {passive:false});
 
 const DATA = (window.KONSPEKT_DATA && window.KONSPEKT_DATA.topics) || [];
+const SECTIONS = (window.KONSPEKT_DATA && window.KONSPEKT_DATA.sections) || [];
 const byKey = Object.fromEntries(DATA.map(t => [t.key, t]));
 
 const $ = id => document.getElementById(id);
@@ -112,17 +122,38 @@ if (!DATA.length){
     'Запусти на сервере: <code>bash deploy/update_webapp.sh</code></div>';
 }
 
-// ── список тем ──
+// ── список тем по разделам (аккордеон) ──
 function renderTiles(){
   if (!DATA.length) return;
-  $("tiles").innerHTML = "";
-  DATA.forEach(t => {
-    const b = document.createElement("button");
-    b.className = "tile";
-    b.textContent = t.title;
-    b.onclick = () => openTopic(t.key);
-    $("tiles").appendChild(b);
+  const box = $("tiles");
+  box.innerHTML = "";
+  const groups = SECTIONS.length ? SECTIONS
+    : [{name: "", keys: DATA.map(t => t.key)}];
+  groups.forEach((sec, gi) => {
+    const wrap = document.createElement("div");
+    wrap.className = "section";
+    if (sec.name){
+      const h = document.createElement("button");
+      h.className = "sechead";
+      h.innerHTML = `<span>${sec.name}</span><span class="chev">▾</span>`;
+      const body = document.createElement("div");
+      body.className = "secbody";
+      h.onclick = () => { wrap.classList.toggle("collapsed"); };
+      sec.keys.forEach(k => { const t = byKey[k]; if (t) body.appendChild(mkTile(t)); });
+      wrap.append(h, body);
+    } else {
+      sec.keys.forEach(k => { const t = byKey[k]; if (t) wrap.appendChild(mkTile(t)); });
+    }
+    box.appendChild(wrap);
   });
+}
+
+function mkTile(t){
+  const b = document.createElement("button");
+  b.className = "tile";
+  b.textContent = t.title;
+  b.onclick = () => openTopic(t.key);
+  return b;
 }
 
 // ── чтение темы ──
