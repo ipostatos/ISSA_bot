@@ -18,10 +18,11 @@ DST=/opt/issa-bot/miniapp        # каталог, который раздаёт
 echo "→ обновляем код из git"
 sudo -u issa git -C "$APP_DIR" pull --ff-only || git -C "$APP_DIR" pull --ff-only
 
-echo "→ перегенерируем данные (вопросы, конспект, задачи)"
+echo "→ перегенерируем данные (вопросы, конспект, задачи, словарь)"
 "$APP_DIR/.venv/bin/python" "$SRC/build_quiz_data.py"
 "$APP_DIR/.venv/bin/python" "$SRC/build_konspekt_data.py"
 "$APP_DIR/.venv/bin/python" "$SRC/build_tasks_data.py"
+"$APP_DIR/.venv/bin/python" "$SRC/build_glossary_data.py"
 
 echo "→ публикуем страницы в $DST"
 mkdir -p "$DST"
@@ -30,9 +31,11 @@ cp -f "$SRC/quiz.html"      "$DST/quiz.html"
 cp -f "$SRC/index.html"     "$DST/calc.html"    # калькулятор под calc.html
 cp -f "$SRC/konspekt.html"  "$DST/konspekt.html"
 cp -f "$SRC/tasks.html"     "$DST/tasks.html"
+cp -f "$SRC/glossary.html"  "$DST/glossary.html"
 cp -f "$SRC/quiz_data.js"     "$DST/quiz_data.js"
 cp -f "$SRC/konspekt_data.js" "$DST/konspekt_data.js"
 cp -f "$SRC/tasks_data.js"    "$DST/tasks_data.js"
+cp -f "$SRC/glossary_data.js" "$DST/glossary_data.js"
 
 echo "→ копируем картинки (схемы конспекта)"
 mkdir -p "$DST/images"

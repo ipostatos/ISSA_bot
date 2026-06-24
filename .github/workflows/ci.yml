@@ -68,6 +68,16 @@ jobs:
           fi
           echo "OK: tasks_data.js актуален"
 
+      - name: Glossary data is up to date with glossary.py
+        run: |
+          python webapp/build_glossary_data.py
+          if ! git diff --quiet -- webapp/glossary_data.js; then
+            echo "::error::webapp/glossary_data.js устарел — перегенерируй: python webapp/build_glossary_data.py"
+            git --no-pager diff --stat -- webapp/glossary_data.js
+            exit 1
+          fi
+          echo "OK: glossary_data.js актуален"
+
       - name: Pre-release audit (questions, images, limits)
         run: python run_audit.py
 
@@ -82,6 +92,7 @@ jobs:
           node webapp/_quiz_check.mjs
           node webapp/_konspekt_check.mjs
           node webapp/_tasks_check.mjs
+          node webapp/_glossary_check.mjs
 
   secret-scan:
     runs-on: ubuntu-latest

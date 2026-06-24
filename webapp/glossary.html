@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Словарь яхтсмена</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="glossary_data.js"></script>
+<style>
+  :root{
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --text: var(--tg-theme-text-color, #fff);
+    --hint: var(--tg-theme-hint-color, #8a9aa9);
+    --card: var(--tg-theme-secondary-bg-color, #232e3c);
+    --accent: var(--tg-theme-button-color, #50a8eb);
+    --accent-text: var(--tg-theme-button-text-color, #fff);
+    --border: rgba(255,255,255,.10);
+    --mark:#ffd54a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; padding:14px 14px 40px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); -webkit-tap-highlight-color:transparent; line-height:1.5}
+  h1{font-size:19px; margin:0 0 10px}
+  .search{position:sticky; top:0; z-index:5; background:var(--bg); padding-bottom:10px}
+  .search input{width:100%; padding:12px 14px; font-size:15px; border-radius:12px;
+    border:1px solid var(--border); background:var(--card); color:var(--text)}
+  .search input:focus{outline:none; border-color:var(--accent)}
+  .chips{display:flex; gap:7px; overflow-x:auto; padding-bottom:10px; -webkit-overflow-scrolling:touch}
+  .chips button{white-space:nowrap; padding:7px 12px; border-radius:20px; font-size:13px; cursor:pointer;
+    border:1px solid var(--border); background:var(--card); color:var(--text)}
+  .chips button.active{background:var(--accent); color:var(--accent-text); border-color:var(--accent)}
+  .count{color:var(--hint); font-size:12px; margin:2px 0 10px}
+  .item{border:1px solid var(--border); background:var(--card); border-radius:13px; padding:13px; margin-bottom:9px}
+  .item .term{font-size:16px; font-weight:700}
+  .item .al{color:var(--hint); font-size:12px; font-style:italic; margin-top:1px}
+  .item .def{font-size:14px; margin-top:6px}
+  .item .ex{font-size:13px; color:var(--hint); margin-top:6px; border-left:2px solid var(--border); padding-left:8px}
+  .item .cat{display:inline-block; font-size:11px; color:var(--hint); margin-top:8px}
+  mark{background:var(--mark); color:#000; border-radius:3px; padding:0 2px}
+  .empty{color:var(--hint); font-size:14px; text-align:center; padding:26px 8px}
+  .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px}
+</style>
+</head>
+<body>
+  <h1>📚 Словарь яхтсмена</h1>
+  <div class="search"><input id="q" type="search" placeholder="🔎 Термин по-русски / English…" autocomplete="off"></div>
+  <div class="chips" id="chips"></div>
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+  <p class="foot">Учебный словарь простыми словами. Не является официальным материалом ISSA.</p>
+
+<script>
+"use strict";
+const tg = window.Telegram?.WebApp;
+if (tg){ tg.ready(); tg.expand(); }
+
+const DATA = window.GLOSSARY_DATA || {categories:[], total:0};
+const CATS = DATA.categories || [];
+// плоский список: каждому термину помним категорию
+const FLAT = [];
+CATS.forEach(c => c.terms.forEach(t => FLAT.push({...t, catTitle:c.title, catKey:c.key, icon:c.icon})));
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const hl = (s, q) => q ? esc(s).replace(new RegExp(escRe(q), "gi"), m=>`<mark>${m}</mark>`) : esc(s);
+
+if (!FLAT.length){
+  $("list").innerHTML = '<div class="empty">Не удалось загрузить словарь.<br>' +
+    'Файл glossary_data.js не найден на сервере.<br>Запусти deploy/update_webapp.sh.</div>';
+}
+
+let CAT = "all", Q = "";
+
+function renderChips(){
+  const mk = (key, label) => `<button data-c="${key}" class="${CAT===key?'active':''}">${label}</button>`;
+  $("chips").innerHTML = mk("all", `Все (${DATA.total})`) +
+    CATS.map(c => mk(c.key, `${c.icon} ${c.title}`)).join("");
+  $("chips").querySelectorAll("button").forEach(b =>
+    b.onclick = () => { CAT = b.dataset.c; renderChips(); render(); });
+}
+
+function matches(t){
+  if (CAT !== "all" && t.catKey !== CAT) return false;
+  if (!Q) return true;
+  const ql = Q.toLowerCase();
+  return t.term.toLowerCase().includes(ql)
+      || (t.aliases||[]).some(a => a.toLowerCase().includes(ql))
+      || t.definition.toLowerCase().includes(ql);
+}
+
+function render(){
+  const found = FLAT.filter(matches);
+  $("count").textContent = found.length
+    ? `Показано: ${found.length}` : "";
+  if (!FLAT.length) return;
+  if (!found.length){
+    $("list").innerHTML = `<div class="empty">Ничего не найдено${Q?` по «${esc(Q)}»`:""}.</div>`;
+    return;
+  }
+  $("list").innerHTML = found.map(t => `
+    <div class="item">
+      <div class="term">${hl(t.term, Q)}</div>
+      ${(t.aliases&&t.aliases.length)?`<div class="al">${hl(t.aliases.join(", "), Q)}</div>`:""}
+      <div class="def">${hl(t.definition, Q)}</div>
+      ${t.example?`<div class="ex">${hl(t.example, Q)}</div>`:""}
+      <div class="cat">${t.icon} ${esc(t.catTitle)}</div>
+    </div>`).join("");
+}
+
+let tmr;
+$("q").addEventListener("input", e => {
+  clearTimeout(tmr);
+  tmr = setTimeout(() => { Q = e.target.value.trim(); render(); }, 110);
+});
+
+renderChips();
+render();
+</script>
+</body>
+</html>
