@@ -40,6 +40,7 @@ from aiogram.types import (
 )
 
 import content
+import glossary
 import nav_tasks
 
 # ──────────────────────────── Конфигурация ────────────────────────────
@@ -223,6 +224,9 @@ EXAMS: dict[int, dict] = {}
 # Текущая задача T-V-M-D-C, на которую пользователь вводит ответ: user_id -> task_id
 ACTIVE_TASK: dict[int, str] = {}
 
+# Пользователи в режиме поиска по словарю (ждём ввод запроса): set(user_id)
+GLOSSARY_SEARCH: set[int] = set()
+
 
 # ──────────────────────────── Клавиатуры ────────────────────────────
 
@@ -236,6 +240,7 @@ def main_menu_kb() -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text="🧭 Решение задач (T-V-M-D-C)", callback_data="mode:tasks")],
             [InlineKeyboardButton(text="📖 Конспект", callback_data="mode:konspekt")],
             [InlineKeyboardButton(text="📌 Шпаргалки", callback_data="mode:cheat")],
+            [InlineKeyboardButton(text="📚 Словарь яхтсмена", callback_data="mode:glossary")],
             [InlineKeyboardButton(text="📊 Моя статистика", callback_data="mode:stats")],
             [InlineKeyboardButton(text="♻️ Сбросить прогресс", callback_data="mode:reset")],
         ]
@@ -706,6 +711,100 @@ async def cb_knot(cb: CallbackQuery) -> None:
     await cb.answer()
 
 
+# ──────────────────────────── Словарь яхтсмена ────────────────────────────
+
+GLOSSARY_PAGE = 8  # терминов на страницу
+
+
+def glossary_menu_kb() -> InlineKeyboardMarkup:
+    rows = []
+    for cat in glossary.CATEGORY_ORDER:
+        icon = glossary.CATEGORY_ICONS.get(cat, "📚")
+        n = len(glossary.YACHTING_GLOSSARY.get(cat, []))
+        if n == 0:
+            continue
+        rows.append([InlineKeyboardButton(text=f"{icon} {cat} ({n})", callback_data=f"gl:cat:{cat}")])
+    rows.append([InlineKeyboardButton(text="🔎 Поиск термина", callback_data="gl:search")])
+    rows.append([InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def glossary_terms_kb(cat: str, page: int) -> InlineKeyboardMarkup:
+    items = glossary.YACHTING_GLOSSARY.get(cat, [])
+    start = page * GLOSSARY_PAGE
+    chunk = items[start:start + GLOSSARY_PAGE]
+    rows = [[InlineKeyboardButton(text=it["term"], callback_data=f"gl:t:{cat}:{start + i}")]
+            for i, it in enumerate(chunk)]
+    nav = []
+    if page > 0:
+        nav.append(InlineKeyboardButton(text="◀️", callback_data=f"gl:cat:{cat}:{page - 1}"))
+    if start + GLOSSARY_PAGE < len(items):
+        nav.append(InlineKeyboardButton(text="▶️", callback_data=f"gl:cat:{cat}:{page + 1}"))
+    if nav:
+        rows.append(nav)
+    rows.append([InlineKeyboardButton(text="⬅️ К категориям", callback_data="mode:glossary")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+@dp.callback_query(F.data == "mode:glossary")
+async def cb_glossary(cb: CallbackQuery) -> None:
+    GLOSSARY_SEARCH.discard(cb.from_user.id)
+    await cb.message.answer(
+        f"📚 <b>Словарь яхтсмена</b> ({glossary.total_count()} терминов)\n\n"
+        "Морские и яхтенные термины простыми словами. Выбери категорию "
+        "или нажми «🔎 Поиск термина».\n\n"
+        "<i>Вспомогательный материал для подготовки, не официальный учебник.</i>",
+        reply_markup=glossary_menu_kb(),
+    )
+    await cb.answer()
+
+
+@dp.callback_query(F.data.startswith("gl:cat:"))
+async def cb_glossary_cat(cb: CallbackQuery) -> None:
+    parts = cb.data.split(":")  # gl:cat:<cat>[:page]
+    # категория может содержать ":" (например «МППСС / огни / знаки» — нет, но без /), берём аккуратно
+    rest = cb.data[len("gl:cat:"):]
+    if rest.rsplit(":", 1)[-1].isdigit() and ":" in rest:
+        cat, page = rest.rsplit(":", 1)
+        page = int(page)
+    else:
+        cat, page = rest, 0
+    if cat not in glossary.YACHTING_GLOSSARY:
+        await cb.answer("Категория не найдена")
+        return
+    icon = glossary.CATEGORY_ICONS.get(cat, "📚")
+    await cb.message.answer(f"{icon} <b>{cat}</b>\nВыбери термин:",
+                            reply_markup=glossary_terms_kb(cat, page))
+    await cb.answer()
+
+
+@dp.callback_query(F.data.startswith("gl:t:"))
+async def cb_glossary_term(cb: CallbackQuery) -> None:
+    rest = cb.data[len("gl:t:"):]
+    cat, idx = rest.rsplit(":", 1)
+    items = glossary.YACHTING_GLOSSARY.get(cat, [])
+    try:
+        it = items[int(idx)]
+    except (ValueError, IndexError):
+        await cb.answer("Термин не найден")
+        return
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⬅️ К списку", callback_data=f"gl:cat:{cat}")],
+        [InlineKeyboardButton(text="📚 Категории", callback_data="mode:glossary")],
+    ])
+    await cb.message.answer(glossary.render(cat, it), reply_markup=kb)
+    await cb.answer()
+
+
+@dp.callback_query(F.data == "gl:search")
+async def cb_glossary_search(cb: CallbackQuery) -> None:
+    GLOSSARY_SEARCH.add(cb.from_user.id)
+    await cb.message.answer(
+        "🔎 Напиши слово для поиска по словарю (например <code>киль</code>, "
+        "<code>mayday</code>, <code>галс</code>).")
+    await cb.answer()
+
+
 # ──────────────────────────── Решение задач T-V-M-D-C ────────────────────────────
 
 def task_kb() -> InlineKeyboardMarkup:
@@ -796,6 +895,30 @@ async def cb_task_stats(cb: CallbackQuery) -> None:
 @dp.message(F.text & ~F.text.startswith("/"))
 async def on_text_answer(message: Message) -> None:
     user_id = message.from_user.id
+
+    # 1) Режим поиска по словарю
+    if user_id in GLOSSARY_SEARCH:
+        GLOSSARY_SEARCH.discard(user_id)
+        hits = glossary.search(message.text)
+        if not hits:
+            await message.answer(
+                "Ничего не нашёл 🤷 Попробуй другое слово или открой категории.",
+                reply_markup=glossary_menu_kb())
+            return
+        # первый результат — карточкой, остальные — кнопками
+        cat0, it0 = hits[0]
+        rows = []
+        for cat, it in hits[1:10]:
+            i = glossary.YACHTING_GLOSSARY[cat].index(it)
+            rows.append([InlineKeyboardButton(text=f"{it['term']} ({cat})",
+                                              callback_data=f"gl:t:{cat}:{i}")])
+        rows.append([InlineKeyboardButton(text="📚 Категории", callback_data="mode:glossary")])
+        head = f"🔎 Найдено: {len(hits)}\n\n" if len(hits) > 1 else ""
+        await message.answer(head + glossary.render(cat0, it0),
+                             reply_markup=InlineKeyboardMarkup(inline_keyboard=rows))
+        return
+
+    # 2) Ответ на задачу T-V-M-D-C
     task_id = ACTIVE_TASK.get(user_id)
     if not task_id:
         await message.answer("Не понял. Откройте меню: /menu", reply_markup=main_menu_kb())
