@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Тесты ISSA</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="quiz_data.js"></script>
+<style>
+  :root{
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --text: var(--tg-theme-text-color, #fff);
+    --hint: var(--tg-theme-hint-color, #8a9aa9);
+    --card: var(--tg-theme-secondary-bg-color, #232e3c);
+    --accent: var(--tg-theme-button-color, #50a8eb);
+    --accent-text: var(--tg-theme-button-text-color, #fff);
+    --border: rgba(255,255,255,.10);
+    --ok: #4caf72; --bad: #e5544b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; padding:16px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); -webkit-tap-highlight-color:transparent}
+  h1{font-size:19px; margin:0 0 2px}
+  .sub{color:var(--hint); font-size:13px; margin:0 0 16px}
+  .card{background:var(--card); border-radius:14px; padding:16px; margin-bottom:12px}
+  .big{width:100%; padding:16px; font-size:16px; font-weight:600; border:none; border-radius:12px;
+    background:var(--accent); color:var(--accent-text); cursor:pointer; margin-bottom:10px; text-align:left}
+  .big small{display:block; font-weight:400; font-size:12px; opacity:.85; margin-top:3px}
+  .ghost{background:transparent; color:var(--text); border:1px solid var(--border)}
+  .topics{display:flex; flex-wrap:wrap; gap:8px}
+  .topics button{flex:1 1 46%; padding:11px 8px; font-size:13px; border:1px solid var(--border);
+    background:transparent; color:var(--text); border-radius:10px; cursor:pointer; text-align:left}
+  .hidden{display:none !important}
+
+  /* шапка квиза */
+  .bar{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; font-size:13px; color:var(--hint)}
+  .timer{font-variant-numeric:tabular-nums}
+  .prog{height:6px; background:var(--border); border-radius:4px; overflow:hidden; margin-bottom:14px}
+  .prog>i{display:block; height:100%; width:0; background:var(--accent); transition:width .25s}
+  .topic-tag{display:inline-block; font-size:11px; color:var(--hint); background:var(--bg);
+    border:1px solid var(--border); border-radius:20px; padding:2px 9px; margin-bottom:10px}
+  .q{font-size:16px; line-height:1.45; margin:0 0 14px; font-weight:600}
+  .opt{display:block; width:100%; text-align:left; padding:13px; margin-bottom:9px; font-size:15px;
+    border:1px solid var(--border); background:var(--bg); color:var(--text); border-radius:11px; cursor:pointer}
+  .opt:active{transform:scale(.995)}
+  .opt.correct{border-color:var(--ok); background:rgba(76,175,114,.16)}
+  .opt.wrong{border-color:var(--bad); background:rgba(229,84,75,.16)}
+  .opt[disabled]{cursor:default; opacity:.95}
+  .expl{font-size:13px; color:var(--hint); line-height:1.5; margin:6px 0 12px; padding:10px;
+    background:var(--bg); border-radius:10px; border:1px solid var(--border)}
+  .next{width:100%; padding:14px; font-size:15px; font-weight:600; border:none; border-radius:12px;
+    background:var(--accent); color:var(--accent-text); cursor:pointer}
+
+  /* результат */
+  .score{font-size:40px; font-weight:800; text-align:center; margin:6px 0 0}
+  .pct{text-align:center; color:var(--hint); margin:2px 0 12px}
+  .verdict{text-align:center; font-size:18px; font-weight:700; margin-bottom:14px}
+  .verdict.pass{color:var(--ok)} .verdict.fail{color:var(--bad)}
+  .review h3{font-size:14px; margin:14px 0 8px}
+  .miss{font-size:13px; padding:10px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px; line-height:1.45}
+  .miss .t{color:var(--hint); font-size:11px}
+  .miss .a{color:var(--ok)}
+  .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px}
+</style>
+</head>
+<body>
+
+<!-- ГЛАВНЫЙ ЭКРАН -->
+<section id="home">
+  <h1>⚓ Тесты ISSA</h1>
+  <p class="sub">Inshore Skipper + SRC · банк <span id="qcount">…</span> вопросов</p>
+
+  <button class="big" id="startExam">📝 Экзамен
+    <small id="examSub">100 вопросов · таймер · проходной балл</small></button>
+  <button class="big ghost" id="startRandom">🎯 Тренировка — случайные
+    <small>Вопросы вперемешку, с пояснениями</small></button>
+  <button class="big ghost" id="startTopic">📚 Тренировка по темам
+    <small>Выбрать тему</small></button>
+
+  <div class="card hidden" id="topicCard">
+    <div class="topics" id="topics"></div>
+  </div>
+  <p class="foot">Учебный тренажёр. Не является официальным материалом ISSA и не содержит экзаменационных ключей.</p>
+</section>
+
+<!-- ЭКРАН ВОПРОСА -->
+<section id="quiz" class="hidden">
+  <div class="bar">
+    <span id="counter">1 / 10</span>
+    <span class="timer hidden" id="timer">00:00</span>
+    <span id="liveScore"></span>
+  </div>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="topic-tag" id="qtopic"></span>
+  <p class="q" id="qtext"></p>
+  <div id="opts"></div>
+  <div class="expl hidden" id="expl"></div>
+  <button class="next hidden" id="nextBtn">Далее →</button>
+</section>
+
+<!-- ЭКРАН РЕЗУЛЬТАТА -->
+<section id="result" class="hidden">
+  <div class="card">
+    <div class="score" id="rScore"></div>
+    <div class="pct" id="rPct"></div>
+    <div class="verdict" id="rVerdict"></div>
+    <button class="next" id="sendBtn">📤 Сохранить результат в боте</button>
+  </div>
+  <div class="review" id="review"></div>
+  <button class="big ghost" id="againBtn">↩️ В меню</button>
+  <p class="foot" id="sentNote"></p>
+</section>
+
+<script>
+"use strict";
+const tg = window.Telegram?.WebApp;
+if (tg){ tg.ready(); tg.expand(); }
+
+const DATA = window.QUIZ_DATA || {questions:[], topics:[], examSize:100, passPercent:75};
+const ALL = DATA.questions;
+document.getElementById("qcount").textContent = ALL.length;
+document.getElementById("examSub").textContent =
+  `${Math.min(DATA.examSize, ALL.length)} вопросов · таймер · проходной балл ${DATA.passPercent}%`;
+
+// ── утилиты ──
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+const byId = Object.fromEntries(ALL.map(q=>[q.id,q]));
+const show = id => document.getElementById(id).classList.remove("hidden");
+const hide = id => document.getElementById(id).classList.add("hidden");
+const esc = s => String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+// ── состояние ──
+let S = null; // {mode, isExam, queue:[q], idx, results:[[id,ok]], correct, startTs, timerH}
+
+function startQuiz(mode, isExam, queue){
+  S = { mode, isExam, queue, idx:0, results:[], correct:0, startTs:Date.now(), timerH:null };
+  hide("home"); hide("result"); show("quiz");
+  document.getElementById("timer").classList.toggle("hidden", !isExam);
+  document.getElementById("liveScore").textContent = isExam ? "" : "✔ 0";
+  if (isExam){
+    tickTimer();
+    S.timerH = setInterval(tickTimer, 1000);
+  }
+  renderQ();
+}
+
+function tickTimer(){
+  const s = Math.floor((Date.now()-S.startTs)/1000);
+  const mm = String(Math.floor(s/60)).padStart(2,"0");
+  const ss = String(s%60).padStart(2,"0");
+  document.getElementById("timer").textContent = `${mm}:${ss}`;
+}
+
+function renderQ(){
+  const q = S.queue[S.idx];
+  document.getElementById("counter").textContent = `${S.idx+1} / ${S.queue.length}`;
+  document.getElementById("progBar").style.width = `${(S.idx/S.queue.length)*100}%`;
+  document.getElementById("qtopic").textContent = q.topic;
+  document.getElementById("qtext").innerHTML = esc(q.q);
+  hide("expl"); hide("nextBtn");
+  const box = document.getElementById("opts");
+  box.innerHTML = "";
+  q.options.forEach((opt,i)=>{
+    const b = document.createElement("button");
+    b.className = "opt"; b.innerHTML = esc(opt);
+    b.onclick = ()=> answer(i, b);
+    box.appendChild(b);
+  });
+}
+
+function answer(i, btn){
+  const q = S.queue[S.idx];
+  const ok = (i === q.answer);
+  S.results.push([q.id, ok]);
+  if (ok) S.correct++;
+  // блокируем варианты
+  const opts = [...document.getElementById("opts").children];
+  opts.forEach((b,k)=>{
+    b.disabled = true;
+    if (k === q.answer) b.classList.add("correct");
+    if (k === i && !ok) b.classList.add("wrong");
+  });
+  if (tg) tg.HapticFeedback?.impactOccurred?.(ok ? "light" : "rigid");
+
+  if (!S.isExam){
+    // тренировка: показываем пояснение сразу
+    if (q.expl){
+      const e = document.getElementById("expl");
+      e.innerHTML = (ok ? "✅ Верно. " : "❌ Неверно. ") + esc(q.expl);
+      show("expl");
+    }
+    document.getElementById("liveScore").textContent = `✔ ${S.correct}`;
+  }
+  document.getElementById("nextBtn").textContent =
+    (S.idx+1 < S.queue.length) ? "Далее →" : "Завершить";
+  show("nextBtn");
+}
+
+document.getElementById("nextBtn").onclick = ()=>{
+  S.idx++;
+  if (S.idx >= S.queue.length){ finish(); return; }
+  renderQ();
+};
+
+function finish(){
+  if (S.timerH){ clearInterval(S.timerH); S.timerH=null; }
+  hide("quiz"); show("result");
+  document.getElementById("progBar").style.width = "100%";
+  const total = S.queue.length, correct = S.correct;
+  const pct = total ? Math.round(correct/total*100) : 0;
+  document.getElementById("rScore").textContent = `${correct} / ${total}`;
+  const secs = Math.floor((Date.now()-S.startTs)/1000);
+  const tstr = S.isExam ? ` · ⏱ ${Math.floor(secs/60)}м ${secs%60}с` : "";
+  document.getElementById("rPct").textContent = `${pct}%${tstr}`;
+
+  const v = document.getElementById("rVerdict");
+  if (S.isExam){
+    const passed = pct >= DATA.passPercent;
+    v.textContent = passed ? "✅ СДАНО" : "❌ НЕ СДАНО";
+    v.className = "verdict " + (passed ? "pass" : "fail");
+  } else {
+    v.textContent = "🎯 Тренировка завершена";
+    v.className = "verdict";
+  }
+
+  // разбор ошибок
+  const wrong = S.results.filter(([,ok])=>!ok).map(([id])=>byId[id]);
+  const rev = document.getElementById("review");
+  if (wrong.length){
+    rev.innerHTML = `<h3>Разбор ошибок (${wrong.length})</h3>` + wrong.map(q=>`
+      <div class="miss">
+        <div class="t">${esc(q.topic)}</div>
+        <div>${esc(q.q)}</div>
+        <div class="a">✔️ ${esc(q.options[q.answer])}</div>
+      </div>`).join("");
+  } else {
+    rev.innerHTML = `<div class="miss" style="border-color:var(--ok)">🎉 Без ошибок!</div>`;
+  }
+  document.getElementById("sentNote").textContent = "";
+  if (tg) tg.HapticFeedback?.notificationOccurred?.(S.isExam ? "warning" : "success");
+}
+
+// отправка компактного результата в бота
+document.getElementById("sendBtn").onclick = ()=>{
+  const payload = {
+    t: "quiz",
+    mode: S.mode,                 // "exam" | "random" | "topic:<...>"
+    n: S.queue.length,
+    ok: S.correct,
+    results: S.results,          // [[id, 0|1], ...]
+    secs: Math.floor((Date.now()-S.startTs)/1000),
+  };
+  // payload компактный: id'шники короткие, лимит sendData ~4 КБ хватает на 100.
+  const json = JSON.stringify(payload);
+  if (tg && tg.sendData){
+    tg.sendData(json);          // бот получит Message.web_app_data и закроет окно
+  } else {
+    document.getElementById("sentNote").textContent =
+      "Открой через кнопку в боте, чтобы сохранить результат.";
+  }
+};
+
+// ── навигация по меню ──
+document.getElementById("startExam").onclick = ()=>{
+  const size = Math.min(DATA.examSize, ALL.length);
+  startQuiz("exam", true, shuffle(ALL).slice(0, size));
+};
+document.getElementById("startRandom").onclick = ()=>{
+  const n = Math.min(20, ALL.length);
+  startQuiz("random", false, shuffle(ALL).slice(0, n));
+};
+document.getElementById("startTopic").onclick = ()=>{
+  const card = document.getElementById("topicCard");
+  card.classList.toggle("hidden");
+  const box = document.getElementById("topics");
+  if (box.children.length) return;
+  DATA.topics.forEach(t=>{
+    const cnt = ALL.filter(q=>q.topic===t).length;
+    const b = document.createElement("button");
+    b.innerHTML = `${esc(t)}<br><span style="color:var(--hint);font-size:11px">${cnt} вопр.</span>`;
+    b.onclick = ()=>{
+      const pool = shuffle(ALL.filter(q=>q.topic===t)).slice(0, Math.min(20, cnt));
+      startQuiz("topic:"+t, false, pool);
+    };
+    box.appendChild(b);
+  });
+};
+document.getElementById("againBtn").onclick = ()=>{
+  if (S && S.timerH) clearInterval(S.timerH);
+  S = null;
+  hide("quiz"); hide("result"); show("home");
+  document.getElementById("topicCard").classList.add("hidden");
+};
+</script>
+</body>
+</html>

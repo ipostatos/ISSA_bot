@@ -35,8 +35,10 @@ from aiogram.types import (
     FSInputFile,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    KeyboardButton,
     Message,
     PollAnswer,
+    ReplyKeyboardMarkup,
     WebAppInfo,
 )
 
@@ -67,6 +69,10 @@ EXAM_PASS_PERCENT = 75    # проходной балл, %
 # в меню калькулятора появляется кнопка «Открыть приложение». Без него
 # калькулятор работает как обычный диалог.
 WEBAPP_URL = os.environ.get("WEBAPP_URL", "").strip()
+# URL Mini App «Тесты» (quiz.html). Если задан (HTTPS) — в меню и на reply-
+# клавиатуре появляется кнопка запуска приложения тестов. Результат теста
+# возвращается в бота через WebApp.sendData и пишется в прогресс.
+WEBAPP_QUIZ_URL = os.environ.get("WEBAPP_QUIZ_URL", "").strip()
 TG_MSG_LIMIT = 4096       # ограничение Telegram на длину сообщения
 POLL_OPTION_LIMIT = 100   # ограничение Telegram на длину варианта ответа
 POLL_QUESTION_LIMIT = 300 # ограничение Telegram на длину текста вопроса/пояснения
@@ -265,6 +271,24 @@ def main_menu_kb() -> InlineKeyboardMarkup:
     )
 
 
+def quiz_app_reply_kb() -> ReplyKeyboardMarkup | None:
+    """
+    Постоянная reply-клавиатура с кнопкой запуска Mini App «Тесты».
+    Только reply-кнопка WebApp умеет возвращать данные через sendData,
+    поэтому приложение тестов запускаем именно отсюда. Если URL не задан —
+    клавиатуры нет (None), приложение недоступно, чат-режимы работают как есть.
+    """
+    if not WEBAPP_QUIZ_URL:
+        return None
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text="🎓 Тесты (приложение)",
+                                  web_app=WebAppInfo(url=WEBAPP_QUIZ_URL))]],
+        resize_keyboard=True,
+        is_persistent=True,
+        input_field_placeholder="Меню — /menu",
+    )
+
+
 def topics_kb() -> InlineKeyboardMarkup:
     rows = []
     row = []
@@ -365,6 +389,31 @@ async def cmd_start(message: Message) -> None:
         "\n\nВыбери режим:",
         reply_markup=main_menu_kb(),
     )
+    rk = quiz_app_reply_kb()
+    if rk:
+        await message.answer(
+            "🎓 Доступно приложение «Тесты» — кнопка снизу (тренировка и экзамен "
+            "с таймером; результат сохраняется в твой прогресс).",
+            reply_markup=rk,
+        )
+
+
+@dp.message(Command("tests"))
+async def cmd_tests(message: Message) -> None:
+    rk = quiz_app_reply_kb()
+    if rk:
+        await message.answer(
+            "🎓 <b>Приложение «Тесты»</b>\n"
+            "Нажми кнопку снизу — откроется тренажёр (тренировка/экзамен). "
+            "Результат вернётся в бота и сохранится в прогресс.",
+            reply_markup=rk,
+        )
+    else:
+        await message.answer(
+            "Приложение «Тесты» пока не подключено. Тренироваться можно прямо "
+            "в чате: /menu → «🎯 Случайный вопрос» или «📝 Экзамен».",
+            reply_markup=main_menu_kb(),
+        )
 
 
 @dp.message(Command("menu"))
@@ -385,6 +434,7 @@ async def cmd_help(message: Message) -> None:
         "/menu — меню режимов\n"
         "/stats — моя статистика\n"
         "/calc — калькулятор поправок TVMDC\n"
+        "/tests — приложение «Тесты» (если подключено)\n"
         "/about — о боте\n"
         "/privacy — конфиденциальность\n"
         "/help — эта справка\n\n"
@@ -1113,6 +1163,121 @@ def _format_calc_result(res: dict) -> str:
         f"<pre>{steps}</pre>\n"
         f"<i>{calc.rule_hint(res['direction'])}</i>"
     )
+
+
+# ──────────────────────────── Результат из Mini App «Тесты» ────────────────────────────
+# Mini App (quiz.html) отправляет компактный итог через WebApp.sendData —
+# приходит как Message.web_app_data. Пишем результаты в прогресс (та же
+# логика, что и в чат-режимах) и показываем сводку.
+
+MAX_WEBAPP_RESULTS = 200  # защита от слишком большого payload
+
+
+def parse_webapp_quiz(payload) -> dict | None:
+    """
+    Разобрать и провалидировать payload из Mini App «Тесты».
+    Возвращает {mode, is_exam, ok_ids:[...], wrong_ids:[...], secs} либо
+    None, если формат непригоден. Чистая функция (без записи прогресса) —
+    удобно тестировать. Неизвестные id отбрасываются.
+    """
+    if not isinstance(payload, dict) or payload.get("t") != "quiz":
+        return None
+    results = payload.get("results")
+    if not isinstance(results, list) or not results:
+        return None
+    results = results[:MAX_WEBAPP_RESULTS]
+
+    ok_ids, wrong_ids = [], []
+    for item in results:
+        if not (isinstance(item, list) and len(item) == 2):
+            continue
+        qid, ok = item[0], bool(item[1])
+        if qid not in QUESTIONS_BY_ID:
+            continue
+        (ok_ids if ok else wrong_ids).append(qid)
+    if not (ok_ids or wrong_ids):
+        return None
+
+    try:
+        secs = int(payload.get("secs", 0) or 0)
+    except (TypeError, ValueError):
+        secs = 0
+    mode = str(payload.get("mode", "random"))
+    return {
+        "mode": mode,
+        "is_exam": mode == "exam",
+        "ok_ids": ok_ids,
+        "wrong_ids": wrong_ids,
+        "secs": max(0, secs),
+    }
+
+
+@dp.message(F.web_app_data)
+async def on_webapp_data(message: Message) -> None:
+    user_id = message.from_user.id
+    try:
+        payload = json.loads(message.web_app_data.data)
+    except (json.JSONDecodeError, TypeError):
+        log.info("webapp_data: bad json from user=%s", user_id)
+        await message.answer("Не удалось прочитать результат из приложения 🤷")
+        return
+
+    parsed = parse_webapp_quiz(payload)
+    if not parsed:
+        await message.answer("Неизвестный или пустой результат из приложения.")
+        return
+
+    is_exam = parsed["is_exam"]
+    mode = parsed["mode"]
+    # Записываем каждый ответ в прогресс (статистика, работа над ошибками,
+    # «увиденные» вопросы) — той же логикой, что и чат-режимы.
+    for qid in parsed["ok_ids"]:
+        record_answer(user_id, qid, True)
+        mark_seen(user_id, qid)
+    for qid in parsed["wrong_ids"]:
+        record_answer(user_id, qid, False)
+        mark_seen(user_id, qid)
+
+    counted = len(parsed["ok_ids"]) + len(parsed["wrong_ids"])
+    correct = len(parsed["ok_ids"])
+    pct = round(correct / counted * 100)
+    secs = parsed["secs"]
+    tline = f" · ⏱ {secs // 60}м {secs % 60}с" if is_exam and secs else ""
+
+    if is_exam:
+        passed = pct >= EXAM_PASS_PERCENT
+        verdict = "✅ <b>СДАНО</b>" if passed else "❌ <b>НЕ СДАНО</b>"
+        head = (f"🏁 <b>Экзамен (приложение) завершён</b>\n"
+                f"Результат: <b>{correct}/{counted}</b> ({pct}%){tline}\n"
+                f"{verdict} (нужно ≥ {EXAM_PASS_PERCENT}%)")
+    else:
+        label = mode.split(":", 1)[1] if mode.startswith("topic:") else "случайные"
+        head = (f"🎯 <b>Тренировка (приложение): {label}</b>\n"
+                f"Результат: <b>{correct}/{counted}</b> ({pct}%)")
+
+    wrong = [QUESTIONS_BY_ID[qid] for qid in parsed["wrong_ids"]]
+    if not wrong:
+        await message.answer(head + "\n\n🎉 Без ошибок! Результат сохранён.",
+                            reply_markup=main_menu_kb())
+        return
+
+    blocks = [head, "\n<b>Разбор ошибок:</b>"]
+    for q in wrong:
+        blocks.append(f"• [{q['topic']}] {q['q']}\n  ✔️ {q['options'][q['answer']]}")
+    blocks.append("\nЭти вопросы добавлены в «Работу над ошибками».")
+
+    chunk, parts = "", []
+    for b in blocks:
+        if len(chunk) + len(b) + 1 > TG_MSG_LIMIT - 100:
+            parts.append(chunk)
+            chunk = b
+        else:
+            chunk = f"{chunk}\n{b}" if chunk else b
+    if chunk:
+        parts.append(chunk)
+    for i, part in enumerate(parts):
+        kb = main_menu_kb() if i == len(parts) - 1 else None
+        await message.answer(part, reply_markup=kb)
 
 
 # ──────────────────────────── Текстовый ответ на задачу ────────────────────────────

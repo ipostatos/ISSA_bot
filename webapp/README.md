@@ -1,12 +1,29 @@
-# Mini App: калькулятор TVMDC
+# Mini Apps (Telegram WebApp)
 
-`index.html` — самодостаточное Telegram Mini App (WebApp): выбор направления
-пересчёта, ввод курса и поправок, мгновенный результат с пошаговым решением.
-Вся арифметика повторяет `calc.py` / `nav_tasks.py` (проверено кросс-тестом
-`_solver_check.mjs` — ответы совпадают с Python-эталоном).
+Две самодостаточные страницы. Бэкенд не нужен — это статика; нужен только
+**HTTPS-хостинг** (Telegram открывает WebApp строго по https).
 
-Бэкенд не нужен — это статическая страница. Нужен только **HTTPS-хостинг**
-(Telegram открывает WebApp строго по https).
+| Файл | Что это | URL в `.env` |
+|------|---------|--------------|
+| `index.html` | 🧮 Калькулятор TVMDC: выбор направления, ввод курса и поправок, результат с пошаговым решением | `WEBAPP_URL` |
+| `quiz.html` | 🎓 Тесты: тренировка (случайные / по темам) и экзамен (100 вопросов, таймер, проходной балл, разбор ошибок) | `WEBAPP_QUIZ_URL` |
+
+Вопросы для `quiz.html` лежат в `quiz_data.js` — он **генерируется** из
+`questions.json`:
+
+```bash
+python webapp/build_quiz_data.py     # после любого изменения банка вопросов
+```
+
+`quiz.html` по завершении теста отправляет компактный итог обратно в бота
+через `WebApp.sendData` (≈1.4 КБ на экзамен из 100 — в лимит 4 КБ влезает),
+бот пишет результат в прогресс пользователя (статистика + работа над ошибками).
+Поэтому кнопку запуска тестов даём через **reply-клавиатуру** (только она
+умеет `sendData`); калькулятор — обычной inline/WebApp-кнопкой.
+
+Вся арифметика калькулятора повторяет `calc.py` / `nav_tasks.py` (кросс-тест
+`_solver_check.mjs` — ответы совпадают с Python-эталоном). Данные тестов
+проверяются `_quiz_check.mjs`.
 
 ## Вариант A. Тот же VPS + nginx (рекомендуется)
 
@@ -36,27 +53,38 @@
 3. Указать боту URL и перезапустить — в `.env` рядом с ботом:
 
    ```bash
-   echo 'WEBAPP_URL=https://calc.example.com/index.html' >> /opt/issa-bot/.env
+   # обе страницы лежат в одном каталоге /var/www/issa-webapp
+   echo 'WEBAPP_URL=https://calc.example.com/index.html'     >> /opt/issa-bot/.env
+   echo 'WEBAPP_QUIZ_URL=https://calc.example.com/quiz.html' >> /opt/issa-bot/.env
    systemctl restart issa-bot
    ```
 
-После этого в меню калькулятора появляется кнопка
-**«📱 Открыть приложение-калькулятор»**.
+После этого:
+- в меню калькулятора — кнопка **«📱 Открыть приложение-калькулятор»**;
+- на `/start` и `/tests` снизу — reply-кнопка **«🎓 Тесты (приложение)»**.
+
+Не забудь скопировать обе страницы и данные тестов:
+
+```bash
+sudo cp /opt/issa-bot/webapp/index.html /opt/issa-bot/webapp/quiz.html \
+        /opt/issa-bot/webapp/quiz_data.js /var/www/issa-webapp/
+```
 
 ## Вариант B. Бесплатный статик-хостинг
 
-Залить `index.html` на GitHub Pages / Netlify / Cloudflare Pages (любой даёт
-HTTPS) и прописать полученный URL в `WEBAPP_URL`. Пример для GitHub Pages:
-включить Pages для каталога `webapp/` — адрес будет вида
-`https://<user>.github.io/ISSA_bot/index.html`.
+Залить каталог `webapp/` на GitHub Pages / Netlify / Cloudflare Pages (любой
+даёт HTTPS) и прописать полученные URL в `WEBAPP_URL` / `WEBAPP_QUIZ_URL`.
+Для GitHub Pages адрес будет вида `https://<user>.github.io/ISSA_bot/quiz.html`.
 
-## Если WEBAPP_URL не задан
+## Если URL не заданы
 
-Ничего не ломается: кнопки приложения просто нет, калькулятор работает как
-обычный диалог в чате (выбор направления + ввод значений строкой).
+Ничего не ломается: кнопок приложений просто нет. Калькулятор работает как
+диалог в чате, тесты — через `/menu` («🎯 Случайный вопрос», «📝 Экзамен»).
 
-## Проверка математики
+## Проверки
 
 ```bash
-node webapp/_solver_check.mjs   # должно вывести "JS MATH OK"
+node webapp/_solver_check.mjs    # калькулятор: "JS MATH OK"
+node webapp/_quiz_check.mjs      # тесты: "QUIZ DATA OK"
+python webapp/build_quiz_data.py # перегенерировать quiz_data.js из банка
 ```

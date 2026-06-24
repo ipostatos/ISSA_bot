@@ -29,11 +29,29 @@ jobs:
       - name: TVMDC calculator tests
         run: python test_calc.py
 
+      - name: Mini App quiz-result parser tests
+        run: python test_webapp.py
+
+      - name: Quiz data is up to date with questions.json
+        run: |
+          python webapp/build_quiz_data.py
+          if ! git diff --quiet -- webapp/quiz_data.js; then
+            echo "::error::webapp/quiz_data.js устарел — перегенерируй: python webapp/build_quiz_data.py"
+            git --no-pager diff --stat -- webapp/quiz_data.js
+            exit 1
+          fi
+          echo "OK: quiz_data.js актуален"
+
       - name: Pre-release audit (questions, images, limits)
         run: python run_audit.py
 
       - name: Concurrency / load test (10 users)
         run: python test_load.py
+
+      - name: Mini App JS checks (math + quiz data)
+        run: |
+          node webapp/_solver_check.mjs
+          node webapp/_quiz_check.mjs
 
   secret-scan:
     runs-on: ubuntu-latest
