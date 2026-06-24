@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Калькулятор TVMDC</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --text: var(--tg-theme-text-color, #fff);
+    --hint: var(--tg-theme-hint-color, #8a9aa9);
+    --card: var(--tg-theme-secondary-bg-color, #232e3c);
+    --accent: var(--tg-theme-button-color, #50a8eb);
+    --accent-text: var(--tg-theme-button-text-color, #fff);
+    --border: rgba(255,255,255,.10);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:16px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text);
+    -webkit-tap-highlight-color:transparent;
+  }
+  h1{font-size:18px; margin:0 0 4px}
+  .sub{color:var(--hint); font-size:13px; margin:0 0 16px}
+  .card{background:var(--card); border-radius:14px; padding:14px; margin-bottom:14px}
+  label{display:block; font-size:13px; color:var(--hint); margin:0 0 6px}
+  .seg{display:flex; gap:6px; flex-wrap:wrap}
+  .seg button{
+    flex:1 1 30%; padding:9px 6px; border:1px solid var(--border);
+    background:transparent; color:var(--text); border-radius:10px;
+    font-size:13px; cursor:pointer; transition:.12s;
+  }
+  .seg button.active{background:var(--accent); color:var(--accent-text); border-color:var(--accent)}
+  .row{display:flex; gap:10px; align-items:flex-end; margin-bottom:12px}
+  .row:last-child{margin-bottom:0}
+  .field{flex:1}
+  input[type=number]{
+    width:100%; padding:11px; font-size:17px; border-radius:10px;
+    border:1px solid var(--border); background:var(--bg); color:var(--text);
+  }
+  input:focus{outline:none; border-color:var(--accent)}
+  .ew{display:flex; gap:6px}
+  .ew button{
+    width:46px; padding:11px 0; border:1px solid var(--border); background:transparent;
+    color:var(--text); border-radius:10px; font-weight:600; cursor:pointer;
+  }
+  .ew button.active{background:var(--accent); color:var(--accent-text); border-color:var(--accent)}
+  .hidden{display:none}
+  .go{
+    width:100%; padding:14px; font-size:16px; font-weight:600; border:none;
+    border-radius:12px; background:var(--accent); color:var(--accent-text); cursor:pointer;
+  }
+  .result{margin-top:14px}
+  .answer{font-size:34px; font-weight:700; text-align:center; margin:4px 0 2px}
+  .answer small{font-size:15px; color:var(--hint); font-weight:500}
+  .steps{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace; font-size:13px;
+    color:var(--text); white-space:pre-wrap; line-height:1.6; margin-top:8px}
+  .rule{color:var(--hint); font-size:12px; margin-top:10px; font-style:italic}
+  .err{color:#ff6b6b; font-size:13px; margin-top:8px}
+  .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px}
+</style>
+</head>
+<body>
+  <h1>🧮 Калькулятор TVMDC</h1>
+  <p class="sub">True ↔ Variation ↔ Magnetic ↔ Deviation ↔ Compass</p>
+
+  <div class="card">
+    <label>Что во что пересчитать</label>
+    <div class="seg" id="dirs">
+      <button data-s="T" data-d="C">True → Compass</button>
+      <button data-s="C" data-d="T">Compass → True</button>
+      <button data-s="T" data-d="M">True → Magnetic</button>
+      <button data-s="M" data-d="T">Magnetic → True</button>
+      <button data-s="M" data-d="C">Magnetic → Compass</button>
+      <button data-s="C" data-d="M">Compass → Magnetic</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="field">
+        <label id="courseLabel">Курс (°)</label>
+        <input id="course" type="number" inputmode="decimal" min="0" max="360" placeholder="045">
+      </div>
+    </div>
+    <div class="row" id="varRow">
+      <div class="field">
+        <label>Variation (°)</label>
+        <input id="var" type="number" inputmode="decimal" min="0" placeholder="3">
+      </div>
+      <div class="ew" id="varEW">
+        <button data-v="E">E</button><button data-v="W" class="active">W</button>
+      </div>
+    </div>
+    <div class="row" id="devRow">
+      <div class="field">
+        <label>Deviation (°)</label>
+        <input id="dev" type="number" inputmode="decimal" min="0" placeholder="2">
+      </div>
+      <div class="ew" id="devEW">
+        <button data-v="E" class="active">E</button><button data-v="W">W</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="go" id="go">Рассчитать</button>
+
+  <div class="card result hidden" id="resultCard">
+    <div class="answer" id="answer"></div>
+    <div class="steps" id="steps"></div>
+    <div class="rule" id="rule"></div>
+  </div>
+  <div class="err hidden" id="error"></div>
+
+  <p class="foot">Учебный инструмент. Не является официальным материалом ISSA.</p>
+
+<script>
+"use strict";
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+// ── Та же математика, что в nav_tasks.py / calc.py ──
+// Вниз (True→Compass): East −, West +.  Вверх — наоборот.
+const POINTS = ["T","M","C"];
+const NAME = {T:"True", M:"Magnetic", C:"Compass"};
+const norm360 = x => ((x % 360) + 360) % 360;
+
+function step(a, b, cur, val, dir, down){
+  // знак применения к величине курса
+  let appliedSign;
+  if (down) appliedSign = (dir === "E") ? -1 : +1;
+  else      appliedSign = (dir === "E") ? +1 : -1;
+  const res = norm360(cur + appliedSign * val);
+  const shown = (appliedSign < 0) ? "−" : "+";
+  return {
+    label: `${NAME[a]}→${NAME[b]}`,
+    text: `${NAME[a]}→${NAME[b]}: ${Math.round(cur)} ${shown} ${Math.round(val)}${dir} = ${Math.round(res)}`,
+    result: res
+  };
+}
+
+function solve(src, dst, course, vr, vrDir, dv, dvDir){
+  const i = POINTS.indexOf(src), j = POINTS.indexOf(dst);
+  const down = j > i;
+  let cur = norm360(course);
+  const order = [];
+  if (down) for (let k=i; k<j; k++) order.push([POINTS[k], POINTS[k+1]]);
+  else      for (let k=i; k>j; k--) order.push([POINTS[k], POINTS[k-1]]);
+  const steps = [];
+  for (const [a,b] of order){
+    const isVar = (a+b).includes("T"); // T↔M => Variation, M↔C => Deviation
+    const val = isVar ? vr : dv;
+    const dir = isVar ? vrDir : dvDir;
+    const s = step(a, b, cur, val, dir, down);
+    steps.push(s);
+    cur = s.result;
+  }
+  return { answer: Math.round(cur), from: NAME[src], to: NAME[dst],
+           direction: down ? "down" : "up", steps };
+}
+
+function ruleHint(direction){
+  return direction === "down"
+    ? "Правило (вниз, True→Compass): East вычитаем (−), West прибавляем (+)."
+    : "Правило (вверх, Compass→True): East прибавляем (+), West вычитаем (−).";
+}
+
+// ── UI ──
+let SRC = "T", DST = "C", VDIR = "W", DDIR = "E";
+
+const dirsBox = document.getElementById("dirs");
+[...dirsBox.children][0].classList.add("active");
+
+function pair(){ return new Set([SRC, DST]); }
+function needVar(){ const p=pair(); return (p.has("T")&&p.has("M"))||(p.has("T")&&p.has("C")); }
+function needDev(){ const p=pair(); return (p.has("M")&&p.has("C"))||(p.has("T")&&p.has("C")); }
+
+function syncFields(){
+  document.getElementById("varRow").classList.toggle("hidden", !needVar());
+  document.getElementById("devRow").classList.toggle("hidden", !needDev());
+  document.getElementById("courseLabel").textContent = `Курс ${NAME[SRC]} (°)`;
+}
+
+dirsBox.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  [...dirsBox.children].forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  SRC = b.dataset.s; DST = b.dataset.d;
+  syncFields();
+});
+
+function bindEW(boxId, set){
+  const box = document.getElementById(boxId);
+  box.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    [...box.children].forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    set(b.dataset.v);
+  });
+}
+bindEW("varEW", v => VDIR = v);
+bindEW("devEW", v => DDIR = v);
+
+function showError(msg){
+  const e = document.getElementById("error");
+  e.textContent = "⚠️ " + msg; e.classList.remove("hidden");
+  document.getElementById("resultCard").classList.add("hidden");
+}
+
+document.getElementById("go").addEventListener("click", () => {
+  document.getElementById("error").classList.add("hidden");
+  const course = parseFloat(document.getElementById("course").value);
+  if (Number.isNaN(course)) return showError("Введите курс.");
+  const vr = needVar() ? parseFloat(document.getElementById("var").value) : 0;
+  const dv = needDev() ? parseFloat(document.getElementById("dev").value) : 0;
+  if (needVar() && Number.isNaN(vr)) return showError("Введите Variation.");
+  if (needDev() && Number.isNaN(dv)) return showError("Введите Deviation.");
+
+  const res = solve(SRC, DST, course, Math.abs(vr||0), VDIR, Math.abs(dv||0), DDIR);
+  const pad = String(res.answer).padStart(3, "0");
+  document.getElementById("answer").innerHTML =
+    `${res.from} → ${res.to}<br>${pad}° <small>(CC/MC/TC)</small>`;
+  document.getElementById("steps").textContent = res.steps.map(s => s.text).join("\n");
+  document.getElementById("rule").textContent = ruleHint(res.direction);
+  document.getElementById("resultCard").classList.remove("hidden");
+  if (tg) tg.HapticFeedback?.notificationOccurred?.("success");
+});
+
+syncFields();
+</script>
+</body>
+</html>

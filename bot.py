@@ -37,8 +37,10 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     Message,
     PollAnswer,
+    WebAppInfo,
 )
 
+import calc
 import content
 import glossary
 import nav_tasks
@@ -61,6 +63,10 @@ DISCLAIMER = (
 
 EXAM_SIZE = 100           # вопросов в экзамене
 EXAM_PASS_PERCENT = 75    # проходной балл, %
+# URL мини-приложения (Mini App) калькулятора TVMDC. Если задан (HTTPS),
+# в меню калькулятора появляется кнопка «Открыть приложение». Без него
+# калькулятор работает как обычный диалог.
+WEBAPP_URL = os.environ.get("WEBAPP_URL", "").strip()
 TG_MSG_LIMIT = 4096       # ограничение Telegram на длину сообщения
 POLL_OPTION_LIMIT = 100   # ограничение Telegram на длину варианта ответа
 POLL_QUESTION_LIMIT = 300 # ограничение Telegram на длину текста вопроса/пояснения
@@ -235,6 +241,9 @@ ACTIVE_TASK: dict[int, str] = {}
 # Пользователи в режиме поиска по словарю (ждём ввод запроса): set(user_id)
 GLOSSARY_SEARCH: set[int] = set()
 
+# Калькулятор TVMDC: user_id -> {"src","dst"} — ждём ввод значений строкой.
+CALC_STATE: dict[int, dict] = {}
+
 
 # ──────────────────────────── Клавиатуры ────────────────────────────
 
@@ -246,6 +255,7 @@ def main_menu_kb() -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text=f"📝 Экзамен ({EXAM_SIZE} вопросов)", callback_data="mode:exam")],
             [InlineKeyboardButton(text="🔁 Работа над ошибками", callback_data="mode:mistakes")],
             [InlineKeyboardButton(text="🧭 Решение задач (T-V-M-D-C)", callback_data="mode:tasks")],
+            [InlineKeyboardButton(text="🧮 Калькулятор TVMDC", callback_data="mode:calc")],
             [InlineKeyboardButton(text="📖 Конспект", callback_data="mode:konspekt")],
             [InlineKeyboardButton(text="📌 Шпаргалки", callback_data="mode:cheat")],
             [InlineKeyboardButton(text="📚 Словарь яхтсмена", callback_data="mode:glossary")],
@@ -374,6 +384,7 @@ async def cmd_help(message: Message) -> None:
         "/start — главное меню\n"
         "/menu — меню режимов\n"
         "/stats — моя статистика\n"
+        "/calc — калькулятор поправок TVMDC\n"
         "/about — о боте\n"
         "/privacy — конфиденциальность\n"
         "/help — эта справка\n\n"
@@ -386,6 +397,17 @@ async def cmd_help(message: Message) -> None:
 async def cmd_about(message: Message) -> None:
     await message.answer(
         "⚓ <b>Тренажёр ISSA Inshore Skipper + SRC</b>\n\n" + DISCLAIMER
+    )
+
+
+@dp.message(Command("calc"))
+async def cmd_calc(message: Message) -> None:
+    CALC_STATE.pop(message.from_user.id, None)
+    await message.answer(
+        "🧮 <b>Калькулятор поправок компаса (TVMDC)</b>\n\n"
+        "Цепочка: <code>True ↔ Variation ↔ Magnetic ↔ Deviation ↔ Compass</code>\n"
+        "Выбери, что во что пересчитать:",
+        reply_markup=calc_menu_kb(),
     )
 
 
@@ -424,6 +446,10 @@ async def show_stats(bot: Bot, chat_id: int, user_id: int) -> None:
 
 @dp.callback_query(F.data == "mode:menu")
 async def cb_menu(cb: CallbackQuery) -> None:
+    # Сбрасываем «ожидающие ввод» режимы, чтобы текст не уходил не туда.
+    CALC_STATE.pop(cb.from_user.id, None)
+    GLOSSARY_SEARCH.discard(cb.from_user.id)
+    ACTIVE_TASK.pop(cb.from_user.id, None)
     await cb.message.answer("Главное меню:", reply_markup=main_menu_kb())
     await cb.answer()
 
@@ -955,6 +981,140 @@ async def cb_task_stats(cb: CallbackQuery) -> None:
     await cb.answer()
 
 
+# ──────────────────────────── Калькулятор TVMDC ────────────────────────────
+# Универсальный пересчёт курсов «любое → любое» (calc.solve). Пользователь
+# выбирает направление кнопкой, затем вводит значения одной строкой.
+
+# Направления: (src, dst, подпись на кнопке). Покрываем все практичные пары.
+CALC_DIRS = [
+    ("T", "C", "True → Compass"),
+    ("C", "T", "Compass → True"),
+    ("T", "M", "True → Magnetic"),
+    ("M", "T", "Magnetic → True"),
+    ("M", "C", "Magnetic → Compass"),
+    ("C", "M", "Compass → Magnetic"),
+]
+
+
+def calc_menu_kb() -> InlineKeyboardMarkup:
+    rows = []
+    # Если развёрнут Mini App — первой кнопкой даём удобный визуальный калькулятор.
+    if WEBAPP_URL:
+        rows.append([InlineKeyboardButton(
+            text="📱 Открыть приложение-калькулятор",
+            web_app=WebAppInfo(url=WEBAPP_URL))])
+    rows += [[InlineKeyboardButton(text=label, callback_data=f"calc:dir:{s}{d}")]
+             for s, d, label in CALC_DIRS]
+    rows.append([InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def calc_result_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔄 Другое направление", callback_data="mode:calc")],
+        [InlineKeyboardButton(text="🧭 Потренироваться (задачи)", callback_data="mode:tasks")],
+        [InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")],
+    ])
+
+
+def _calc_prompt(src: str, dst: str) -> str:
+    """Подсказка по вводу: какие поправки нужны для выбранного направления."""
+    # T↔M использует Variation, M↔C — Deviation; для T↔C нужны обе.
+    pair = {src, dst}
+    if pair == {"T", "M"}:
+        fields, example = "<b>курс</b> и <b>Variation</b>", "100 6E"
+        hint = "Формат: <code>курс  variation(E/W)</code>"
+    elif pair == {"M", "C"}:
+        fields, example = "<b>курс</b> и <b>Deviation</b>", "120 4W"
+        hint = "Формат: <code>курс  deviation(E/W)</code>"
+    else:  # T↔C
+        fields, example = "<b>курс</b>, <b>Variation</b> и <b>Deviation</b>", "045 3W 2E"
+        hint = "Формат: <code>курс  variation(E/W)  deviation(E/W)</code>"
+    return (
+        f"Введи {fields} одной строкой.\n"
+        f"{hint}\n"
+        f"Пример: <code>{example}</code>\n\n"
+        "Направление поправки указывай буквой: <b>E</b> (восток) или <b>W</b> (запад). "
+        "Можно и русские: <b>В</b>/<b>З</b>."
+    )
+
+
+@dp.callback_query(F.data == "mode:calc")
+async def cb_calc(cb: CallbackQuery) -> None:
+    CALC_STATE.pop(cb.from_user.id, None)
+    await cb.message.answer(
+        "🧮 <b>Калькулятор поправок компаса (TVMDC)</b>\n\n"
+        "Цепочка: <code>True ↔ Variation ↔ Magnetic ↔ Deviation ↔ Compass</code>\n"
+        "Выбери, что во что пересчитать:",
+        reply_markup=calc_menu_kb(),
+    )
+    await cb.answer()
+
+
+@dp.callback_query(F.data.startswith("calc:dir:"))
+async def cb_calc_dir(cb: CallbackQuery) -> None:
+    code = cb.data[len("calc:dir:"):]  # напр. "TC"
+    src, dst = code[0], code[1]
+    if src not in calc.POINTS or dst not in calc.POINTS or src == dst:
+        await cb.answer("Неизвестное направление")
+        return
+    CALC_STATE[cb.from_user.id] = {"src": src, "dst": dst}
+    label = next((l for s, d, l in CALC_DIRS if s == src and d == dst), f"{src}→{dst}")
+    await cb.message.answer(
+        f"🧮 <b>{label}</b>\n\n{_calc_prompt(src, dst)}",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="⬅️ Назад", callback_data="mode:calc")],
+        ]),
+    )
+    await cb.answer()
+
+
+# Парсер строки ввода: «045 3W 2E» / «100 6e» / «120,5 4 з».
+_NUM = r"[-+]?\d+(?:[.,]\d+)?"
+
+
+def _parse_calc_input(text: str, need_var: bool, need_dev: bool) -> dict | None:
+    """
+    Разобрать строку «045 3W 2E» в поля для calc.solve.
+
+    Первое число — курс. Следующие — нужные поправки (Variation и/или
+    Deviation) в порядке: сначала Variation, потом Deviation. У каждой
+    поправки должна быть буква направления (E/W или В/З).
+    Возвращает dict или None, если данных не хватает / формат непонятен.
+    """
+    import re
+    pairs = []  # [(число, 'E'|'W'|'')]
+    for m in re.finditer(rf"({_NUM})\s*([EWВЗ]?)", text.strip().upper()):
+        d = {"E": "E", "W": "W", "В": "E", "З": "W"}.get(m.group(2), "")
+        pairs.append((float(m.group(1).replace(",", ".")), d))
+    if not pairs:
+        return None
+
+    course = pairs[0][0]
+    rest = pairs[1:]
+    n_need = (1 if need_var else 0) + (1 if need_dev else 0)
+    # Нужно ровно столько поправок, и у каждой — направление.
+    if len(rest) < n_need or any(not d for _, d in rest[:n_need]):
+        return None
+
+    res = {"course": course, "var": 0, "var_dir": "E", "dev": 0, "dev_dir": "E"}
+    i = 0
+    if need_var:
+        res["var"], res["var_dir"] = abs(rest[i][0]), rest[i][1]; i += 1
+    if need_dev:
+        res["dev"], res["dev_dir"] = abs(rest[i][0]), rest[i][1]
+    return res
+
+
+def _format_calc_result(res: dict) -> str:
+    steps = "\n".join(s["text"] for s in res["steps"])
+    return (
+        f"✅ <b>{res['from']} → {res['to']} = {res['answer']:03d}°</b>\n\n"
+        f"<pre>{steps}</pre>\n"
+        f"<i>{calc.rule_hint(res['direction'])}</i>"
+    )
+
+
 # ──────────────────────────── Текстовый ответ на задачу ────────────────────────────
 # Срабатывает на любой НЕ-командный текст; если у пользователя активна задача —
 # трактуем как ответ. Иначе мягко подсказываем меню.
@@ -962,6 +1122,34 @@ async def cb_task_stats(cb: CallbackQuery) -> None:
 @dp.message(F.text & ~F.text.startswith("/"))
 async def on_text_answer(message: Message) -> None:
     user_id = message.from_user.id
+
+    # 0) Калькулятор TVMDC: ждём строку со значениями
+    state = CALC_STATE.get(user_id)
+    if state:
+        src, dst = state["src"], state["dst"]
+        pair = {src, dst}
+        need_var = pair == {"T", "M"} or pair == {"T", "C"}
+        need_dev = pair == {"M", "C"} or pair == {"T", "C"}
+        parsed = _parse_calc_input(message.text, need_var, need_dev)
+        if not parsed:
+            await message.answer(
+                "Не понял ввод 🤔 " + _calc_prompt(src, dst),
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="⬅️ Назад", callback_data="mode:calc")],
+                ]),
+            )
+            return
+        try:
+            res = calc.solve(src, dst, parsed["course"],
+                             parsed["var"], parsed["var_dir"],
+                             parsed["dev"], parsed["dev_dir"])
+        except ValueError as e:
+            await message.answer(f"⚠️ {e}", reply_markup=calc_result_kb())
+            CALC_STATE.pop(user_id, None)
+            return
+        CALC_STATE.pop(user_id, None)
+        await message.answer(_format_calc_result(res), reply_markup=calc_result_kb())
+        return
 
     # 1) Режим поиска по словарю
     if user_id in GLOSSARY_SEARCH:
@@ -977,8 +1165,9 @@ async def on_text_answer(message: Message) -> None:
         rows = []
         for cat, it in hits[1:10]:
             i = glossary.YACHTING_GLOSSARY[cat].index(it)
+            key = glossary.CATEGORY_KEY[cat]
             rows.append([InlineKeyboardButton(text=f"{it['term']} ({cat})",
-                                              callback_data=f"gl:t:{cat}:{i}")])
+                                              callback_data=f"gl:t:{key}:{i}")])
         rows.append([InlineKeyboardButton(text="📚 Категории", callback_data="mode:glossary")])
         head = f"🔎 Найдено: {len(hits)}\n\n" if len(hits) > 1 else ""
         await message.answer(head + glossary.render(cat0, it0),
