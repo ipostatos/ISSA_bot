@@ -42,6 +42,22 @@ CATEGORY_BTN = {
     "Польско-русский мини-словарь": "Польский",
 }
 
+# Короткие латинские ключи для callback_data (Telegram лимит 64 байта;
+# русские буквы по 2 байта — поэтому в callback только латиница).
+CATEGORY_KEY = {
+    "Устройство яхты": "boat",
+    "Снасти и такелаж": "rig",
+    "Паруса и ветер": "sail",
+    "Навигация": "nav",
+    "Швартовка и якорение": "anchor",
+    "МППСС / огни / знаки": "colreg",
+    "Радиообмен VHF/SRC": "vhf",
+    "Метеорология": "meteo",
+    "Безопасность": "safety",
+    "Польско-русский мини-словарь": "pl",
+}
+KEY_CATEGORY = {v: k for k, v in CATEGORY_KEY.items()}
+
 # Порядок категорий в меню.
 CATEGORY_ORDER = list(CATEGORY_ICONS.keys())
 
@@ -1766,13 +1782,14 @@ def search(query: str, limit: int = 20) -> list[tuple[str, dict]]:
 
 
 def render(cat: str, it: dict) -> str:
-    """HTML-карточка термина для отправки в Telegram."""
-    title = it["term"]
-    aliases = it.get("aliases") or []
+    """HTML-карточка термина. Контент экранируется (термины могут содержать <, >, &)."""
+    from html import escape
+    title = escape(it["term"])
+    aliases = [escape(a) for a in (it.get("aliases") or [])]
     if aliases:
         title += " / " + ", ".join(aliases)
     icon = CATEGORY_ICONS.get(cat, "📚")
-    text = f"{icon} <b>{title}</b>\n\n{it.get('definition', '')}"
+    text = f"{icon} <b>{title}</b>\n\n{escape(it.get('definition', ''))}"
     if it.get("example"):
-        text += f"\n\n<i>Пример:</i> {it['example']}"
+        text += f"\n\n<i>Пример:</i> {escape(it['example'])}"
     return text

@@ -321,6 +321,26 @@ async def send_quiz(
 
 dp = Dispatcher()
 
+# Бот рассчитан на ЛИЧНЫЕ чаты: прогресс, экзамен и quiz привязаны к одному
+# пользователю. В группах модель ответов на poll работает иначе, поэтому
+# в группах вежливо отправляем в личку и дальше не обрабатываем.
+
+@dp.message(~F.chat.type.in_({"private"}))
+async def group_redirect(message: Message) -> None:
+    try:
+        me = await message.bot.get_me()
+        await message.reply(
+            "👋 Я тренажёр для самоподготовки. Открой меня в личном чате: "
+            f"@{me.username} → /start"
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+
+@dp.callback_query(~F.message.chat.type.in_({"private"}))
+async def group_cb_redirect(cb: CallbackQuery) -> None:
+    await cb.answer("Открой бота в личном чате 🙂", show_alert=True)
+
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message) -> None:
@@ -355,6 +375,7 @@ async def cmd_help(message: Message) -> None:
         "/menu — меню режимов\n"
         "/stats — моя статистика\n"
         "/about — о боте\n"
+        "/privacy — конфиденциальность\n"
         "/help — эта справка\n\n"
         "В режиме quiz нажимай на вариант ответа — бот сразу покажет, "
         "верно ли, и даст пояснение."
@@ -365,6 +386,19 @@ async def cmd_help(message: Message) -> None:
 async def cmd_about(message: Message) -> None:
     await message.answer(
         "⚓ <b>Тренажёр ISSA Inshore Skipper + SRC</b>\n\n" + DISCLAIMER
+    )
+
+
+@dp.message(Command("privacy"))
+async def cmd_privacy(message: Message) -> None:
+    await message.answer(
+        "🔒 <b>Конфиденциальность</b>\n\n"
+        "Бот хранит только <b>ваш Telegram ID</b> и <b>прогресс обучения</b> "
+        "(какие вопросы видели, ошибки, статистика) — чтобы вести вашу "
+        "тренировку отдельно.\n\n"
+        "❌ Не собираются: имя, телефон, переписка, геолокация, платежи.\n"
+        "Бот работает только в личном чате и не читает группы.\n\n"
+        "Удалить свои данные — кнопка «♻️ Сбросить прогресс» в меню."
     )
 
 
@@ -576,6 +610,11 @@ async def finish_exam(bot: Bot, chat_id: int, user_id: int) -> None:
 async def on_poll_answer(poll_answer: PollAnswer) -> None:
     info = ACTIVE_POLLS.pop(poll_answer.poll_id, None)
     if not info:
+        # Ответ на «потерянный» опрос: бот перезапускали, либо опрос старый.
+        # Молча игнорируем (прогресс при перезапуске не теряется, теряется
+        # только привязка незавершённых опросов), но фиксируем в логе.
+        log.info("stale poll_answer: poll_id=%s user=%s",
+                 poll_answer.poll_id, getattr(poll_answer.user, "id", "?"))
         return
     user_id = info["user_id"]
     question = QUESTIONS_BY_ID.get(info["qid"])
@@ -743,7 +782,8 @@ def glossary_menu_kb() -> InlineKeyboardMarkup:
         if n == 0:
             continue
         label = glossary.CATEGORY_BTN.get(cat, cat)
-        row.append(InlineKeyboardButton(text=f"{icon} {label}", callback_data=f"gl:cat:{cat}"))
+        key = glossary.CATEGORY_KEY[cat]
+        row.append(InlineKeyboardButton(text=f"{icon} {label}", callback_data=f"gl:cat:{key}"))
         i += 1
         if i % 2 == 0:
             rows.append(row)
@@ -756,16 +796,17 @@ def glossary_menu_kb() -> InlineKeyboardMarkup:
 
 
 def glossary_terms_kb(cat: str, page: int) -> InlineKeyboardMarkup:
+    key = glossary.CATEGORY_KEY[cat]
     items = glossary.YACHTING_GLOSSARY.get(cat, [])
     start = page * GLOSSARY_PAGE
     chunk = items[start:start + GLOSSARY_PAGE]
-    rows = [[InlineKeyboardButton(text=it["term"], callback_data=f"gl:t:{cat}:{start + i}")]
+    rows = [[InlineKeyboardButton(text=it["term"], callback_data=f"gl:t:{key}:{start + i}")]
             for i, it in enumerate(chunk)]
     nav = []
     if page > 0:
-        nav.append(InlineKeyboardButton(text="◀️", callback_data=f"gl:cat:{cat}:{page - 1}"))
+        nav.append(InlineKeyboardButton(text="◀️", callback_data=f"gl:cat:{key}:{page - 1}"))
     if start + GLOSSARY_PAGE < len(items):
-        nav.append(InlineKeyboardButton(text="▶️", callback_data=f"gl:cat:{cat}:{page + 1}"))
+        nav.append(InlineKeyboardButton(text="▶️", callback_data=f"gl:cat:{key}:{page + 1}"))
     if nav:
         rows.append(nav)
     rows.append([InlineKeyboardButton(text="⬅️ К категориям", callback_data="mode:glossary")])
@@ -787,15 +828,14 @@ async def cb_glossary(cb: CallbackQuery) -> None:
 
 @dp.callback_query(F.data.startswith("gl:cat:"))
 async def cb_glossary_cat(cb: CallbackQuery) -> None:
-    parts = cb.data.split(":")  # gl:cat:<cat>[:page]
-    # категория может содержать ":" (например «МППСС / огни / знаки» — нет, но без /), берём аккуратно
-    rest = cb.data[len("gl:cat:"):]
-    if rest.rsplit(":", 1)[-1].isdigit() and ":" in rest:
-        cat, page = rest.rsplit(":", 1)
-        page = int(page)
+    rest = cb.data[len("gl:cat:"):]  # <key>[:page]
+    if ":" in rest:
+        key, page = rest.split(":", 1)
+        page = int(page) if page.isdigit() else 0
     else:
-        cat, page = rest, 0
-    if cat not in glossary.YACHTING_GLOSSARY:
+        key, page = rest, 0
+    cat = glossary.KEY_CATEGORY.get(key)
+    if not cat:
         await cb.answer("Категория не найдена")
         return
     icon = glossary.CATEGORY_ICONS.get(cat, "📚")
@@ -806,16 +846,17 @@ async def cb_glossary_cat(cb: CallbackQuery) -> None:
 
 @dp.callback_query(F.data.startswith("gl:t:"))
 async def cb_glossary_term(cb: CallbackQuery) -> None:
-    rest = cb.data[len("gl:t:"):]
-    cat, idx = rest.rsplit(":", 1)
-    items = glossary.YACHTING_GLOSSARY.get(cat, [])
+    rest = cb.data[len("gl:t:"):]  # <key>:<idx>
+    key, idx = rest.rsplit(":", 1)
+    cat = glossary.KEY_CATEGORY.get(key)
+    items = glossary.YACHTING_GLOSSARY.get(cat, []) if cat else []
     try:
         it = items[int(idx)]
     except (ValueError, IndexError):
         await cb.answer("Термин не найден")
         return
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⬅️ К списку", callback_data=f"gl:cat:{cat}")],
+        [InlineKeyboardButton(text="⬅️ К списку", callback_data=f"gl:cat:{key}")],
         [InlineKeyboardButton(text="📚 Категории", callback_data="mode:glossary")],
     ])
     await cb.message.answer(glossary.render(cat, it), reply_markup=kb)

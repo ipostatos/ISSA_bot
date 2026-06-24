@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compile all modules
+        run: python -m py_compile bot.py content.py glossary.py nav_tasks.py
+
+      - name: Nav-tasks unit tests (incl. 0/360 boundary)
+        run: python test_nav.py
+
+      - name: Pre-release audit (questions, images, limits)
+        run: python run_audit.py
+
+      - name: Concurrency / load test (10 users)
+        run: python test_load.py
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for leaked Telegram bot tokens
+        run: |
+          # Токен бота: <digits>:<35 base64-символов>. Ищем по всему репо.
+          if grep -REn '[0-9]{8,10}:[A-Za-z0-9_-]{35}' \
+               --include='*.py' --include='*.json' --include='*.md' \
+               --include='*.txt' --include='*.yml' . ; then
+            echo "::error::Похоже на токен Telegram в репозитории!"
+            exit 1
+          fi
+          echo "OK: токенов не найдено"
+
+      - name: Ensure .env is gitignored
+        run: |
+          if git ls-files --error-unmatch .env 2>/dev/null; then
+            echo "::error::.env закоммичен — должен быть в .gitignore!"
+            exit 1
+          fi
+          echo "OK: .env не в репозитории"

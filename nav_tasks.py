@@ -23,6 +23,12 @@ def norm360(x: float) -> float:
     return x % 360
 
 
+def angle_diff(a: float, b: float) -> float:
+    """Кратчайшая разница углов по кругу (учитывает границу 0°/360°)."""
+    d = abs(norm360(a) - norm360(b))
+    return min(d, 360 - d)
+
+
 # ──────────────── Базовые преобразования ────────────────
 # Вниз (True→Compass): East −, West +.
 
@@ -72,7 +78,7 @@ class NavTask:
             val = float(str(user).strip().replace("°", "").replace(",", "."))
         except ValueError:
             return False
-        return abs(norm360(val) - self.answer) <= 1.0
+        return angle_diff(val, self.answer) <= 1.0
 
 
 # ──────────────── 50 задач ────────────────
