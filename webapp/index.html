@@ -63,7 +63,14 @@
 </style>
 </head>
 <body>
-  <h1>🧮 Калькулятор TVMDC</h1>
+  <h1>🧮 Морской калькулятор</h1>
+
+  <div class="seg" id="tabs" style="margin-bottom:14px">
+    <button data-tab="compass" class="active">🧭 Поправки</button>
+    <button data-tab="marine">⏱ Скорость·время</button>
+  </div>
+
+  <div id="panel-compass">
   <p class="sub">True ↔ Variation ↔ Magnetic ↔ Deviation ↔ Compass</p>
 
   <div class="card">
@@ -113,6 +120,43 @@
     <div class="rule" id="rule"></div>
   </div>
   <div class="err hidden" id="error"></div>
+  </div><!-- /panel-compass -->
+
+  <div id="panel-marine" class="hidden">
+    <div class="card">
+      <label>Что посчитать</label>
+      <div class="seg" id="mkinds">
+        <button data-k="t" class="active">⏱ Время</button>
+        <button data-k="d">📏 Дистанция</button>
+        <button data-k="v">🚤 Скорость</button>
+        <button data-k="e">🎯 ETA</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row"><div class="field">
+        <label id="mLabelA">Скорость (узлы)</label>
+        <input id="mA" type="number" inputmode="decimal" min="0" placeholder="5.5">
+      </div></div>
+      <div class="row"><div class="field">
+        <label id="mLabelB">Дистанция (NM)</label>
+        <input id="mB" type="number" inputmode="decimal" min="0" placeholder="13.2">
+      </div></div>
+      <div class="row hidden" id="mRowRes"><div class="field">
+        <label>Запас, %</label>
+        <input id="mRes" type="number" inputmode="decimal" min="0" placeholder="20">
+      </div></div>
+      <div class="row hidden" id="mRowStart"><div class="field">
+        <label>Время старта (ЧЧ:ММ)</label>
+        <input id="mStart" type="text" inputmode="numeric" placeholder="09:00">
+      </div></div>
+    </div>
+    <button class="go" id="mGo">Рассчитать</button>
+    <div class="card result hidden" id="mResultCard">
+      <div class="answer" id="mAnswer"></div>
+      <div class="steps" id="mSteps"></div>
+    </div>
+    <div class="err hidden" id="mError"></div>
+  </div><!-- /panel-marine -->
 
   <p class="foot">Учебный инструмент. Не является официальным материалом ISSA.</p>
 
@@ -229,6 +273,99 @@ document.getElementById("go").addEventListener("click", () => {
 });
 
 syncFields();
+
+// ───────────────────── Раздел «Скорость · время · ETA» ─────────────────────
+// Та же арифметика, что marine.py.
+function numFmt(x){ return String(Math.round(x*100)/100).replace(".", ","); }
+function hoursToHM(h){ if(h<0)h=0; const t=Math.round(h*60); return `${Math.floor(t/60)} ч ${String(t%60).padStart(2,"0")} мин`; }
+function etaClock(start, travelH){
+  const s = String(start).trim().replace(".", ":");
+  let hh, mm;
+  if (s.includes(":")){ [hh,mm] = s.split(":"); }
+  else if (/^\d{3,4}$/.test(s)){ hh = s.slice(0,-2); mm = s.slice(-2); }
+  else return null;
+  const h = parseInt(hh,10), m = parseInt(mm,10);
+  if (!(h>=0&&h<24&&m>=0&&m<60)) return null;
+  const arrive = ((h*60+m) + Math.round(travelH*60)) % (24*60);
+  return `${String(Math.floor(arrive/60)).padStart(2,"0")}:${String(arrive%60).padStart(2,"0")}`;
+}
+
+let MKIND = "t";
+const MK = {
+  t: { a:["Скорость (узлы)","5.5"], b:["Дистанция (NM)","13.2"], res:false, start:false },
+  d: { a:["Скорость (узлы)","6"],   b:["Время (часы)","2.5"],    res:false, start:false },
+  v: { a:["Дистанция (NM)","15"],   b:["Время (часы)","3"],      res:false, start:false },
+  e: { a:["Дистанция (NM)","18"],   b:["Скорость (узлы)","5"],   res:true,  start:true  },
+};
+
+function syncMarine(){
+  const c = MK[MKIND];
+  const A=document.getElementById("mLabelA"), B=document.getElementById("mLabelB");
+  A.textContent = c.a[0]; document.getElementById("mA").placeholder = c.a[1];
+  B.textContent = c.b[0]; document.getElementById("mB").placeholder = c.b[1];
+  document.getElementById("mRowRes").classList.toggle("hidden", !c.res);
+  document.getElementById("mRowStart").classList.toggle("hidden", !c.start);
+}
+
+document.getElementById("mkinds").addEventListener("click", e => {
+  const b = e.target.closest("button"); if(!b) return;
+  [...e.currentTarget.children].forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); MKIND = b.dataset.k; syncMarine();
+  document.getElementById("mResultCard").classList.add("hidden");
+  document.getElementById("mError").classList.add("hidden");
+});
+
+function mErr(msg){
+  const e=document.getElementById("mError");
+  e.textContent="⚠️ "+msg; e.classList.remove("hidden");
+  document.getElementById("mResultCard").classList.add("hidden");
+}
+
+document.getElementById("mGo").addEventListener("click", () => {
+  document.getElementById("mError").classList.add("hidden");
+  const a = parseFloat(document.getElementById("mA").value);
+  const b = parseFloat(document.getElementById("mB").value);
+  if (Number.isNaN(a) || Number.isNaN(b)) return mErr("Заполни оба поля.");
+  let answer="", steps="";
+  if (MKIND === "t"){
+    if (a<=0) return mErr("Скорость должна быть > 0.");
+    const h=b/a; answer=`⏱ Время в пути: ${numFmt(h)} ч (${hoursToHM(h)})`;
+    steps=`t = D / V = ${numFmt(b)} / ${numFmt(a)} = ${numFmt(h)} ч`;
+  } else if (MKIND === "d"){
+    const d=a*b; answer=`📏 Дистанция: ${numFmt(d)} NM`;
+    steps=`D = V × t = ${numFmt(a)} × ${numFmt(b)} = ${numFmt(d)} NM`;
+  } else if (MKIND === "v"){
+    if (b<=0) return mErr("Время должно быть > 0.");
+    const v=a/b; answer=`🚤 Средняя скорость: ${numFmt(v)} узла`;
+    steps=`V = D / t = ${numFmt(a)} / ${numFmt(b)} = ${numFmt(v)} узла`;
+  } else { // e: ETA
+    if (b<=0) return mErr("Скорость должна быть > 0.");
+    const res=parseFloat(document.getElementById("mRes").value)||0;
+    const start=document.getElementById("mStart").value.trim();
+    const base=a/b, withR=base*(1+Math.max(0,res)/100);
+    answer=`🎯 В пути: ${numFmt(withR)} ч (${hoursToHM(withR)})`;
+    const eta = start ? etaClock(start, withR) : null;
+    if (eta) answer+=`\n🕒 ETA: ${eta}`;
+    steps=`t = D / V = ${numFmt(a)} / ${numFmt(b)} = ${numFmt(base)} ч`;
+    if (res) steps+=`\nс запасом ${numFmt(res)}% → ${numFmt(withR)} ч`;
+  }
+  document.getElementById("mAnswer").textContent = answer;
+  document.getElementById("mSteps").textContent = steps;
+  document.getElementById("mResultCard").classList.remove("hidden");
+  if (tg) tg.HapticFeedback?.notificationOccurred?.("success");
+});
+
+syncMarine();
+
+// ── переключение вкладок ──
+document.getElementById("tabs").addEventListener("click", e => {
+  const b = e.target.closest("button"); if(!b) return;
+  [...e.currentTarget.children].forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  const tab = b.dataset.tab;
+  document.getElementById("panel-compass").classList.toggle("hidden", tab!=="compass");
+  document.getElementById("panel-marine").classList.toggle("hidden", tab!=="marine");
+});
 </script>
 </body>
 </html>

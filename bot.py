@@ -45,6 +45,7 @@ from aiogram.types import (
 import calc
 import content
 import glossary
+import marine
 import nav_tasks
 
 # ──────────────────────────── Конфигурация ────────────────────────────
@@ -216,11 +217,11 @@ def remaining_in_pool(user_id: int, pool: list[dict]) -> int:
     return sum(1 for q in pool if q["id"] not in seen)
 
 
-def record_task(user_id: int, correct: bool) -> dict:
-    """Учёт задач T-V-M-D-C: попытки, решено, серия (streak) и рекорд."""
+def _record_streak(user_id: int, correct: bool, key: str) -> dict:
+    """Общий учёт задач со streak: попытки, решено, серия и рекорд под ключом key."""
     with _lock_for(user_id):
         prog = load_progress(user_id)
-        t = prog["tasks"]
+        t = prog.setdefault(key, {"solved": 0, "attempts": 0, "streak": 0, "best": 0})
         t["attempts"] += 1
         if correct:
             t["solved"] += 1
@@ -230,6 +231,16 @@ def record_task(user_id: int, correct: bool) -> dict:
             t["streak"] = 0
         save_progress(user_id, prog)
         return dict(t)
+
+
+def record_task(user_id: int, correct: bool) -> dict:
+    """Учёт задач T-V-M-D-C."""
+    return _record_streak(user_id, correct, "tasks")
+
+
+def record_ptask(user_id: int, correct: bool) -> dict:
+    """Учёт практических задач (скорость/время/дистанция/ETA)."""
+    return _record_streak(user_id, correct, "ptasks")
 
 
 # ──────────────────────────── Состояние сессий ────────────────────────────
@@ -243,6 +254,9 @@ EXAMS: dict[int, dict] = {}
 
 # Текущая задача T-V-M-D-C, на которую пользователь вводит ответ: user_id -> task_id
 ACTIVE_TASK: dict[int, str] = {}
+
+# Текущая практическая задача (скорость/время/ETA): user_id -> task_id
+ACTIVE_PTASK: dict[int, str] = {}
 
 # Пользователи в режиме поиска по словарю (ждём ввод запроса): set(user_id)
 GLOSSARY_SEARCH: set[int] = set()
@@ -261,7 +275,8 @@ def main_menu_kb() -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text=f"📝 Экзамен ({EXAM_SIZE} вопросов)", callback_data="mode:exam")],
             [InlineKeyboardButton(text="🔁 Работа над ошибками", callback_data="mode:mistakes")],
             [InlineKeyboardButton(text="🧭 Решение задач (T-V-M-D-C)", callback_data="mode:tasks")],
-            [InlineKeyboardButton(text="🧮 Калькулятор TVMDC", callback_data="mode:calc")],
+            [InlineKeyboardButton(text="🧮 Морской калькулятор", callback_data="mode:calc")],
+            [InlineKeyboardButton(text="📝 Практические задачи", callback_data="mode:ptasks")],
             [InlineKeyboardButton(text="📖 Конспект", callback_data="mode:konspekt")],
             [InlineKeyboardButton(text="📌 Шпаргалки", callback_data="mode:cheat")],
             [InlineKeyboardButton(text="📚 Словарь яхтсмена", callback_data="mode:glossary")],
@@ -433,7 +448,7 @@ async def cmd_help(message: Message) -> None:
         "/start — главное меню\n"
         "/menu — меню режимов\n"
         "/stats — моя статистика\n"
-        "/calc — калькулятор поправок TVMDC\n"
+        "/calc — морской калькулятор (TVMDC, скорость/время/ETA)\n"
         "/tests — приложение «Тесты» (если подключено)\n"
         "/about — о боте\n"
         "/privacy — конфиденциальность\n"
@@ -500,6 +515,7 @@ async def cb_menu(cb: CallbackQuery) -> None:
     CALC_STATE.pop(cb.from_user.id, None)
     GLOSSARY_SEARCH.discard(cb.from_user.id)
     ACTIVE_TASK.pop(cb.from_user.id, None)
+    ACTIVE_PTASK.pop(cb.from_user.id, None)
     await cb.message.answer("Главное меню:", reply_markup=main_menu_kb())
     await cb.answer()
 
@@ -950,6 +966,77 @@ async def cb_glossary_search(cb: CallbackQuery) -> None:
 
 # ──────────────────────────── Решение задач T-V-M-D-C ────────────────────────────
 
+# ──────────────────────────── Практические задачи (S-D-T / ETA) ────────────────────────────
+
+def ptask_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🎲 Новая задача", callback_data="ptask:new")],
+        [InlineKeyboardButton(text="💡 Показать решение", callback_data="ptask:solve")],
+        [InlineKeyboardButton(text="📊 Статистика", callback_data="ptask:stats")],
+        [InlineKeyboardButton(text="🧮 Калькулятор", callback_data="mode:calc")],
+        [InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")],
+    ])
+
+
+async def _send_ptask(bot: Bot, chat_id: int, user_id: int, task: marine.MarineTask) -> None:
+    ACTIVE_PTASK[user_id] = task.id
+    await bot.send_message(
+        chat_id,
+        f"📝 <b>Практическая задача</b>\n\n{task.text}\n\n"
+        f"✍️ Напиши ответ числом (в {task.unit}). Допуск ±{marine._num(task.tol)}.",
+        reply_markup=ptask_kb(),
+    )
+
+
+@dp.callback_query(F.data == "mode:ptasks")
+async def cb_ptasks(cb: CallbackQuery) -> None:
+    await cb.message.answer(
+        "📝 <b>Практические задачи</b>\n\n"
+        "Скорость · дистанция · время · ETA. Реши задачу — бот проверит ответ "
+        "и покажет решение. Ведётся серия (streak).",
+        reply_markup=ptask_kb(),
+    )
+    await _send_ptask(cb.bot, cb.message.chat.id, cb.from_user.id, random.choice(marine.TASKS))
+    await cb.answer()
+
+
+@dp.callback_query(F.data == "ptask:new")
+async def cb_ptask_new(cb: CallbackQuery) -> None:
+    await _send_ptask(cb.bot, cb.message.chat.id, cb.from_user.id, random.choice(marine.TASKS))
+    await cb.answer()
+
+
+@dp.callback_query(F.data == "ptask:solve")
+async def cb_ptask_solve(cb: CallbackQuery) -> None:
+    tid = ACTIVE_PTASK.get(cb.from_user.id)
+    task = marine.TASKS_BY_ID.get(tid) if tid else None
+    if not task:
+        await cb.answer("Сначала возьми задачу")
+        return
+    await cb.message.answer(
+        f"💡 <b>Решение</b>\n\n{task.text}\n\n<pre>{task.solution}</pre>\n"
+        f"✅ Ответ: <b>{marine._num(task.answer)} {task.unit}</b>",
+        reply_markup=ptask_kb(),
+    )
+    await cb.answer()
+
+
+@dp.callback_query(F.data == "ptask:stats")
+async def cb_ptask_stats(cb: CallbackQuery) -> None:
+    p = load_progress(cb.from_user.id).get("ptasks", {"solved": 0, "attempts": 0, "streak": 0, "best": 0})
+    att, solved = p["attempts"], p["solved"]
+    acc = round(solved / att * 100) if att else 0
+    await cb.message.answer(
+        "📊 <b>Статистика практических задач</b>\n\n"
+        f"Решено верно: <b>{solved}</b> из {att} ({acc}%)\n"
+        f"🔥 Текущая серия: <b>{p['streak']}</b>\n"
+        f"🏆 Лучшая серия: <b>{p['best']}</b>\n\n"
+        f"Всего задач в банке: {len(marine.TASKS)}.",
+        reply_markup=ptask_kb(),
+    )
+    await cb.answer()
+
+
 def task_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -1055,15 +1142,15 @@ def calc_menu_kb() -> InlineKeyboardMarkup:
             web_app=WebAppInfo(url=WEBAPP_URL))])
     rows += [[InlineKeyboardButton(text=label, callback_data=f"calc:dir:{s}{d}")]
              for s, d, label in CALC_DIRS]
-    rows.append([InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")])
+    rows.append([InlineKeyboardButton(text="⬅️ Разделы", callback_data="mode:calc")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def calc_result_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔄 Другое направление", callback_data="mode:calc")],
+        [InlineKeyboardButton(text="🔄 Другое направление", callback_data="calc:cat:compass")],
         [InlineKeyboardButton(text="🧭 Потренироваться (задачи)", callback_data="mode:tasks")],
-        [InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")],
+        [InlineKeyboardButton(text="⬅️ Разделы", callback_data="mode:calc")],
     ])
 
 
@@ -1089,16 +1176,147 @@ def _calc_prompt(src: str, dst: str) -> str:
     )
 
 
+def calc_categories_kb() -> InlineKeyboardMarkup:
+    rows = []
+    if WEBAPP_URL:
+        rows.append([InlineKeyboardButton(
+            text="📱 Открыть приложение-калькулятор",
+            web_app=WebAppInfo(url=WEBAPP_URL))])
+    rows += [
+        [InlineKeyboardButton(text="🧭 Поправки компаса (TVMDC)", callback_data="calc:cat:compass")],
+        [InlineKeyboardButton(text="⏱ Скорость · время · ETA", callback_data="calc:cat:marine")],
+        [InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")],
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
 @dp.callback_query(F.data == "mode:calc")
 async def cb_calc(cb: CallbackQuery) -> None:
     CALC_STATE.pop(cb.from_user.id, None)
     await cb.message.answer(
-        "🧮 <b>Калькулятор поправок компаса (TVMDC)</b>\n\n"
+        "🧮 <b>Морской калькулятор</b>\n\nВыбери раздел:",
+        reply_markup=calc_categories_kb(),
+    )
+    await cb.answer()
+
+
+@dp.callback_query(F.data == "calc:cat:compass")
+async def cb_calc_compass(cb: CallbackQuery) -> None:
+    CALC_STATE.pop(cb.from_user.id, None)
+    await cb.message.answer(
+        "🧭 <b>Поправки компаса (TVMDC)</b>\n\n"
         "Цепочка: <code>True ↔ Variation ↔ Magnetic ↔ Deviation ↔ Compass</code>\n"
         "Выбери, что во что пересчитать:",
         reply_markup=calc_menu_kb(),
     )
     await cb.answer()
+
+
+# ── Раздел «Скорость · время · ETA» ──
+# kind: t=время, d=дистанция, v=скорость, e=ETA.
+MARINE_KINDS = {
+    "t": ("⏱ Время в пути", "Скорость (узлы) и дистанцию (NM).", "5.5 13.2"),
+    "d": ("📏 Дистанция", "Скорость (узлы) и время (часы).", "6 2.5"),
+    "v": ("🚤 Средняя скорость", "Дистанцию (NM) и время (часы).", "15 3"),
+    "e": ("🎯 ETA / время прибытия", "Дистанцию (NM), скорость (узлы), запас % "
+          "и время старта ЧЧ:ММ.", "18 5 20 09:00"),
+}
+
+
+def marine_menu_kb() -> InlineKeyboardMarkup:
+    rows = [[InlineKeyboardButton(text=MARINE_KINDS[k][0], callback_data=f"calc:m:{k}")]
+            for k in ("t", "d", "v", "e")]
+    rows.append([InlineKeyboardButton(text="⬅️ Разделы", callback_data="mode:calc")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def marine_result_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔄 Ещё расчёт", callback_data="calc:cat:marine")],
+        [InlineKeyboardButton(text="📝 Практические задачи", callback_data="mode:ptasks")],
+        [InlineKeyboardButton(text="⬅️ Разделы", callback_data="mode:calc")],
+    ])
+
+
+@dp.callback_query(F.data == "calc:cat:marine")
+async def cb_calc_marine(cb: CallbackQuery) -> None:
+    CALC_STATE.pop(cb.from_user.id, None)
+    await cb.message.answer(
+        "⏱ <b>Скорость · время · ETA</b>\n\nЧто посчитать?",
+        reply_markup=marine_menu_kb(),
+    )
+    await cb.answer()
+
+
+@dp.callback_query(F.data.startswith("calc:m:"))
+async def cb_calc_marine_kind(cb: CallbackQuery) -> None:
+    kind = cb.data[len("calc:m:"):]
+    if kind not in MARINE_KINDS:
+        await cb.answer("Неизвестный расчёт")
+        return
+    CALC_STATE[cb.from_user.id] = {"marine": kind}
+    title, need, example = MARINE_KINDS[kind]
+    await cb.message.answer(
+        f"{title}\n\nВведи {need}\nОдной строкой через пробел.\n"
+        f"Пример: <code>{example}</code>",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="⬅️ Назад", callback_data="calc:cat:marine")],
+        ]),
+    )
+    await cb.answer()
+
+
+def _marine_numbers(text: str) -> list[float]:
+    import re
+    return [float(x.replace(",", ".")) for x in re.findall(r"[-+]?\d+(?:[.,]\d+)?", text)]
+
+
+def compute_marine(kind: str, text: str) -> str:
+    """
+    Посчитать выбранный морской расчёт по строке ввода. Бросает ValueError
+    с понятным текстом, если данных не хватает или они некорректны.
+    """
+    nums = _marine_numbers(text)
+    if kind == "t":
+        if len(nums) < 2:
+            raise ValueError("Нужны скорость и дистанция, например «5.5 13.2».")
+        v, d = nums[0], nums[1]
+        h = marine.time_from(d, v)
+        return (f"⏱ <b>Время в пути: {round(h,2)} ч</b> ({marine.hours_to_hm(h)})\n\n"
+                f"<pre>t = D / V = {marine._num(d)} / {marine._num(v)} = {round(h,2)} ч</pre>")
+    if kind == "d":
+        if len(nums) < 2:
+            raise ValueError("Нужны скорость и время, например «6 2.5».")
+        v, t = nums[0], nums[1]
+        d = marine.distance_from(v, t)
+        return (f"📏 <b>Дистанция: {round(d,1)} NM</b>\n\n"
+                f"<pre>D = V × t = {marine._num(v)} × {marine._num(t)} = {round(d,1)} NM</pre>")
+    if kind == "v":
+        if len(nums) < 2:
+            raise ValueError("Нужны дистанция и время, например «15 3».")
+        d, t = nums[0], nums[1]
+        v = marine.speed_from(d, t)
+        return (f"🚤 <b>Средняя скорость: {round(v,1)} узла</b>\n\n"
+                f"<pre>V = D / t = {marine._num(d)} / {marine._num(t)} = {round(v,1)} узла</pre>")
+    if kind == "e":
+        # дистанция, скорость, [запас%], [старт ЧЧ:ММ]
+        import re
+        if len(nums) < 2:
+            raise ValueError("Нужны минимум дистанция и скорость, например «18 5 20 09:00».")
+        d, v = nums[0], nums[1]
+        reserve = nums[2] if len(nums) >= 3 else 0.0
+        mt = re.search(r"\b(\d{1,2}[:.]\d{2})\b", text)
+        start = mt.group(1).replace(".", ":") if mt else None
+        r = marine.plan_eta(d, v, reserve, start)
+        lines = [f"t = D / V = {marine._num(d)} / {marine._num(v)} = {round(r.travel_h,2)} ч"]
+        if reserve:
+            lines.append(f"с запасом {marine._num(reserve)}% → {round(r.travel_h_reserve,2)} ч")
+        body = "\n".join(lines)
+        head = f"🎯 <b>В пути: {round(r.travel_h_reserve,2)} ч</b> ({marine.hours_to_hm(r.travel_h_reserve)})"
+        if r.eta:
+            head += f"\n🕒 <b>ETA: {r.eta}</b>"
+        return f"{head}\n\n<pre>{body}</pre>"
+    raise ValueError("Неизвестный расчёт")
 
 
 @dp.callback_query(F.data.startswith("calc:dir:"))
@@ -1288,8 +1506,23 @@ async def on_webapp_data(message: Message) -> None:
 async def on_text_answer(message: Message) -> None:
     user_id = message.from_user.id
 
-    # 0) Калькулятор TVMDC: ждём строку со значениями
+    # 0) Калькулятор: ждём строку со значениями
     state = CALC_STATE.get(user_id)
+    if state and "marine" in state:
+        kind = state["marine"]
+        try:
+            out = compute_marine(kind, message.text)
+        except ValueError as e:
+            await message.answer(
+                f"🤔 {e}",
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="⬅️ Назад", callback_data="calc:cat:marine")],
+                ]),
+            )
+            return
+        CALC_STATE.pop(user_id, None)
+        await message.answer(out, reply_markup=marine_result_kb())
+        return
     if state:
         src, dst = state["src"], state["dst"]
         pair = {src, dst}
@@ -1339,7 +1572,36 @@ async def on_text_answer(message: Message) -> None:
                              reply_markup=InlineKeyboardMarkup(inline_keyboard=rows))
         return
 
-    # 2) Ответ на задачу T-V-M-D-C
+    # 2) Ответ на практическую задачу (скорость/время/ETA)
+    ptid = ACTIVE_PTASK.get(user_id)
+    if ptid:
+        ptask = marine.TASKS_BY_ID.get(ptid)
+        if not ptask:
+            ACTIVE_PTASK.pop(user_id, None)
+            await message.answer("Задача не найдена. /menu", reply_markup=main_menu_kb())
+            return
+        if ptask.check(message.text):
+            ACTIVE_PTASK.pop(user_id, None)
+            p = record_ptask(user_id, True)
+            streak_line = f"🔥 Серия: <b>{p['streak']}</b>"
+            if p["streak"] == p["best"] and p["streak"] >= 3:
+                streak_line += " (рекорд!)"
+            await message.answer(
+                f"✅ <b>Верно!</b> Ответ {marine._num(ptask.answer)} {ptask.unit}.\n"
+                f"{streak_line}\n\n<pre>{ptask.solution}</pre>",
+                reply_markup=ptask_kb(),
+            )
+        else:
+            p = record_ptask(user_id, False)
+            await message.answer(
+                "❌ Не то. Проверь формулу (t=D/V, D=V·t, V=D/t) и единицы.\n"
+                "Попробуй ещё раз или нажми «💡 Показать решение».\n"
+                f"<i>Серия сброшена. Лучшая: {p['best']}.</i>",
+                reply_markup=ptask_kb(),
+            )
+        return
+
+    # 3) Ответ на задачу T-V-M-D-C
     task_id = ACTIVE_TASK.get(user_id)
     if not task_id:
         await message.answer("Не понял. Откройте меню: /menu", reply_markup=main_menu_kb())
