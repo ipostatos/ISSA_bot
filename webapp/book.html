@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Библиотека</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --text: var(--tg-theme-text-color, #fff);
+    --hint: var(--tg-theme-hint-color, #8a9aa9);
+    --card: var(--tg-theme-secondary-bg-color, #232e3c);
+    --accent: var(--tg-theme-button-color, #50a8eb);
+    --accent-text: var(--tg-theme-button-text-color, #fff);
+    --border: rgba(255,255,255,.10);
+  }
+  *{box-sizing:border-box}
+  html,body{max-width:100%; overflow-x:hidden}
+  body{margin:0; padding:20px 16px 40px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.5; -webkit-tap-highlight-color:transparent}
+  h1{font-size:20px; margin:0 0 4px}
+  .sub{color:var(--hint); font-size:13px; margin:0 0 18px}
+  .book{display:flex; gap:14px; background:var(--card); border:1px solid var(--border);
+    border-radius:16px; padding:16px; margin-bottom:12px; align-items:flex-start}
+  .book .ic{font-size:34px; line-height:1}
+  .book .info{flex:1; min-width:0}
+  .book .t{font-size:16px; font-weight:700}
+  .book .a{color:var(--hint); font-size:13px; margin-top:2px}
+  .book .d{color:var(--hint); font-size:13px; margin-top:6px}
+  .row{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap}
+  .row a{flex:1; min-width:120px; text-decoration:none; text-align:center; padding:11px;
+    border-radius:11px; font-size:14px; font-weight:600}
+  .row a.open{background:var(--accent); color:var(--accent-text)}
+  .row a.dl{background:transparent; color:var(--text); border:1px solid var(--border)}
+  .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px; line-height:1.5}
+</style>
+</head>
+<body>
+  <h1>📚 Библиотека</h1>
+  <p class="sub">Учебники и пособия по яхтингу</p>
+
+  <div id="list"></div>
+
+  <p class="foot">Материалы открываются во внешнем просмотрщике устройства.
+    Авторские права принадлежат их правообладателям.</p>
+
+<script>
+"use strict";
+const tg = window.Telegram?.WebApp;
+if (tg){ tg.ready(); tg.expand(); }
+
+// Список книг. Файлы лежат рядом со страницей (отдаёт Caddy).
+// Чтобы добавить книгу — положи PDF в webapp/ и допиши элемент сюда.
+const BOOKS = [
+  {
+    ic: "📕",
+    title: "Шкипер прибрежного плавания",
+    author: "Учебник курсанта ISSA",
+    desc: "Навигация, метео, управление яхтой, МППСС, приборы, первая помощь.",
+    file: "book.pdf",
+  },
+  {
+    ic: "📘",
+    title: "Управление парусной яхтой",
+    author: "Дж. Тогхилл (Yachting)",
+    desc: "Классическое пособие по парусному яхтингу.",
+    file: "book2.pdf",
+  },
+];
+
+const esc = s => String(s).replace(/[&<>]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const openPdf = (file) => {
+  if (tg && tg.openLink){ tg.openLink(new URL(file, location.href).href, {try_instant_view:false}); }
+  else { window.open(file, "_blank"); }
+};
+
+const box = document.getElementById("list");
+box.innerHTML = BOOKS.map((b, i) => `
+  <div class="book">
+    <div class="ic">${b.ic}</div>
+    <div class="info">
+      <div class="t">${esc(b.title)}</div>
+      <div class="a">${esc(b.author)}</div>
+      <div class="d">${esc(b.desc)}</div>
+      <div class="row">
+        <a class="open" data-i="${i}" href="${esc(b.file)}">Открыть</a>
+        <a class="dl" href="${esc(b.file)}" download>Скачать</a>
+      </div>
+    </div>
+  </div>`).join("");
+
+box.querySelectorAll("a.open").forEach(a =>
+  a.addEventListener("click", e => { e.preventDefault(); openPdf(BOOKS[+a.dataset.i].file); }));
+</script>
+</body>
+</html>
