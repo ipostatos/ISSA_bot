@@ -290,10 +290,13 @@ KONSPEKT_BTN = {
 # Картинки к темам конспекта (файлы в bot/images/). Можно несколько на тему.
 # Картинка отправляется ПОСЛЕ текста темы.
 KONSPEKT_IMAGES: dict[str, list[str]] = {
-    "boat": ["yacht.jpg"],
-    "nav": ["course.png", "tmc.png"],
-    "lights": ["dayshapes.png"],
+    "boat": ["yacht.jpg", "yacht_parts_1.jpg", "yacht_parts_2.jpg", "yacht_parts_3.jpg"],
+    "wind": ["points_of_sail_1.png", "points_of_sail_2.png"],
+    "nav": ["course.png", "tmc.png", "deviation_2.png"],
+    "iala": ["iala_signs.jpg", "lighthouses.png", "iala_regions.png"],
+    "lights": ["dayshapes.png", "sound_signals.png"],
     "meteo": ["beaufort.png"],
+    "vhf": ["src_mayday.png", "src_panpan.png", "src_mayday_relay.png", "src_cancel.png"],
 }
 
 
@@ -487,9 +490,12 @@ CHEATSHEET_ORDER = ["tvmdc", "colreg", "lights", "sounds", "iala",
 
 # Картинки к шпаргалкам (файлы в bot/images/). Отправляются после текста.
 CHEATSHEET_IMAGES: dict[str, list[str]] = {
-    "tvmdc": ["tmc.png", "deviation.png"],
+    "tvmdc": ["tmc.png", "deviation.png", "deviation_2.png"],
     "lights": ["dayshapes.png"],
+    "sounds": ["sound_signals.png"],
+    "iala": ["iala_signs.jpg", "lighthouses.png", "iala_regions.png"],
     "beaufort": ["beaufort.png"],
+    "vhf": ["src_mayday.png", "src_panpan.png", "src_mayday_relay.png", "src_cancel.png"],
 }
 
 
