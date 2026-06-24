@@ -75,6 +75,10 @@ WEBAPP_URL = os.environ.get("WEBAPP_URL", "").strip()
 # клавиатуре появляется кнопка запуска приложения тестов. Результат теста
 # возвращается в бота через WebApp.sendData и пишется в прогресс.
 WEBAPP_QUIZ_URL = os.environ.get("WEBAPP_QUIZ_URL", "").strip()
+# URL стартового экрана Mini App (home.html на корне). Если задан — в главном
+# меню показываем кнопку «Открыть приложение», а контентные пункты (конспект,
+# шпаргалки, словарь, калькулятор, задачи) прячем как дубли приложения.
+WEBAPP_HOME_URL = os.environ.get("WEBAPP_HOME_URL", "").strip()
 TG_MSG_LIMIT = 4096       # ограничение Telegram на длину сообщения
 POLL_OPTION_LIMIT = 100   # ограничение Telegram на длину варианта ответа
 POLL_QUESTION_LIMIT = 300 # ограничение Telegram на длину текста вопроса/пояснения
@@ -269,6 +273,21 @@ CALC_STATE: dict[int, dict] = {}
 # ──────────────────────────── Клавиатуры ────────────────────────────
 
 def main_menu_kb() -> InlineKeyboardMarkup:
+    # Если развёрнут Mini App — ведём кнопкой «Открыть приложение», а контентные
+    # разделы (есть в приложении) в чат-меню не дублируем. В чате остаётся то,
+    # что завязано на прогресс/quiz-поллы. Без URL — полное меню (как было).
+    if WEBAPP_HOME_URL:
+        rows = [
+            [InlineKeyboardButton(text="🚀 Открыть приложение",
+                                  web_app=WebAppInfo(url=WEBAPP_HOME_URL))],
+            [InlineKeyboardButton(text="🎯 Случайный вопрос", callback_data="mode:random")],
+            [InlineKeyboardButton(text="📚 Тренировка по темам", callback_data="mode:topics")],
+            [InlineKeyboardButton(text=f"📝 Экзамен ({EXAM_SIZE} вопросов)", callback_data="mode:exam")],
+            [InlineKeyboardButton(text="🔁 Работа над ошибками", callback_data="mode:mistakes")],
+            [InlineKeyboardButton(text="📊 Моя статистика", callback_data="mode:stats")],
+            [InlineKeyboardButton(text="♻️ Сбросить прогресс", callback_data="mode:reset")],
+        ]
+        return InlineKeyboardMarkup(inline_keyboard=rows)
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="🎯 Случайный вопрос", callback_data="mode:random")],
