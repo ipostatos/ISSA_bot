@@ -51,6 +51,14 @@ PROGRESS_DIR = BASE_DIR / "progress"
 PROGRESS_DIR.mkdir(exist_ok=True)
 IMAGES_DIR = BASE_DIR / "images"
 
+# Дисклеймер: бот неофициальный, без экзаменационных ключей.
+DISCLAIMER = (
+    "ℹ️ <i>Бот и база вопросов — оригинальные, созданы для тренировки. "
+    "Они <b>не содержат экзаменационных ключей</b> и <b>не являются официальным "
+    "материалом ISSA</b> или какой-либо школы. Это вспомогательный учебный "
+    "материал для самоподготовки.</i>"
+)
+
 EXAM_SIZE = 100           # вопросов в экзамене
 EXAM_PASS_PERCENT = 75    # проходной балл, %
 TG_MSG_LIMIT = 4096       # ограничение Telegram на длину сообщения
@@ -323,7 +331,8 @@ async def cmd_start(message: Message) -> None:
         "IALA, COLREG (МППСС), огни/знаки, звуковые сигналы, метео, "
         "безопасность, VHF/SRC, планирование, практика.\n\n"
         "Вопросы <b>не повторяются</b>, пока не пройдёшь весь круг.\n\n"
-        "Выбери режим:",
+        + DISCLAIMER +
+        "\n\nВыбери режим:",
         reply_markup=main_menu_kb(),
     )
 
@@ -345,9 +354,17 @@ async def cmd_help(message: Message) -> None:
         "/start — главное меню\n"
         "/menu — меню режимов\n"
         "/stats — моя статистика\n"
+        "/about — о боте\n"
         "/help — эта справка\n\n"
         "В режиме quiz нажимай на вариант ответа — бот сразу покажет, "
         "верно ли, и даст пояснение."
+    )
+
+
+@dp.message(Command("about"))
+async def cmd_about(message: Message) -> None:
+    await message.answer(
+        "⚓ <b>Тренажёр ISSA Inshore Skipper + SRC</b>\n\n" + DISCLAIMER
     )
 
 
@@ -535,6 +552,7 @@ async def finish_exam(bot: Bot, chat_id: int, user_id: int) -> None:
         correct_opt = q["options"][q["answer"]]
         blocks.append(f"• [{q['topic']}] {q['q']}\n  ✔️ {correct_opt}")
     blocks.append("\nЭти вопросы добавлены в «Работу над ошибками».")
+    blocks.append("\n" + DISCLAIMER)
 
     chunk = ""
     parts: list[str] = []
