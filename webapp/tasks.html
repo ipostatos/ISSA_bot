@@ -91,6 +91,14 @@ function pool(){ return CAT === "all" ? ALL : ALL.filter(t => t.cat === CAT); }
 
 function pick(){
   const p = pool();
+  if (!p.length){
+    cur = null;
+    $("q").textContent = ALL.length
+      ? "В этой категории задач нет."
+      : "Не удалось загрузить задачи (tasks_data.js не найден). Запусти на сервере deploy/update_webapp.sh.";
+    $("sol").textContent = "";
+    return;
+  }
   cur = p[Math.floor(Math.random() * p.length)];
   $("q").textContent = cur.text;
   $("inp").value = "";

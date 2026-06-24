@@ -87,8 +87,17 @@ const show = id => $(id).classList.remove("hidden");
 const hide = id => $(id).classList.add("hidden");
 const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// Если данные не подгрузились — показываем понятное сообщение, а не пустоту.
+if (!DATA.length){
+  $("tiles").innerHTML =
+    '<div class="empty">Не удалось загрузить конспект.<br>' +
+    'Файл konspekt_data.js не найден на сервере.<br>' +
+    'Запусти на сервере: <code>bash deploy/update_webapp.sh</code></div>';
+}
+
 // ── список тем ──
 function renderTiles(){
+  if (!DATA.length) return;
   $("tiles").innerHTML = "";
   DATA.forEach(t => {
     const b = document.createElement("button");
