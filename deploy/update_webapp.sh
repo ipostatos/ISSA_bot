@@ -18,15 +18,22 @@ DST=/opt/issa-bot/miniapp        # каталог, который раздаёт
 echo "→ обновляем код из git"
 sudo -u issa git -C "$APP_DIR" pull --ff-only || git -C "$APP_DIR" pull --ff-only
 
-echo "→ перегенерируем quiz_data.js из questions.json"
+echo "→ перегенерируем данные из банка вопросов и конспекта"
 "$APP_DIR/.venv/bin/python" "$SRC/build_quiz_data.py"
+"$APP_DIR/.venv/bin/python" "$SRC/build_konspekt_data.py"
 
 echo "→ публикуем страницы в $DST"
 mkdir -p "$DST"
-cp -f "$SRC/home.html"  "$DST/index.html"   # стартовый экран — на корень
-cp -f "$SRC/quiz.html"  "$DST/quiz.html"
-cp -f "$SRC/index.html" "$DST/calc.html"    # калькулятор под calc.html
-cp -f "$SRC/quiz_data.js" "$DST/quiz_data.js"
+cp -f "$SRC/home.html"      "$DST/index.html"   # стартовый экран — на корень
+cp -f "$SRC/quiz.html"      "$DST/quiz.html"
+cp -f "$SRC/index.html"     "$DST/calc.html"    # калькулятор под calc.html
+cp -f "$SRC/konspekt.html"  "$DST/konspekt.html"
+cp -f "$SRC/quiz_data.js"     "$DST/quiz_data.js"
+cp -f "$SRC/konspekt_data.js" "$DST/konspekt_data.js"
+
+echo "→ копируем картинки (схемы конспекта)"
+mkdir -p "$DST/images"
+cp -f "$APP_DIR/images/"*.png "$APP_DIR/images/"*.jpg "$DST/images/" 2>/dev/null || true
 
 echo "✅ опубликовано:"
 ls -1 "$DST"

@@ -45,17 +45,28 @@ jobs:
           fi
           echo "OK: quiz_data.js актуален"
 
+      - name: Konspekt data is up to date with content.py
+        run: |
+          python webapp/build_konspekt_data.py
+          if ! git diff --quiet -- webapp/konspekt_data.js; then
+            echo "::error::webapp/konspekt_data.js устарел — перегенерируй: python webapp/build_konspekt_data.py"
+            git --no-pager diff --stat -- webapp/konspekt_data.js
+            exit 1
+          fi
+          echo "OK: konspekt_data.js актуален"
+
       - name: Pre-release audit (questions, images, limits)
         run: python run_audit.py
 
       - name: Concurrency / load test (10 users)
         run: python test_load.py
 
-      - name: Mini App JS checks (math + quiz data)
+      - name: Mini App JS checks (math + quiz + konspekt data)
         run: |
           node webapp/_solver_check.mjs
           node webapp/_marine_check.mjs
           node webapp/_quiz_check.mjs
+          node webapp/_konspekt_check.mjs
 
   secret-scan:
     runs-on: ubuntu-latest
