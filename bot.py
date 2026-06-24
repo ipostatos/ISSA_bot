@@ -47,6 +47,7 @@ import content
 import glossary
 import marine
 import nav_tasks
+import tides
 
 # ──────────────────────────── Конфигурация ────────────────────────────
 
@@ -1220,12 +1221,14 @@ MARINE_KINDS = {
     "v": ("🚤 Средняя скорость", "Дистанцию (NM) и время (часы).", "15 3"),
     "e": ("🎯 ETA / время прибытия", "Дистанцию (NM), скорость (узлы), запас % "
           "и время старта ЧЧ:ММ.", "18 5 20 09:00"),
+    "tide": ("🌊 Прилив (правило 12)", "Малую воду LW, полную HW (м) и часы после "
+             "малой воды (0–6).", "2 8 3.5"),
 }
 
 
 def marine_menu_kb() -> InlineKeyboardMarkup:
     rows = [[InlineKeyboardButton(text=MARINE_KINDS[k][0], callback_data=f"calc:m:{k}")]
-            for k in ("t", "d", "v", "e")]
+            for k in ("t", "d", "v", "e", "tide")]
     rows.append([InlineKeyboardButton(text="⬅️ Разделы", callback_data="mode:calc")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
@@ -1316,6 +1319,21 @@ def compute_marine(kind: str, text: str) -> str:
         if r.eta:
             head += f"\n🕒 <b>ETA: {r.eta}</b>"
         return f"{head}\n\n<pre>{body}</pre>"
+    if kind == "tide":
+        # LW, HW, часы после малой воды (по правилу двенадцатых)
+        if len(nums) < 3:
+            raise ValueError("Нужны LW, HW и часы после малой воды, например «2 8 3.5».")
+        lw, hw, hours = nums[0], nums[1], nums[2]
+        water = tides.height_after_lw(hw, lw, hours)
+        rng = hw - lw
+        rows = [f"Диапазон = {tides._num(hw)} − {tides._num(lw)} = {tides._num(rng)} м; "
+                f"1/12 = {tides._num(rng/12)} м"]
+        acc = lw
+        for i, part in enumerate(tides.TWELFTHS, start=1):
+            acc += rng * part / 12
+            rows.append(f"{i}ч  +{part}/12 → {tides._num(acc)} м")
+        return (f"🌊 <b>Высота воды через {tides._num(hours)} ч: "
+                f"{tides._num(water)} м</b>\n\n<pre>" + "\n".join(rows) + "</pre>")
     raise ValueError("Неизвестный расчёт")
 
 

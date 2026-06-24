@@ -21,7 +21,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Compile all modules
-        run: python -m py_compile bot.py calc.py content.py glossary.py marine.py nav_tasks.py
+        run: python -m py_compile bot.py calc.py content.py glossary.py marine.py nav_tasks.py tides.py
 
       - name: Nav-tasks unit tests (incl. 0/360 boundary)
         run: python test_nav.py
@@ -31,6 +31,9 @@ jobs:
 
       - name: Marine calc tests (S-D-T, ETA, practical tasks)
         run: python test_marine.py
+
+      - name: Tides tests (rule of twelfths)
+        run: python test_tides.py
 
       - name: Mini App quiz-result parser tests
         run: python test_webapp.py
@@ -55,18 +58,30 @@ jobs:
           fi
           echo "OK: konspekt_data.js актуален"
 
+      - name: Tasks data is up to date with marine.py/tides.py
+        run: |
+          python webapp/build_tasks_data.py
+          if ! git diff --quiet -- webapp/tasks_data.js; then
+            echo "::error::webapp/tasks_data.js устарел — перегенерируй: python webapp/build_tasks_data.py"
+            git --no-pager diff --stat -- webapp/tasks_data.js
+            exit 1
+          fi
+          echo "OK: tasks_data.js актуален"
+
       - name: Pre-release audit (questions, images, limits)
         run: python run_audit.py
 
       - name: Concurrency / load test (10 users)
         run: python test_load.py
 
-      - name: Mini App JS checks (math + quiz + konspekt data)
+      - name: Mini App JS checks (math + quiz + konspekt + tides + tasks)
         run: |
           node webapp/_solver_check.mjs
           node webapp/_marine_check.mjs
+          node webapp/_tide_check.mjs
           node webapp/_quiz_check.mjs
           node webapp/_konspekt_check.mjs
+          node webapp/_tasks_check.mjs
 
   secret-scan:
     runs-on: ubuntu-latest

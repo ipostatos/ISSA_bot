@@ -67,7 +67,8 @@
 
   <div class="seg" id="tabs" style="margin-bottom:14px">
     <button data-tab="compass" class="active">🧭 Поправки</button>
-    <button data-tab="marine">⏱ Скорость·время</button>
+    <button data-tab="marine">⏱ Время</button>
+    <button data-tab="tide">🌊 Прилив</button>
   </div>
 
   <div id="panel-compass">
@@ -157,6 +158,33 @@
     </div>
     <div class="err hidden" id="mError"></div>
   </div><!-- /panel-marine -->
+
+  <div id="panel-tide" class="hidden">
+    <p class="sub">Правило двенадцатых: 1–2–3–3–2–1 за 6 часов</p>
+    <div class="card">
+      <div class="row">
+        <div class="field">
+          <label>Малая вода LW (м)</label>
+          <input id="tLw" type="number" inputmode="decimal" placeholder="2">
+        </div>
+        <div class="field">
+          <label>Полная вода HW (м)</label>
+          <input id="tHw" type="number" inputmode="decimal" placeholder="8">
+        </div>
+      </div>
+      <div class="row"><div class="field">
+        <label>Часов после малой воды (0–6)</label>
+        <input id="tH" type="number" inputmode="decimal" min="0" max="6" step="0.5" placeholder="3.5">
+      </div></div>
+    </div>
+    <button class="go" id="tGo">Рассчитать</button>
+    <div class="card result hidden" id="tResultCard">
+      <div class="answer" id="tAnswer"></div>
+      <canvas id="tChart" width="320" height="180" style="width:100%;height:auto;margin-top:6px"></canvas>
+      <div class="steps" id="tSteps"></div>
+    </div>
+    <div class="err hidden" id="tError"></div>
+  </div><!-- /panel-tide -->
 
   <p class="foot">Учебный инструмент. Не является официальным материалом ISSA.</p>
 
@@ -357,6 +385,73 @@ document.getElementById("mGo").addEventListener("click", () => {
 
 syncMarine();
 
+// ───────────────────── Раздел «Прилив» (правило двенадцатых) ─────────────────────
+// Та же логика, что tides.py.
+const TWELFTHS = [1,2,3,3,2,1];
+function heightAfterLw(hw, lw, hours){
+  const rng = hw - lw;
+  let h = Math.max(0, Math.min(6, hours));
+  const full = Math.floor(h), frac = h - full;
+  let water = lw;
+  for (let i=0; i<full; i++) water += rng*TWELFTHS[i]/12;
+  if (full < 6) water += rng*TWELFTHS[full]/12*frac;
+  return water;
+}
+
+function drawTide(hw, lw, mark){
+  const cv = document.getElementById("tChart");
+  const ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height, pad = 26;
+  ctx.clearRect(0,0,W,H);
+  const css = getComputedStyle(document.body);
+  const accent = css.getPropertyValue("--tg-theme-button-color").trim() || "#50a8eb";
+  const hint = css.getPropertyValue("--tg-theme-hint-color").trim() || "#8a9aa9";
+  const lo = Math.min(hw,lw), hi = Math.max(hw,lw), span = (hi-lo)||1;
+  const x = h => pad + (W-2*pad) * h/6;
+  const y = v => H-pad - (H-2*pad) * (v-lo)/span;
+  // оси
+  ctx.strokeStyle = hint; ctx.globalAlpha = .35; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.stroke();
+  ctx.globalAlpha = 1;
+  // ступенчатая кривая правила 12 (по 0.1ч)
+  ctx.strokeStyle = accent; ctx.lineWidth = 2; ctx.beginPath();
+  for (let i=0; i<=60; i++){ const h=i/10; const px=x(h), py=y(heightAfterLw(hw,lw,h)); i?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+  ctx.stroke();
+  // подписи часов
+  ctx.fillStyle = hint; ctx.font = "10px sans-serif"; ctx.textAlign = "center";
+  for (let hh=0; hh<=6; hh++) ctx.fillText(hh+"ч", x(hh), H-pad+12);
+  // точка-маркер на текущем времени
+  if (mark != null){
+    const mx=x(Math.max(0,Math.min(6,mark))), my=y(heightAfterLw(hw,lw,mark));
+    ctx.fillStyle = accent; ctx.beginPath(); ctx.arc(mx,my,4,0,7); ctx.fill();
+    ctx.strokeStyle = accent; ctx.globalAlpha=.4;
+    ctx.beginPath(); ctx.moveTo(mx,H-pad); ctx.lineTo(mx,my); ctx.stroke(); ctx.globalAlpha=1;
+  }
+}
+
+function tErr(m){ const e=document.getElementById("tError"); e.textContent="⚠️ "+m; e.classList.remove("hidden"); document.getElementById("tResultCard").classList.add("hidden"); }
+
+document.getElementById("tGo").addEventListener("click", () => {
+  document.getElementById("tError").classList.add("hidden");
+  const lw = parseFloat(document.getElementById("tLw").value);
+  const hw = parseFloat(document.getElementById("tHw").value);
+  const h  = parseFloat(document.getElementById("tH").value);
+  if (Number.isNaN(lw) || Number.isNaN(hw)) return tErr("Введи LW и HW.");
+  if (Number.isNaN(h)) return tErr("Введи число часов после малой воды.");
+  const rng = hw - lw;
+  const water = heightAfterLw(hw, lw, h);
+  const f = x => String(Math.round(x*100)/100).replace(".", ",");
+  document.getElementById("tAnswer").textContent = `🌊 Высота воды: ${f(water)} м`;
+  // пошаговая таблица 1-2-3-3-2-1
+  let acc = lw, lines = [`Диапазон = ${f(hw)} − ${f(lw)} = ${f(rng)} м; 1/12 = ${f(rng/12)} м`];
+  for (let i=0;i<6;i++){ acc += rng*TWELFTHS[i]/12; lines.push(`${i+1}ч  +${TWELFTHS[i]}/12 → ${f(acc)} м`); }
+  document.getElementById("tSteps").textContent = lines.join("\n");
+  document.getElementById("tResultCard").classList.remove("hidden");
+  drawTide(hw, lw, h);
+  if (tg) tg.HapticFeedback?.notificationOccurred?.("success");
+});
+
 // ── переключение вкладок ──
 document.getElementById("tabs").addEventListener("click", e => {
   const b = e.target.closest("button"); if(!b) return;
@@ -365,6 +460,7 @@ document.getElementById("tabs").addEventListener("click", e => {
   const tab = b.dataset.tab;
   document.getElementById("panel-compass").classList.toggle("hidden", tab!=="compass");
   document.getElementById("panel-marine").classList.toggle("hidden", tab!=="marine");
+  document.getElementById("panel-tide").classList.toggle("hidden", tab!=="tide");
 });
 </script>
 </body>
