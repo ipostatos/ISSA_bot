@@ -270,6 +270,21 @@ W: конусы ✕ «бокал»   — обходить с ЗАПАДА   (Q(9
 KONSPEKT_ORDER = ["boat", "wind", "anchor", "nav", "iala",
                   "colreg", "lights", "meteo", "vhf", "safety"]
 
+# Короткие подписи для КНОПОК (чтобы не обрезались троеточием при 2 в ряд).
+# Полное название показывается в заголовке самой страницы.
+KONSPEKT_BTN = {
+    "boat": "⚓ Яхта",
+    "wind": "🌬 Курсы",
+    "anchor": "🛟 Якорь/мотор",
+    "nav": "🧭 Навигация",
+    "iala": "🚦 IALA",
+    "colreg": "⚠️ МППСС",
+    "lights": "🔴 Огни",
+    "meteo": "🌦 Метео",
+    "vhf": "📻 VHF/SRC",
+    "safety": "🦺 Безопасность",
+}
+
 # Картинки к темам конспекта (файлы в bot/images/). Можно несколько на тему.
 # Картинка отправляется ПОСЛЕ текста темы.
 KONSPEKT_IMAGES: dict[str, list[str]] = {
@@ -451,6 +466,18 @@ OVER</pre>
 
 <b>Процедурные слова:</b> OVER (жду ответ), OUT (конец), ROGER (принял), SAY AGAIN (повторите).
 ⚠️ Ложный вызов DSC — отменить голосом на 16-м."""),
+}
+
+CHEATSHEET_BTN = {
+    "tvmdc": "🧭 T-V-M-D-C",
+    "colreg": "⚠️ МППСС",
+    "lights": "🔴 Огни",
+    "sounds": "🔊 Сигналы",
+    "iala": "🚦 Буи IALA",
+    "beaufort": "💨 Бофорт",
+    "knots": "🪢 Узлы",
+    "moorings": "⛵ Швартовки",
+    "vhf": "📻 VHF/Mayday",
 }
 
 CHEATSHEET_ORDER = ["tvmdc", "colreg", "lights", "sounds", "iala",

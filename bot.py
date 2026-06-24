@@ -616,7 +616,7 @@ async def send_images(bot: Bot, chat_id: int, files: list[str]) -> None:
 def konspekt_menu_kb() -> InlineKeyboardMarkup:
     rows, row = [], []
     for i, key in enumerate(content.KONSPEKT_ORDER, 1):
-        title = content.KONSPEKT[key][0]
+        title = content.KONSPEKT_BTN.get(key, content.KONSPEKT[key][0])
         row.append(InlineKeyboardButton(text=title, callback_data=f"kon:{key}"))
         if i % 2 == 0:
             rows.append(row)
@@ -656,7 +656,7 @@ async def cb_konspekt_page(cb: CallbackQuery) -> None:
 def cheat_menu_kb() -> InlineKeyboardMarkup:
     rows, row = [], []
     for i, key in enumerate(content.CHEATSHEET_ORDER, 1):
-        title = content.CHEATSHEETS[key][0]
+        title = content.CHEATSHEET_BTN.get(key, content.CHEATSHEETS[key][0])
         row.append(InlineKeyboardButton(text=title, callback_data=f"chs:{key}"))
         if i % 2 == 0:
             rows.append(row)
@@ -735,13 +735,21 @@ GLOSSARY_PAGE = 8  # терминов на страницу
 
 
 def glossary_menu_kb() -> InlineKeyboardMarkup:
-    rows = []
+    rows, row = [], []
+    i = 0
     for cat in glossary.CATEGORY_ORDER:
         icon = glossary.CATEGORY_ICONS.get(cat, "📚")
         n = len(glossary.YACHTING_GLOSSARY.get(cat, []))
         if n == 0:
             continue
-        rows.append([InlineKeyboardButton(text=f"{icon} {cat} ({n})", callback_data=f"gl:cat:{cat}")])
+        label = glossary.CATEGORY_BTN.get(cat, cat)
+        row.append(InlineKeyboardButton(text=f"{icon} {label}", callback_data=f"gl:cat:{cat}"))
+        i += 1
+        if i % 2 == 0:
+            rows.append(row)
+            row = []
+    if row:
+        rows.append(row)
     rows.append([InlineKeyboardButton(text="🔎 Поиск термина", callback_data="gl:search")])
     rows.append([InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
