@@ -36,6 +36,9 @@ cp -f "$SRC/glossary.html"   "$DST/glossary.html"
 cp -f "$SRC/navtasks.html"   "$DST/navtasks.html"
 cp -f "$SRC/cheatsheet.html" "$DST/cheatsheet.html"
 cp -f "$SRC/book.html"       "$DST/book.html"
+cp -f "$SRC/reader.html"     "$DST/reader.html"   # встроенный PDF-просмотрщик
+cp -f "$SRC/nav.js"          "$DST/nav.js"        # общая навигация (BackButton)
+cp -f "$SRC/lightbox.js"     "$DST/lightbox.js"   # зум картинок
 cp -f "$SRC/quiz_data.js"     "$DST/quiz_data.js"
 cp -f "$SRC/konspekt_data.js" "$DST/konspekt_data.js"
 cp -f "$SRC/tasks_data.js"    "$DST/tasks_data.js"

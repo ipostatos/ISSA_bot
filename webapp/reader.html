@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Чтение</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="nav.js"></script>
+<style>
+  :root{
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --text: var(--tg-theme-text-color, #fff);
+    --hint: var(--tg-theme-hint-color, #8a9aa9);
+    --card: var(--tg-theme-secondary-bg-color, #232e3c);
+    --accent: var(--tg-theme-button-color, #50a8eb);
+    --accent-text: var(--tg-theme-button-text-color, #fff);
+    --border: rgba(255,255,255,.10);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0; height:100%; background:#1b1b1b; color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-tap-highlight-color:transparent; overflow:hidden}
+  /* область прокрутки страниц */
+  #pages{position:absolute; inset:0 0 56px 0; overflow:auto; -webkit-overflow-scrolling:touch;
+    padding:10px; text-align:center}
+  #pages canvas{display:block; margin:0 auto 10px; max-width:100%; height:auto;
+    background:#fff; border-radius:4px; box-shadow:0 1px 6px rgba(0,0,0,.4)}
+  /* нижняя панель управления */
+  .toolbar{position:absolute; left:0; right:0; bottom:0; height:56px; display:flex;
+    align-items:center; gap:8px; padding:0 12px; background:var(--card);
+    border-top:1px solid var(--border)}
+  .toolbar button{flex:0 0 auto; width:40px; height:40px; border-radius:10px; border:1px solid var(--border);
+    background:var(--bg); color:var(--text); font-size:18px; cursor:pointer; line-height:1}
+  .toolbar .pageinfo{flex:1; text-align:center; font-size:13px; color:var(--hint);
+    font-variant-numeric:tabular-nums}
+  .toolbar .zoom{font-size:13px; min-width:46px; text-align:center; color:var(--hint)}
+  /* статус загрузки / ошибки */
+  .status{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; padding:24px; text-align:center; gap:12px; color:var(--hint)}
+  .status .spin{width:34px; height:34px; border:3px solid var(--border); border-top-color:var(--accent);
+    border-radius:50%; animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .status a{color:var(--accent); text-decoration:none; border:1px solid var(--border);
+    border-radius:10px; padding:9px 16px}
+  .hidden{display:none !important}
+  .bar{height:4px; background:var(--border); border-radius:3px; overflow:hidden; width:70%; max-width:240px}
+  .bar>i{display:block; height:100%; width:0; background:var(--accent); transition:width .2s}
+</style>
+</head>
+<body>
+
+<div id="pages" class="hidden"></div>
+
+<div id="status" class="status">
+  <div class="spin"></div>
+  <div id="statusText">Загрузка книги…</div>
+  <div class="bar"><i id="loadBar"></i></div>
+</div>
+
+<div class="toolbar">
+  <button id="zoomOut" title="Меньше">−</button>
+  <span class="zoom" id="zoomLbl">100%</span>
+  <button id="zoomIn" title="Больше">+</button>
+  <span class="pageinfo" id="pageInfo">—</span>
+  <button id="dl" title="Скачать">⤓</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+"use strict";
+const tg = window.Telegram?.WebApp;
+
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const file = params.get("file") || "";
+const title = params.get("title") || "Книга";
+document.title = title;
+
+// внешняя ссылка для «скачать», если встроенный рендер не справится
+$("dl").onclick = () => {
+  const url = new URL(file, location.href).href;
+  if (tg && tg.openLink) tg.openLink(url); else window.open(url, "_blank");
+};
+
+function fail(msg){
+  $("status").classList.remove("hidden");
+  $("pages").classList.add("hidden");
+  $("status").innerHTML =
+    `<div style="font-size:30px">📄</div><div>${msg}</div>` +
+    `<a id="ext">Открыть во внешнем просмотрщике</a>`;
+  $("ext").onclick = () => {
+    const url = new URL(file, location.href).href;
+    if (tg && tg.openLink) tg.openLink(url); else window.open(url, "_blank");
+  };
+}
+
+if (!file){ fail("Файл не указан."); }
+else if (!window.pdfjsLib){ fail("Не удалось загрузить просмотрщик. Проверьте интернет."); }
+else {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  startReader();
+}
+
+function startReader(){
+  let pdf = null, numPages = 0;
+  let scale = 1;                 // пользовательский зум (кнопки)
+  const baseWidthCache = {};     // отрисованная ширина страницы при scale=1
+  const rendered = new Set();    // какие страницы уже нарисованы
+  const canvases = [];           // canvas по индексу страницы (1-based в [i])
+
+  const url = new URL(file, location.href).href;
+  const task = pdfjsLib.getDocument({ url, disableAutoFetch:false, disableStream:false });
+  task.onProgress = p => {
+    if (p.total){ $("loadBar").style.width = Math.round(p.loaded/p.total*100) + "%"; }
+  };
+
+  task.promise.then(doc => {
+    pdf = doc; numPages = doc.numPages;
+    $("status").classList.add("hidden");
+    $("pages").classList.remove("hidden");
+    buildPlaceholders();
+    renderVisible();
+    updateInfo();
+  }).catch(err => {
+    console.error(err);
+    fail("Не удалось открыть PDF в приложении.");
+  });
+
+  // создаём пустые canvas-«заглушки» под каждую страницу, рисуем лениво при прокрутке
+  function buildPlaceholders(){
+    const box = $("pages");
+    box.innerHTML = "";
+    for (let i = 1; i <= numPages; i++){
+      const c = document.createElement("canvas");
+      c.dataset.page = i;
+      // примерная высота, чтобы скролл имел длину до фактической отрисовки
+      c.style.height = "60vh";
+      canvases[i] = c;
+      box.appendChild(c);
+    }
+  }
+
+  function devicePixelRatioClamped(){ return Math.min(window.devicePixelRatio || 1, 2); }
+
+  function renderPage(i){
+    if (rendered.has(i) || !pdf) return;
+    rendered.add(i);
+    pdf.getPage(i).then(page => {
+      const containerW = $("pages").clientWidth - 20;        // минус padding
+      const vp1 = page.getViewport({ scale: 1 });
+      const fit = containerW / vp1.width;                    // вписать по ширине
+      const dpr = devicePixelRatioClamped();
+      const eff = fit * scale * dpr;
+      const vp = page.getViewport({ scale: eff });
+      const c = canvases[i];
+      c.width = vp.width; c.height = vp.height;
+      c.style.width = (vp.width / dpr) + "px";
+      c.style.height = "auto";
+      const ctx = c.getContext("2d", { alpha:false });
+      page.render({ canvasContext: ctx, viewport: vp });
+    }).catch(()=>{ rendered.delete(i); });
+  }
+
+  // рисуем страницы около вьюпорта (±1 экран)
+  function renderVisible(){
+    const box = $("pages");
+    const top = box.scrollTop, bottom = top + box.clientHeight;
+    for (let i = 1; i <= numPages; i++){
+      const c = canvases[i];
+      const y = c.offsetTop, h = c.offsetHeight || box.clientHeight;
+      if (y + h >= top - box.clientHeight && y <= bottom + box.clientHeight){
+        renderPage(i);
+      }
+    }
+    updateInfo();
+  }
+
+  function reRenderAll(){
+    rendered.clear();
+    renderVisible();
+  }
+
+  function updateInfo(){
+    const box = $("pages");
+    // текущая страница — та, чья середина ближе всего к центру вьюпорта
+    const center = box.scrollTop + box.clientHeight/2;
+    let cur = 1, best = Infinity;
+    for (let i = 1; i <= numPages; i++){
+      const c = canvases[i]; const mid = c.offsetTop + (c.offsetHeight||0)/2;
+      const d = Math.abs(mid - center);
+      if (d < best){ best = d; cur = i; }
+    }
+    $("pageInfo").textContent = `${cur} / ${numPages}`;
+    $("zoomLbl").textContent = Math.round(scale*100) + "%";
+  }
+
+  let scrollTmr;
+  $("pages").addEventListener("scroll", () => {
+    clearTimeout(scrollTmr); scrollTmr = setTimeout(renderVisible, 80);
+  }, { passive:true });
+
+  $("zoomIn").onclick = () => { scale = Math.min(scale*1.25, 4); reRenderAll(); };
+  $("zoomOut").onclick = () => { scale = Math.max(scale/1.25, 0.5); reRenderAll(); };
+
+  // двойной тап — переключение 100% ↔ 200%
+  let lastTap = 0;
+  $("pages").addEventListener("touchend", e => {
+    const now = Date.now();
+    if (now - lastTap < 300){
+      scale = scale > 1.2 ? 1 : 2;
+      reRenderAll();
+      e.preventDefault();
+    }
+    lastTap = now;
+  }, { passive:false });
+
+  window.addEventListener("resize", () => { reRenderAll(); }, { passive:true });
+}
+</script>
+</body>
+</html>

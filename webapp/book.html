@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Библиотека</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="nav.js"></script>
 <style>
   :root{
     --bg: var(--tg-theme-bg-color, #17212b);
@@ -42,8 +43,8 @@
 
   <div id="list"></div>
 
-  <p class="foot">Материалы открываются во внешнем просмотрщике устройства.
-    Авторские права принадлежат их правообладателям.</p>
+  <p class="foot">«Открыть» — чтение прямо в приложении (листание и зум).
+    «Скачать» — сохранить файл. Авторские права принадлежат правообладателям.</p>
 
 <script>
 "use strict";
@@ -78,9 +79,10 @@ const BOOKS = [
 ];
 
 const esc = s => String(s).replace(/[&<>]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
-const openPdf = (file) => {
-  if (tg && tg.openLink){ tg.openLink(new URL(file, location.href).href, {try_instant_view:false}); }
-  else { window.open(file, "_blank"); }
+// Открываем книгу во встроенном просмотрщике (reader.html на PDF.js), не выходя из Mini App.
+const openPdf = (book) => {
+  const q = `reader.html?file=${encodeURIComponent(book.file)}&title=${encodeURIComponent(book.title)}`;
+  location.href = q;
 };
 
 const box = document.getElementById("list");
@@ -99,7 +101,7 @@ box.innerHTML = BOOKS.map((b, i) => `
   </div>`).join("");
 
 box.querySelectorAll("a.open").forEach(a =>
-  a.addEventListener("click", e => { e.preventDefault(); openPdf(BOOKS[+a.dataset.i].file); }));
+  a.addEventListener("click", e => { e.preventDefault(); openPdf(BOOKS[+a.dataset.i]); }));
 </script>
 </body>
 </html>

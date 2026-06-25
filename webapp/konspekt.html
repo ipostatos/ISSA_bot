@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Конспект ISSA</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="nav.js"></script>
+<script src="lightbox.js" data-scope="#rBody"></script>
 <script src="konspekt_data.js"></script>
 <style>
   :root{
@@ -176,7 +178,16 @@ function openTopic(key, scrollToTerm){
   }
 }
 
-$("back").onclick = () => { hide("reader"); show("list"); };
+function backToList(){ hide("reader"); show("list"); }
+$("back").onclick = backToList;
+
+// Системная «Назад» Telegram: сперва лайтбокс (если открыт), потом тема→список, иначе home.
+const _lbBack = window.__navBack;   // обработчик лайтбокса (закрыть зум картинки)
+window.__navBack = () => {
+  if (typeof _lbBack === "function" && _lbBack() === true) return true;
+  if (!$("reader").classList.contains("hidden")){ backToList(); return true; }
+  return false;
+};
 
 // ── подсветка ──
 function highlightIn(root, term){
