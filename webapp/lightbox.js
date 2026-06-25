@@ -26,9 +26,9 @@
   style.textContent =
     '#lbOverlay{position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.92);' +
       'display:none; touch-action:none; overflow:hidden}' +
-    '#lbOverlay.open{display:block}' +
-    '#lbImg{position:absolute; top:50%; left:50%; max-width:none; max-height:none;' +
-      'transform-origin:0 0; will-change:transform; -webkit-user-select:none; user-select:none}' +
+    '#lbOverlay.open{display:flex; align-items:center; justify-content:center}' +
+    '#lbImg{max-width:none; max-height:none; transform-origin:center center;' +
+      'will-change:transform; -webkit-user-select:none; user-select:none}' +
     '#lbBar{position:absolute; left:0; right:0; bottom:0; height:56px; display:flex; gap:8px;' +
       'align-items:center; justify-content:center; background:rgba(0,0,0,.55); padding:0 12px}' +
     '#lbBar button{width:46px; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,.25);' +
@@ -43,20 +43,24 @@
   var state = { scale:1, x:0, y:0, natW:0, natH:0, baseScale:1 };
 
   function apply(){
+    // картинка центрирована flex'ом контейнера; зум и панорама — от центра.
     img.style.transform =
-      "translate(-50%,-50%) translate(" + state.x + "px," + state.y + "px) scale(" + state.scale + ")";
+      "translate(" + state.x + "px," + state.y + "px) scale(" + state.scale + ")";
   }
 
   function open(src){
+    // сбрасываем состояние сразу, чтобы при показе не мелькнул прошлый зум/сдвиг
+    state.scale = 1; state.baseScale = 1; state.x = 0; state.y = 0;
+    img.style.transform = "";
     img.src = src;
     img.onload = function(){
-      state.natW = img.naturalWidth; state.natH = img.naturalHeight;
-      // вписать по экрану как стартовый масштаб
-      var fit = Math.min(window.innerWidth / state.natW, (window.innerHeight - 56) / state.natH, 1);
-      state.baseScale = fit;
-      state.scale = fit; state.x = 0; state.y = 0;
-      img.style.width = state.natW + "px";
-      img.style.height = state.natH + "px";
+      // картинку вписываем в экран средствами CSS (max-width/height в пикселях),
+      // дальнейший зум идёт поверх через scale. baseScale всегда 1.
+      var maxW = window.innerWidth, maxH = window.innerHeight - 56;
+      var r = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+      img.style.width  = (img.naturalWidth  * r) + "px";
+      img.style.height = (img.naturalHeight * r) + "px";
+      state.scale = 1; state.baseScale = 1; state.x = 0; state.y = 0;
       apply();
     };
     overlay.classList.add("open");

@@ -77,7 +77,15 @@
   .navbtn{flex:1; padding:13px; font-size:14px; font-weight:600; border-radius:11px;
     border:1px solid var(--border); background:var(--card); color:var(--text); cursor:pointer}
   .navbtn:disabled{opacity:.4; cursor:default}
-  .strip{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:14px 0}
+  /* переключатель «лента номеров» — по умолчанию свёрнута, чтобы не скроллить */
+  .gridToggle{display:flex; align-items:center; justify-content:space-between; gap:10px;
+    width:100%; margin:10px 0 0; padding:11px 14px; font-size:13px; font-weight:600;
+    border:1px solid var(--border); border-radius:11px; background:var(--card);
+    color:var(--text); cursor:pointer}
+  .gridToggle .meta{color:var(--hint); font-weight:400}
+  .strip{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:10px 0 0;
+    max-height:42vh; overflow:auto; -webkit-overflow-scrolling:touch}
+  .strip.collapsed{display:none}
   .cell{width:30px; height:30px; border-radius:8px; border:1px solid var(--border);
     background:var(--bg); color:var(--hint); font-size:12px; cursor:pointer;
     display:flex; align-items:center; justify-content:center; padding:0}
@@ -160,7 +168,10 @@
       <button class="navbtn" id="prevBtn">← Назад</button>
       <button class="navbtn" id="skipBtn">Пропустить →</button>
     </div>
-    <div class="strip" id="strip"></div>
+    <button class="gridToggle" id="gridToggle" type="button">
+      <span>🗒 Список вопросов</span><span class="meta" id="gridMeta"></span>
+    </button>
+    <div class="strip collapsed" id="strip"></div>
     <button class="finishBtn" id="finishBtn">Завершить тест</button>
   </div>
 </section>
@@ -339,20 +350,28 @@ function renderExamNav(){
   skip.textContent = last ? (answered ? "Готово ✓" : "Дальше →")
                           : (answered ? "Далее →" : "Пропустить →");
   skip.disabled = last;
-  // лента номеров
+  // лента номеров (по умолчанию свёрнута; раскрывается кнопкой gridToggle)
   const strip = document.getElementById("strip");
   strip.innerHTML = "";
   S.queue.forEach((_, i)=>{
     const c = document.createElement("button");
     c.className = "cell" + (S.answers[i]!==null ? " answered":"") + (i===S.idx ? " current":"");
     c.textContent = i+1;
-    c.onclick = ()=>{ S.idx = i; renderQ(); };
+    c.onclick = ()=>{ S.idx = i; strip.classList.add("collapsed"); renderQ(); };
     strip.appendChild(c);
   });
+  // компактная сводка на кнопке-переключателе
+  document.getElementById("gridMeta").textContent =
+    `вопрос ${S.idx+1}/${S.queue.length} · отвечено ${answeredCount()}`;
   const fin = document.getElementById("finishBtn");
   const left = S.queue.length - answeredCount();
   fin.textContent = left ? `Завершить (без ответа: ${left})` : "Завершить тест";
 }
+
+// переключатель ленты номеров (вешаем один раз)
+document.getElementById("gridToggle").onclick = ()=>{
+  document.getElementById("strip").classList.toggle("collapsed");
+};
 
 // экзамен: выбрать/сменить вариант (без блокировки)
 function chooseExam(i){

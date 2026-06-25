@@ -47,18 +47,20 @@
     if (typeof window.__navBack === "function") {
       try { if (window.__navBack() === true) return; } catch (e) {}
     }
-    // Иначе — назад по истории Mini App, либо на главную.
-    if (window.history.length > 1 && document.referrer) {
-      window.history.back();
-    } else {
-      window.location.href = "index.html"; // home.html публикуется как index.html
-    }
+    // Иначе — всегда на главную. history.back() в webview Telegram ненадёжен
+    // (referrer/history.length скачут), поэтому ведём детерминированно на index.
+    window.location.replace("index.html"); // home.html публикуется как index.html
   }
 
   if (isHome) {
+    // На главном экране системная кнопка Telegram закрывает Mini App — это норма.
     bb.hide();
   } else {
+    // Подписываемся и на BackButton, и на общесистемное событие back (на части
+    // клиентов срабатывает именно оно), чтобы кнопка реагировала стабильно.
     bb.show();
+    try { bb.offClick && bb.offClick(goBack); } catch (e) {}
     bb.onClick(goBack);
+    try { tg.onEvent && tg.onEvent("backButtonClicked", goBack); } catch (e) {}
   }
 })();

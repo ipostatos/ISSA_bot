@@ -123,22 +123,38 @@ function startReader(){
   const canvases = [];           // canvas по индексу страницы (1-based в [i])
 
   const url = new URL(file, location.href).href;
-  const task = pdfjsLib.getDocument({ url, disableAutoFetch:false, disableStream:false });
-  task.onProgress = p => {
-    if (p.total){ $("loadBar").style.width = Math.round(p.loaded/p.total*100) + "%"; }
-  };
 
-  task.promise.then(doc => {
-    pdf = doc; numPages = doc.numPages;
-    $("status").classList.add("hidden");
-    $("pages").classList.remove("hidden");
-    buildPlaceholders();
-    renderVisible();
-    updateInfo();
-  }).catch(err => {
-    console.error(err);
-    fail("Не удалось открыть PDF в приложении.");
-  });
+  // Сначала проверяем, что файл вообще есть и доступен — иначе показываем точную
+  // причину (404 — книга не залита на сервер), а не общее «не удалось».
+  fetch(url, { method: "GET", headers: { Range: "bytes=0-0" } })
+    .then(r => {
+      if (!r.ok && r.status !== 206) {
+        if (r.status === 404) throw new Error("Файл книги не найден на сервере (404). Загрузите PDF в webapp/books/.");
+        throw new Error("Сервер вернул " + r.status + " при запросе книги.");
+      }
+      loadPdf();
+    })
+    .catch(e => fail(e.message || "Не удалось получить файл книги."));
+
+  function loadPdf(){
+    // disableStream/Range: качаем файл целиком — надёжнее на простой статике (Caddy),
+    // где частичные Range-ответы для PDF.js иногда отдаются некорректно.
+    const task = pdfjsLib.getDocument({ url, disableStream:true, disableRange:true, disableAutoFetch:true });
+    task.onProgress = p => {
+      if (p.total){ $("loadBar").style.width = Math.round(p.loaded/p.total*100) + "%"; }
+    };
+    task.promise.then(doc => {
+      pdf = doc; numPages = doc.numPages;
+      $("status").classList.add("hidden");
+      $("pages").classList.remove("hidden");
+      buildPlaceholders();
+      renderVisible();
+      updateInfo();
+    }).catch(err => {
+      console.error(err);
+      fail("PDF загружен, но не открылся: " + (err && err.message ? err.message : "формат не распознан") + ".");
+    });
+  }
 
   // создаём пустые canvas-«заглушки» под каждую страницу, рисуем лениво при прокрутке
   function buildPlaceholders(){
