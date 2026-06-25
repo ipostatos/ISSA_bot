@@ -48,6 +48,12 @@
   .opt[disabled]{cursor:default; opacity:.95}
   .expl{font-size:13px; color:var(--hint); line-height:1.5; margin:6px 0 12px; padding:10px;
     background:var(--bg); border-radius:10px; border:1px solid var(--border)}
+  /* источник-лампочка (только тренировка) */
+  .src{margin:0 0 12px; font-size:13px; line-height:1.5}
+  .src .lbl{color:var(--hint); display:block; margin-bottom:6px}
+  .src a{display:inline-block; text-decoration:none; color:var(--accent);
+    border:1px solid var(--border); border-radius:9px; padding:6px 11px; margin:0 6px 6px 0}
+  .src a:active{transform:scale(.98)}
   .next{width:100%; padding:14px; font-size:15px; font-weight:600; border:none; border-radius:12px;
     background:var(--accent); color:var(--accent-text); cursor:pointer}
   .next.ghost{background:transparent; color:var(--text); border:1px solid var(--border); margin-bottom:9px}
@@ -75,6 +81,17 @@
   .miss{font-size:13px; padding:10px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px; line-height:1.45}
   .miss .t{color:var(--hint); font-size:11px}
   .miss .a{color:var(--ok)}
+  /* фидбек по темам */
+  .fb{margin:4px 0 6px}
+  .fbrow{display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:7px}
+  .fbrow .name{flex:0 0 38%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .fbrow .meter{flex:1; height:8px; background:var(--border); border-radius:5px; overflow:hidden}
+  .fbrow .meter>i{display:block; height:100%; border-radius:5px}
+  .fbrow .v{flex:0 0 auto; color:var(--hint); font-variant-numeric:tabular-nums; min-width:48px; text-align:right}
+  .recs{background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px; margin:6px 0 4px}
+  .recs .lbl{font-size:13px; margin-bottom:8px}
+  .recs a{display:inline-block; text-decoration:none; color:var(--accent);
+    border:1px solid var(--border); border-radius:9px; padding:6px 11px; margin:0 6px 6px 0; font-size:13px}
   .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px}
 </style>
 </head>
@@ -110,6 +127,7 @@
   <p class="q" id="qtext"></p>
   <div id="opts"></div>
   <div class="expl hidden" id="expl"></div>
+  <div class="src hidden" id="src"></div>
 
   <!-- тренировка: пропустить (до ответа) / Далее (после ответа) -->
   <button class="next ghost hidden" id="trainSkip">Пропустить →</button>
@@ -134,6 +152,7 @@
     <div class="verdict" id="rVerdict"></div>
     <button class="next" id="sendBtn">📤 Сохранить результат в боте</button>
   </div>
+  <div id="feedback"></div>
   <div class="review" id="review"></div>
   <button class="big ghost" id="againBtn">↩️ В меню</button>
   <p class="foot" id="sentNote"></p>
@@ -146,6 +165,12 @@ if (tg){ tg.ready(); tg.expand(); }
 
 const DATA = window.QUIZ_DATA || {questions:[], topics:[], examSize:100, passPercent:75};
 const ALL = DATA.questions;
+const KTITLES = DATA.konspekt || {};   // ключ темы конспекта → название кнопки
+
+// ссылки-источники для вопроса: [{key,title}] из q.src, отфильтрованные по справочнику
+function srcLinks(q){
+  return (q.src || []).filter(k => KTITLES[k]).map(k => ({key:k, title:KTITLES[k]}));
+}
 document.getElementById("qcount").textContent = ALL.length;
 document.getElementById("examSub").textContent =
   `${Math.min(DATA.examSize, ALL.length)} вопросов · таймер · проходной балл ${DATA.passPercent}%`;
@@ -164,7 +189,11 @@ let S = null;
 
 function startQuiz(mode, isExam, queue){
   S = { mode, isExam, queue, idx:0,
-        answers: new Array(queue.length).fill(null),
+        // order[i] — перестановка индексов вариантов вопроса queue[i].
+        // Показываем options[order[i][k]]; «правильная» позиция — где order=answer.
+        // Это нейтрализует перекос (ответ всегда B / самый длинный) без правки банка.
+        order: queue.map(q => shuffle(q.options.map((_,k)=>k))),
+        answers: new Array(queue.length).fill(null),  // хранит ИСХОДНЫЙ индекс ответа
         locked: new Array(queue.length).fill(false),
         startTs:Date.now(), timerH:null };
   hide("home"); hide("result"); show("quiz");
@@ -191,25 +220,27 @@ function renderQ(){
   document.getElementById("qtopic").textContent = q.topic;
   document.getElementById("qtext").innerHTML = esc(q.q);
   hide("expl");
+  hide("src");
 
-  const sel = S.answers[S.idx];
+  const sel = S.answers[S.idx];           // ИСХОДНЫЙ индекс выбранного (или null)
+  const order = S.order[S.idx];           // порядок показа: позиция k → исходный orig
   const box = document.getElementById("opts");
   box.innerHTML = "";
-  q.options.forEach((opt,i)=>{
+  order.forEach((orig)=>{
     const b = document.createElement("button");
-    b.className = "opt"; b.innerHTML = esc(opt);
+    b.className = "opt"; b.innerHTML = esc(q.options[orig]);
     if (S.isExam){
       // экзамен: подсветка выбора, без раскрытия правильности; можно менять
-      if (sel === i) b.classList.add("correct");
-      b.onclick = ()=> chooseExam(i);
+      if (sel === orig) b.classList.add("correct");
+      b.onclick = ()=> chooseExam(orig);
     } else {
       // тренировка: фиксируем ответ и раскрываем правильный
       if (S.locked[S.idx]){
         b.disabled = true;
-        if (i === q.answer) b.classList.add("correct");
-        if (i === sel && sel !== q.answer) b.classList.add("wrong");
+        if (orig === q.answer) b.classList.add("correct");
+        if (orig === sel && sel !== q.answer) b.classList.add("wrong");
       } else {
-        b.onclick = ()=> answerTraining(i);
+        b.onclick = ()=> answerTraining(orig);
       }
     }
     box.appendChild(b);
@@ -228,6 +259,15 @@ function renderQ(){
         const e = document.getElementById("expl");
         e.innerHTML = (ok ? "✅ Верно. " : "❌ Неверно. ") + esc(q.expl);
         show("expl");
+      }
+      // 💡 источник: где изучить тему (конспект + библиотека). Только в тренировке.
+      const links = srcLinks(q);
+      if (links.length){
+        const s = document.getElementById("src");
+        s.innerHTML = '<span class="lbl">💡 Где изучить:</span>'
+          + links.map(l => `<a href="konspekt.html#${encodeURIComponent(l.key)}">📖 ${esc(l.title)}</a>`).join("")
+          + '<a href="book.html">📚 Библиотека</a>';
+        show("src");
       }
       const nb = document.getElementById("nextBtn");
       nb.textContent = last ? "Завершить" : "Далее →";
@@ -304,6 +344,49 @@ document.getElementById("finishBtn").onclick = ()=>{
   finish();
 };
 
+// фидбек: разбивка по темам + рекомендации со ссылками в конспект
+function renderFeedback(pct){
+  const box = document.getElementById("feedback");
+  // агрегируем по теме вопроса
+  const byTopic = {};
+  S.queue.forEach((q,i)=>{
+    const t = byTopic[q.topic] || (byTopic[q.topic] = {total:0, ok:0, srcKeys:new Set()});
+    t.total++;
+    if (S.answers[i] === q.answer) t.ok++;
+    (q.src||[]).forEach(k => t.srcKeys.add(k));
+  });
+  const rows = Object.entries(byTopic).map(([topic,t])=>({
+    topic, ...t, pct: Math.round(t.ok/t.total*100), srcKeys:[...t.srcKeys]
+  })).sort((a,b)=> a.pct - b.pct || b.total - a.total);   // слабые сверху
+
+  const color = p => p>=75 ? "var(--ok)" : p>=50 ? "#e0a13a" : "var(--bad)";
+  let html = '<div class="card"><h3 style="margin:0 0 10px">📊 По темам</h3><div class="fb">';
+  html += rows.map(r=>`
+    <div class="fbrow">
+      <span class="name" title="${esc(r.topic)}">${esc(r.topic)}</span>
+      <span class="meter"><i style="width:${r.pct}%;background:${color(r.pct)}"></i></span>
+      <span class="v">${r.ok}/${r.total}</span>
+    </div>`).join("");
+  html += '</div>';
+
+  // рекомендации: слабые темы (<75%), уникальные ключи конспекта
+  const weak = rows.filter(r => r.pct < 75);
+  if (weak.length){
+    const seen = new Set(), recs = [];
+    weak.forEach(r => r.srcKeys.forEach(k => {
+      if (KTITLES[k] && !seen.has(k)){ seen.add(k); recs.push({key:k, title:KTITLES[k]}); }
+    }));
+    const names = weak.map(r=>r.topic).join(", ");
+    html += `<div class="recs"><div class="lbl">📌 Стоит повторить: <b>${esc(names)}</b></div>`
+      + recs.map(l=>`<a href="konspekt.html#${encodeURIComponent(l.key)}">📖 ${esc(l.title)}</a>`).join("")
+      + '<a href="book.html">📚 Библиотека</a></div>';
+  } else {
+    html += `<div class="recs"><div class="lbl">💪 Слабых тем нет — отличная подготовка!</div></div>`;
+  }
+  html += '</div>';
+  box.innerHTML = html;
+}
+
 function finish(){
   if (S.timerH){ clearInterval(S.timerH); S.timerH=null; }
   hide("quiz"); show("result");
@@ -327,6 +410,9 @@ function finish(){
     v.textContent = "🎯 Тренировка завершена";
     v.className = "verdict";
   }
+
+  // ── фидбек по темам: где сильно, где слабо + что повторить ──
+  renderFeedback(pct);
 
   // разбор ошибок
   const wrong = S.results.filter(([,ok])=>!ok).map(([id])=>byId[id]);
@@ -395,6 +481,8 @@ document.getElementById("againBtn").onclick = ()=>{
   S = null;
   hide("quiz"); hide("result"); show("home");
   document.getElementById("topicCard").classList.add("hidden");
+  document.getElementById("feedback").innerHTML = "";
+  document.getElementById("review").innerHTML = "";
 };
 </script>
 </body>

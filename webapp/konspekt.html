@@ -240,6 +240,15 @@ $("q").addEventListener("input", e => {
 });
 
 renderTiles();
+
+// ── глубокая ссылка: konspekt.html#nav откроет тему сразу ──
+// Используется «лампочкой-источником» из тестов.
+function openFromHash(){
+  const key = decodeURIComponent((location.hash || "").replace(/^#/, "")).trim();
+  if (key && byKey[key]) openTopic(key);
+}
+openFromHash();
+window.addEventListener("hashchange", openFromHash);
 </script>
 </body>
 </html>
