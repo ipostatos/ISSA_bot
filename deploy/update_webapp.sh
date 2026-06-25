@@ -43,8 +43,18 @@ cp -f "$SRC/glossary_data.js" "$DST/glossary_data.js"
 cp -f "$SRC/content_data.js"  "$DST/content_data.js"
 
 echo "→ копируем PDF-книги (если есть)"
-cp -f "$SRC/book.pdf"  "$DST/book.pdf"  2>/dev/null && echo "  book.pdf"  || echo "  (book.pdf нет)"
-cp -f "$SRC/book2.pdf" "$DST/book2.pdf" 2>/dev/null && echo "  book2.pdf" || echo "  (book2.pdf нет)"
+# Книги кладём в $SRC/books/ под латинскими именами (book.pdf / studbook.pdf / toghill.pdf).
+# На Linux важно: без пробелов и кириллицы в именах, иначе Caddy не отдаст файл.
+BOOKS_SRC="$SRC/books"
+for f in book.pdf studbook.pdf toghill.pdf; do
+  if [ -f "$BOOKS_SRC/$f" ]; then
+    cp -f "$BOOKS_SRC/$f" "$DST/$f" && echo "  $f"
+  elif [ -f "$SRC/$f" ]; then           # запасной путь: файл лежит прямо в webapp/
+    cp -f "$SRC/$f" "$DST/$f" && echo "  $f (из webapp/)"
+  else
+    echo "  ($f нет — положи в $BOOKS_SRC/)"
+  fi
+done
 
 echo "→ копируем картинки (схемы конспекта)"
 mkdir -p "$DST/images"
