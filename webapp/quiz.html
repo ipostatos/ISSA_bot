@@ -18,6 +18,19 @@
     --border: rgba(255,255,255,.10);
     --ok: #4caf72; --bad: #e5544b;
   }
+  /* Светлый системный режим: если Telegram НЕ передал тему (--tg-theme-*),
+     берём светлый fallback, а не тёмный (иначе белый текст на белом фоне). */
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg: var(--tg-theme-bg-color, #ffffff);
+      --text: var(--tg-theme-text-color, #1a1a1a);
+      --hint: var(--tg-theme-hint-color, #7d8a99);
+      --card: var(--tg-theme-secondary-bg-color, #f1f3f5);
+      --accent: var(--tg-theme-button-color, #3390ec);
+      --accent-text: var(--tg-theme-button-text-color, #ffffff);
+      --border: rgba(0,0,0,.10);
+    }
+  }
   *{box-sizing:border-box}
   body{margin:0; padding:16px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     background:var(--bg); color:var(--text); -webkit-tap-highlight-color:transparent}
@@ -103,6 +116,13 @@
   <h1>⚓ Тесты ISSA</h1>
   <p class="sub">Inshore Skipper + SRC · банк <span id="qcount">…</span> вопросов</p>
 
+  <!-- баннер продолжения незавершённого теста (показывается, если есть сессия) -->
+  <div class="card hidden" id="resumeCard" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+    <div style="flex:1 1 100%; font-size:14px">⏸ Есть незавершённый тест: <b><span id="resumeInfo"></span></b></div>
+    <button class="next" id="resumeBtn" style="flex:1; min-width:130px">▶️ Продолжить</button>
+    <button class="next ghost" id="resumeDrop" style="flex:1; min-width:130px; margin:0">🗑 Начать заново</button>
+  </div>
+
   <button class="big" id="startExam">📝 Экзамен
     <small id="examSub">100 вопросов · таймер · проходной балл</small></button>
   <button class="big ghost" id="startRandom">🎯 Тренировка — случайные
@@ -182,6 +202,33 @@ const byId = Object.fromEntries(ALL.map(q=>[q.id,q]));
 const show = id => document.getElementById(id).classList.remove("hidden");
 const hide = id => document.getElementById(id).classList.add("hidden");
 const esc = s => String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+// ── сохранение незавершённого теста (localStorage) ──
+// Чтобы при случайном закрытии Mini App или потере сети не терять прогресс
+// длинного теста. Храним только id вопросов и ответы — достаточно для восстановления.
+const LS_KEY = "issa_quiz_session_v1";
+function saveSession(){
+  if (!S || S.finished) return;
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      mode: S.mode, isExam: S.isExam, idx: S.idx,
+      ids: S.queue.map(q => q.id),
+      order: S.order, answers: S.answers, locked: S.locked,
+      startTs: S.startTs, ts: Date.now(),
+    }));
+  } catch (e) {}
+}
+function clearSession(){ try { localStorage.removeItem(LS_KEY); } catch (e) {} }
+function loadSession(){
+  try {
+    const raw = localStorage.getItem(LS_KEY); if (!raw) return null;
+    const s = JSON.parse(raw);
+    // восстановление валидно только если все вопросы ещё существуют в банке
+    const queue = s.ids.map(id => byId[id]);
+    if (queue.some(q => !q) || !s.ids.length) { clearSession(); return null; }
+    return { ...s, queue };
+  } catch (e) { return null; }
+}
 
 // ── состояние ──
 // answers[i] = выбранный индекс варианта или null (не отвечено).
@@ -281,6 +328,7 @@ function renderQ(){
       show("trainSkip");
     }
   }
+  saveSession();   // сохраняем незавершённый тест после каждого шага
 }
 
 function renderExamNav(){
@@ -309,7 +357,7 @@ function renderExamNav(){
 // экзамен: выбрать/сменить вариант (без блокировки)
 function chooseExam(i){
   S.answers[S.idx] = i;
-  if (tg) tg.HapticFeedback?.selectionChanged?.();
+  haptic("select");
   renderQ();
 }
 
@@ -320,7 +368,7 @@ function answerTraining(i){
   const ok = i === S.queue[S.idx].answer;
   document.getElementById("liveScore").textContent =
     `✔ ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
-  if (tg) tg.HapticFeedback?.impactOccurred?.(ok ? "light" : "rigid");
+  haptic(ok ? "light" : "rigid");
   renderQ();
 }
 
@@ -390,6 +438,7 @@ function renderFeedback(pct){
 
 function finish(){
   if (S.timerH){ clearInterval(S.timerH); S.timerH=null; }
+  S.finished = true; clearSession();   // тест завершён — сохранённую сессию убираем
   hide("quiz"); show("result");
   document.getElementById("progBar").style.width = "100%";
   // итог считаем из answers (неотвеченные = ошибки)
@@ -429,7 +478,7 @@ function finish(){
     rev.innerHTML = `<div class="miss" style="border-color:var(--ok)">🎉 Без ошибок!</div>`;
   }
   document.getElementById("sentNote").textContent = "";
-  if (tg) tg.HapticFeedback?.notificationOccurred?.(S.isExam ? "warning" : "success");
+  haptic(S.isExam ? "warning" : "success");
 }
 
 // отправка компактного результата в бота
@@ -479,11 +528,13 @@ document.getElementById("startTopic").onclick = ()=>{
 };
 function toMenu(){
   if (S && S.timerH) clearInterval(S.timerH);
+  clearSession();   // явный выход в меню = отказ от теста, сохранять нечего
   S = null;
   hide("quiz"); hide("result"); show("home");
   document.getElementById("topicCard").classList.add("hidden");
   document.getElementById("feedback").innerHTML = "";
   document.getElementById("review").innerHTML = "";
+  renderResumeBanner();   // вдруг есть другая сохранённая сессия — покажем снова
 }
 document.getElementById("againBtn").onclick = toMenu;
 
@@ -494,6 +545,43 @@ window.__navBack = () => {
   if (inQuiz || inResult){ toMenu(); return true; }
   return false;
 };
+
+// ── восстановление незавершённого теста ──
+function resumeQuiz(){
+  const s = loadSession();
+  if (!s) return;
+  S = { mode:s.mode, isExam:s.isExam, queue:s.queue, idx:s.idx,
+        order:s.order, answers:s.answers, locked:s.locked,
+        startTs:s.startTs, timerH:null };
+  hide("home"); hide("result"); show("quiz");
+  document.getElementById("timer").classList.toggle("hidden", !s.isExam);
+  document.getElementById("examNav").classList.toggle("hidden", !s.isExam);
+  document.getElementById("liveScore").textContent = s.isExam ? ""
+    : `✔ ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
+  if (s.isExam){ tickTimer(); S.timerH = setInterval(tickTimer, 1000); }
+  renderQ();
+}
+
+const MODE_LABEL = m => m==="exam" ? "Экзамен"
+  : m==="random" ? "Тренировка" : m && m.startsWith("topic:") ? "Тема: "+m.slice(6) : "Тест";
+
+function renderResumeBanner(){
+  const s = loadSession();
+  const card = document.getElementById("resumeCard");
+  if (!s){ card.classList.add("hidden"); return; }
+  const done = s.answers.filter(a => a !== null).length;
+  document.getElementById("resumeInfo").textContent =
+    `${MODE_LABEL(s.mode)} · ${done}/${s.ids.length}`;
+  card.classList.remove("hidden");
+}
+document.getElementById("resumeBtn").onclick = resumeQuiz;
+document.getElementById("resumeDrop").onclick = () => {
+  clearSession();
+  document.getElementById("resumeCard").classList.add("hidden");
+};
+
+// при открытии страницы — предложить продолжить, если есть сессия
+renderResumeBanner();
 </script>
 </body>
 </html>

@@ -130,23 +130,20 @@ def _progress_path(user_id: int) -> Path:
     return PROGRESS_DIR / f"{user_id}.json"
 
 
-# Блокировки на пользователя: гарантируют, что read-modify-write прогресса
-# не перемешается при одновременных апдейтах одного юзера (поллинг aiogram
-# обрабатывает апдейты как параллельные задачи). Без этого — гонки и потеря
-# данных при нагрузке. RLock — на случай вложенных вызовов внутри одной мутации.
-import threading  # noqa: E402
+import contextlib  # noqa: E402
 
-_user_locks: dict[int, threading.RLock] = {}
-_locks_guard = threading.Lock()
-
-
-def _lock_for(user_id: int) -> threading.RLock:
-    with _locks_guard:
-        lk = _user_locks.get(user_id)
-        if lk is None:
-            lk = threading.RLock()
-            _user_locks[user_id] = lk
-        return lk
+# Атомарность read-modify-write прогресса обеспечивает САМ event-loop: aiogram
+# работает в одном потоке, а каждая мутация (load → modify → save ниже) полностью
+# синхронна — внутри неё нет ни одного await, поэтому loop не переключается на
+# другую корутину до завершения save_progress. Значит гонок между апдейтами
+# одного юзера нет и отдельный замок не нужен (раньше тут был threading.RLock,
+# который в однопоточном asyncio всё равно был no-op).
+#
+# Известный компромисс: файловый I/O синхронный и на время записи блокирует loop.
+# Для учебной нагрузки приемлемо; переход на БД/aiofiles — в техдолге (см. README).
+# _locked() оставлен как заглушка-контекст на случай, если мутации станут async.
+def _lock_for(user_id: int):  # noqa: ARG001 - сигнатура сохранена для совместимости
+    return contextlib.nullcontext()
 
 
 def load_progress(user_id: int) -> dict:
@@ -155,6 +152,10 @@ def load_progress(user_id: int) -> dict:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
+            # Битый/недописанный файл: не теряем молча — сохраняем копию для
+            # ручного разбора, затем стартуем с чистого прогресса.
+            with contextlib.suppress(OSError):
+                path.replace(path.with_suffix(".corrupt.json"))
             data = {}
     else:
         data = {}
@@ -169,7 +170,9 @@ def save_progress(user_id: int, data: dict) -> None:
     # Атомарная запись: пишем во временный файл и переименовываем. Так файл
     # прогресса никогда не остаётся «наполовину записанным» при сбое/нагрузке.
     path = _progress_path(user_id)
-    tmp = path.with_suffix(f".{os.getpid()}.{threading.get_ident()}.tmp")
+    # Уникальный временный файл (pid + случайный хвост) на случай параллельных
+    # процессов; в одном процессе loop однопоточный, так что коллизий нет.
+    tmp = path.with_suffix(f".{os.getpid()}.{random.randrange(1 << 32):08x}.tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     os.replace(tmp, path)
 
@@ -196,6 +199,10 @@ def pick_unseen(user_id: int, pool: list[dict], count: int = 1) -> list[dict]:
 
 
 def mark_seen(user_id: int, qid: str) -> None:
+    # Принимаем только реальные id из банка: иначе подделанный payload из WebApp
+    # мог бы бесконечно раздувать прогресс-файл (защита от флуда мусором).
+    if qid not in QUESTIONS_BY_ID:
+        return
     with _lock_for(user_id):
         prog = load_progress(user_id)
         if qid not in prog["seen"]:
@@ -204,6 +211,8 @@ def mark_seen(user_id: int, qid: str) -> None:
 
 
 def record_answer(user_id: int, qid: str, correct: bool) -> None:
+    if qid not in QUESTIONS_BY_ID:  # игнорируем несуществующие id (см. mark_seen)
+        return
     with _lock_for(user_id):
         prog = load_progress(user_id)
         prog["stats"]["answered"] += 1

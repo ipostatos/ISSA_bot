@@ -11,6 +11,26 @@
 (function () {
   "use strict";
   var tg = window.Telegram && window.Telegram.WebApp;
+
+  // Безопасный тактильный отклик: на старых/альтернативных клиентах HapticFeedback
+  // или его методы могут отсутствовать. Любой сбой глушим, чтобы не ронять UI.
+  // type: "success" | "warning" | "error" → notificationOccurred,
+  //       "light" | "medium" | "rigid" | "heavy" | "soft" → impactOccurred,
+  //       "select" → selectionChanged.
+  window.haptic = function (type) {
+    try {
+      var h = tg && tg.HapticFeedback;
+      if (!h) return;
+      if (type === "success" || type === "warning" || type === "error") {
+        h.notificationOccurred && h.notificationOccurred(type);
+      } else if (type === "select") {
+        h.selectionChanged && h.selectionChanged();
+      } else {
+        h.impactOccurred && h.impactOccurred(type || "light");
+      }
+    } catch (e) {}
+  };
+
   if (!tg) return;
   try { tg.ready(); tg.expand(); } catch (e) {}
 

@@ -16,6 +16,19 @@
     --accent-text: var(--tg-theme-button-text-color, #fff);
     --border: rgba(255,255,255,.10);
   }
+  /* Светлый системный режим: если Telegram НЕ передал тему (--tg-theme-*),
+     берём светлый fallback, а не тёмный (иначе белый текст на белом фоне). */
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg: var(--tg-theme-bg-color, #ffffff);
+      --text: var(--tg-theme-text-color, #1a1a1a);
+      --hint: var(--tg-theme-hint-color, #7d8a99);
+      --card: var(--tg-theme-secondary-bg-color, #f1f3f5);
+      --accent: var(--tg-theme-button-color, #3390ec);
+      --accent-text: var(--tg-theme-button-text-color, #ffffff);
+      --border: rgba(0,0,0,.10);
+    }
+  }
   *{box-sizing:border-box}
   body{
     margin:0; padding:16px;
@@ -298,7 +311,7 @@ document.getElementById("go").addEventListener("click", () => {
   document.getElementById("steps").textContent = res.steps.map(s => s.text).join("\n");
   document.getElementById("rule").textContent = ruleHint(res.direction);
   document.getElementById("resultCard").classList.remove("hidden");
-  if (tg) tg.HapticFeedback?.notificationOccurred?.("success");
+  haptic("success");
 });
 
 syncFields();
@@ -381,7 +394,7 @@ document.getElementById("mGo").addEventListener("click", () => {
   document.getElementById("mAnswer").textContent = answer;
   document.getElementById("mSteps").textContent = steps;
   document.getElementById("mResultCard").classList.remove("hidden");
-  if (tg) tg.HapticFeedback?.notificationOccurred?.("success");
+  haptic("success");
 });
 
 syncMarine();
@@ -450,7 +463,7 @@ document.getElementById("tGo").addEventListener("click", () => {
   document.getElementById("tSteps").textContent = lines.join("\n");
   document.getElementById("tResultCard").classList.remove("hidden");
   drawTide(hw, lw, h);
-  if (tg) tg.HapticFeedback?.notificationOccurred?.("success");
+  haptic("success");
 });
 
 // ── переключение вкладок ──
