@@ -36,7 +36,10 @@
   /* область прокрутки страниц */
   #pages{position:absolute; inset:0 0 56px 0; overflow:auto; -webkit-overflow-scrolling:touch;
     padding:10px; text-align:center}
-  #pages canvas{display:block; margin:0 auto 10px; max-width:100%; height:auto;
+  /* НЕ ставим max-width:100% — иначе увеличенный canvas обрезается до ширины
+     контейнера и зум-плюс «не работает». Ширину canvas задаёт JS; при зуме
+     >100% появляется горизонтальный скролл (#pages overflow:auto). */
+  #pages canvas{display:block; margin:0 auto 10px;
     background:#fff; border-radius:4px; box-shadow:0 1px 6px rgba(0,0,0,.4)}
   /* нижняя панель управления */
   .toolbar{position:absolute; left:0; right:0; bottom:0; height:56px; display:flex;
@@ -160,10 +163,12 @@ function startReader(){
   function buildPlaceholders(){
     const box = $("pages");
     box.innerHTML = "";
+    const w = box.clientWidth - 20;   // ширина под заглушку = ширина контейнера
     for (let i = 1; i <= numPages; i++){
       const c = document.createElement("canvas");
       c.dataset.page = i;
-      // примерная высота, чтобы скролл имел длину до фактической отрисовки
+      // примерные размеры до фактической отрисовки, чтобы скролл имел длину
+      c.style.width = w + "px";
       c.style.height = "60vh";
       canvases[i] = c;
       box.appendChild(c);
@@ -183,9 +188,9 @@ function startReader(){
       const eff = fit * scale * dpr;
       const vp = page.getViewport({ scale: eff });
       const c = canvases[i];
-      c.width = vp.width; c.height = vp.height;
-      c.style.width = (vp.width / dpr) + "px";
-      c.style.height = "auto";
+      c.width = vp.width; c.height = vp.height;            // буфер в физ. пикселях
+      c.style.width  = (vp.width / dpr) + "px";            // CSS-размер с учётом DPR
+      c.style.height = (vp.height / dpr) + "px";
       const ctx = c.getContext("2d", { alpha:false });
       page.render({ canvasContext: ctx, viewport: vp });
     }).catch(()=>{ rendered.delete(i); });
@@ -205,9 +210,21 @@ function startReader(){
     updateInfo();
   }
 
+  // Перерисовка при смене зума. Сохраняем относительную позицию скролла,
+  // принудительно перерисовываем уже показанные страницы (не полагаясь на
+  // расчёт видимости — после смены масштаба координаты ещё старые), затем
+  // дорисовываем остальные видимые.
   function reRenderAll(){
+    const box = $("pages");
+    const ratio = box.scrollHeight ? box.scrollTop / box.scrollHeight : 0;
+    const wasRendered = [...rendered];
     rendered.clear();
-    renderVisible();
+    wasRendered.forEach(renderPage);   // перерисовать видимые сейчас в новом масштабе
+    // после перерисовки восстановим позицию и дорисуем то, что попало в кадр
+    requestAnimationFrame(() => {
+      box.scrollTop = ratio * box.scrollHeight;
+      renderVisible();
+    });
   }
 
   function updateInfo(){
