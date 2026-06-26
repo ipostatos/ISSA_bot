@@ -100,6 +100,7 @@ jobs:
           node webapp/_marine_check.mjs
           node webapp/_tide_check.mjs
           node webapp/_quiz_check.mjs
+          node webapp/_srs_check.mjs
           node webapp/_konspekt_check.mjs
           node webapp/_tasks_check.mjs
           node webapp/_glossary_check.mjs

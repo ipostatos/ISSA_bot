@@ -40,6 +40,7 @@ cp -f "$SRC/about.html"      "$DST/about.html"    # экран «О банке»
 cp -f "$SRC/reader.html"     "$DST/reader.html"   # встроенный PDF-просмотрщик
 cp -f "$SRC/nav.js"          "$DST/nav.js"        # общая навигация (BackButton)
 cp -f "$SRC/lightbox.js"     "$DST/lightbox.js"   # зум картинок
+cp -f "$SRC/srs.js"          "$DST/srs.js"        # интервальное повторение (SRS)
 cp -f "$SRC/theme.css"       "$DST/theme.css"     # единая дизайн-система
 cp -f "$SRC/quiz_data.js"     "$DST/quiz_data.js"
 cp -f "$SRC/konspekt_data.js" "$DST/konspekt_data.js"

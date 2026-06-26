@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js" data-home="true"></script>
+<script src="quiz_data.js"></script>
+<script src="srs.js"></script>
 <style>
   /* — дашборд: специфика главного экрана — */
   .hero{ display:flex; align-items:baseline; gap:var(--sp-2); margin-bottom:var(--sp-1) }
@@ -44,13 +46,13 @@
   <div class="hero"><span class="logo">⚓</span><h1>ISSA Trainer</h1></div>
   <p class="sub">Подготовка к экзамену Inshore Skipper + SRC</p>
 
-  <!-- ПРИОРИТЕТ: что делать прямо сейчас -->
+  <!-- ПРИОРИТЕТ: что делать прямо сейчас (динамически: повтор или старт) -->
   <div class="next">
-    <div class="label">С чего начать</div>
-    <div class="big">Тренировка и экзамен</div>
-    <div class="hintline">525 вопросов по 15 темам · перемешанные варианты · разбор и источники</div>
+    <div class="label" id="nextLabel">С чего начать</div>
+    <div class="big" id="nextTitle">Тренировка и экзамен</div>
+    <div class="hintline" id="nextHint">525 вопросов · перемешанные варианты · разбор и источники</div>
     <div class="actions">
-      <a class="btn" href="quiz.html">🎓 Начать</a>
+      <a class="btn" id="nextBtn" href="quiz.html">🎓 Начать</a>
       <a class="btn ghost" href="konspekt.html">📖 Теория</a>
     </div>
   </div>
@@ -115,5 +117,36 @@
 
   <p class="foot">Учебный тренажёр. Не является официальным материалом ISSA
     и не содержит экзаменационных ключей.</p>
+
+<script>
+"use strict";
+// Оживляем блок «С чего начать»: если есть вопросы к повтору по SRS —
+// предлагаем повторение приоритетом, иначе обычный старт. Всё на устройстве.
+(function(){
+  const D = window.QUIZ_DATA;
+  const total = D && D.meta ? D.meta.total : (D && D.questions ? D.questions.length : 0);
+  if (D && D.questions) document.getElementById("nextHint").textContent =
+    `${total} вопросов · перемешанные варианты · разбор и источники`;
+  if (!window.SRS || !D || !D.questions) return;
+
+  const ids = D.questions.map(q=>q.id);
+  const due = SRS.dueCount(ids);
+  const st = SRS.stats(ids);
+  if (due > 0 && st.started > 0){
+    // есть что повторять — делаем это главным действием
+    document.getElementById("nextLabel").textContent = "Пора повторить";
+    document.getElementById("nextTitle").textContent = `🔁 ${due} вопрос(ов) к повторению`;
+    document.getElementById("nextHint").textContent =
+      `Интервальное повторение · закреплено ${st.learned} из ${total}`;
+    const b = document.getElementById("nextBtn");
+    b.textContent = "🔁 Повторить";
+    b.href = "quiz.html";   // на странице тестов кнопка «Повторить сегодня» уже первая
+  } else if (st.started > 0){
+    document.getElementById("nextLabel").textContent = "Так держать";
+    document.getElementById("nextHint").textContent =
+      `На сегодня всё повторено · закреплено ${st.learned} из ${total}`;
+  }
+})();
+</script>
 </body>
 </html>

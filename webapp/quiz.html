@@ -8,6 +8,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
 <script src="quiz_data.js"></script>
+<script src="srs.js"></script>
 <style>
   :root{
     --bg: var(--tg-theme-bg-color, #17212b);
@@ -143,12 +144,14 @@
     <button class="next ghost" id="resumeDrop" style="flex:1; min-width:130px; margin:0">🗑 Начать заново</button>
   </div>
 
-  <button class="big" id="startExam">📝 Экзамен
-    <small id="examSub">100 вопросов · таймер · проходной балл</small></button>
+  <button class="big" id="startReview">🔁 Повторить сегодня
+    <small id="reviewSub">вопросы к повторению по расписанию</small></button>
   <button class="big ghost" id="startRandom">🎯 Тренировка — случайные
     <small>Вопросы вперемешку, с пояснениями</small></button>
   <button class="big ghost" id="startTopic">📚 Тренировка по темам
     <small>Выбрать тему</small></button>
+  <button class="big ghost" id="startExam">📝 Экзамен
+    <small id="examSub">100 вопросов · таймер · проходной балл</small></button>
 
   <div class="card hidden" id="topicCard">
     <div class="topics" id="topics"></div>
@@ -225,6 +228,18 @@ document.getElementById("examSub").textContent =
 // ── утилиты ──
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
 const byId = Object.fromEntries(ALL.map(q=>[q.id,q]));
+
+// подпись кнопки «Повторить сегодня»: сколько вопросов созрело к повтору
+function updateReviewLabel(){
+  const btn = document.getElementById("startReview");
+  const sub = document.getElementById("reviewSub");
+  if (!window.SRS){ btn.classList.add("hidden"); return; }
+  const due = SRS.dueCount(ALL.map(q=>q.id));
+  const learned = SRS.stats(ALL.map(q=>q.id)).learned;
+  sub.textContent = due
+    ? `${due} вопрос(ов) к повторению · закреплено ${learned}`
+    : `на сегодня всё повторено · закреплено ${learned}`;
+}
 const show = id => document.getElementById(id).classList.remove("hidden");
 const hide = id => document.getElementById(id).classList.add("hidden");
 const esc = s => String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
@@ -415,7 +430,11 @@ function chooseExam(i){
 function answerTraining(i){
   S.answers[S.idx] = i;
   S.locked[S.idx] = true;
-  const ok = i === S.queue[S.idx].answer;
+  const q = S.queue[S.idx];
+  const ok = i === q.answer;
+  // SRS: фиксируем результат для интервального повторения (только в тренировке —
+  // в экзамене ответы можно менять, грейдить нечего до завершения).
+  if (window.SRS) SRS.grade(q.id, ok);
   document.getElementById("liveScore").textContent =
     `✔ ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
   haptic(ok ? "light" : "rigid");
@@ -552,13 +571,43 @@ document.getElementById("sendBtn").onclick = ()=>{
 };
 
 // ── навигация по меню ──
+const ALL_IDS = ALL.map(q=>q.id);
+
 document.getElementById("startExam").onclick = ()=>{
   const size = Math.min(DATA.examSize, ALL.length);
   startQuiz("exam", true, shuffle(ALL).slice(0, size));
 };
+
+// «Повторить сегодня» — интервальное повторение (SRS): берём вопросы, которым
+// пора, в правильном порядке (просроченные/слабые раньше).
+document.getElementById("startReview").onclick = ()=>{
+  if (!window.SRS) return;
+  const dueIds = SRS.pickDue(ALL_IDS, 20);
+  if (!dueIds.length){
+    alert("На сегодня всё повторено 👍\nЗагляни позже или потренируйся в других режимах.");
+    return;
+  }
+  const queue = dueIds.map(id=>byId[id]).filter(Boolean);
+  startQuiz("review", false, queue);
+};
+
+// Случайная тренировка — теперь адаптивная: сначала то, что пора повторить,
+// затем добиваем новыми, чтобы набрать пул.
 document.getElementById("startRandom").onclick = ()=>{
   const n = Math.min(20, ALL.length);
-  startQuiz("random", false, shuffle(ALL).slice(0, n));
+  let queue;
+  if (window.SRS){
+    const due = SRS.pickDue(ALL_IDS, n).map(id=>byId[id]).filter(Boolean);
+    if (due.length >= n) queue = due;
+    else {
+      const have = new Set(due.map(q=>q.id));
+      const rest = shuffle(ALL.filter(q=>!have.has(q.id))).slice(0, n - due.length);
+      queue = due.concat(rest);
+    }
+  } else {
+    queue = shuffle(ALL).slice(0, n);
+  }
+  startQuiz("random", false, queue);
 };
 document.getElementById("startTopic").onclick = ()=>{
   const card = document.getElementById("topicCard");
@@ -585,6 +634,7 @@ function toMenu(){
   document.getElementById("feedback").innerHTML = "";
   document.getElementById("review").innerHTML = "";
   renderResumeBanner();   // вдруг есть другая сохранённая сессия — покажем снова
+  updateReviewLabel();    // счётчик «Повторить сегодня» мог измениться
 }
 document.getElementById("againBtn").onclick = toMenu;
 
@@ -632,6 +682,7 @@ document.getElementById("resumeDrop").onclick = () => {
 
 // при открытии страницы — предложить продолжить, если есть сессия
 renderResumeBanner();
+updateReviewLabel();   // показать, сколько вопросов к повтору
 </script>
 </body>
 </html>
