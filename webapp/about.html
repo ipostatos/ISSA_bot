@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>О банке вопросов</title>
+<link rel="stylesheet" href="theme.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="nav.js"></script>
+<script src="quiz_data.js"></script>
+<style>
+  .stat-row{ display:flex; justify-content:space-between; align-items:center;
+    padding:9px 0; border-bottom:1px solid var(--border); font-size:var(--fs-body) }
+  .stat-row:last-child{ border-bottom:none }
+  .stat-row .v{ font-weight:700; font-variant-numeric:tabular-nums }
+  .big-num{ font-size:34px; font-weight:800; text-align:center; margin:4px 0 0 }
+  .big-cap{ text-align:center; color:var(--hint); font-size:var(--fs-sm); margin-bottom:4px }
+  .tbar{ display:flex; align-items:center; gap:8px; font-size:var(--fs-sm); margin-bottom:8px }
+  .tbar .name{ flex:0 0 40%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .tbar .v{ flex:0 0 auto; color:var(--hint); min-width:34px; text-align:right; font-variant-numeric:tabular-nums }
+  .difrow{ display:flex; gap:8px; margin-top:6px }
+  .difrow .pill{ flex:1; text-align:center; padding:10px; border-radius:var(--r-md);
+    border:1px solid var(--border); font-size:var(--fs-sm) }
+  .difrow .pill .n{ display:block; font-size:20px; font-weight:800; margin-top:2px }
+  .ok-i{ color:var(--ok) } .li{ display:flex; gap:8px; margin:6px 0; font-size:var(--fs-sm); line-height:1.5 }
+  .li .b{ color:var(--ok); flex:0 0 auto }
+</style>
+</head>
+<body>
+  <h1>О банке вопросов</h1>
+  <p class="sub">Прозрачно: из чего собран и как проверен</p>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="big-num" id="total">—</div>
+    <div class="big-cap">проверенных вопросов · ревизия <span id="rev">—</span></div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="h2">Что выверено</div>
+    <div class="li"><span class="b">✓</span><span>У каждого вопроса <b id="cExpl">—</b> — пояснение к правильному ответу.</span></div>
+    <div class="li"><span class="b">✓</span><span>У <b id="cRef">—</b> указан <b>источник</b> (правило МППСС / раздел учебника ISSA).</span></div>
+    <div class="li"><span class="b">✓</span><span>У <b id="cWhy">—</b> — разбор <b>каждого</b> варианта: почему он верен или неверен.</span></div>
+    <div class="li"><span class="b">✓</span><span>Каждый вопрос прошёл <b>независимую перепроверку</b> (корректность ответа, источника и разбора).</span></div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="h2">По сложности</div>
+    <div class="difrow">
+      <div class="pill"><span>Лёгкие</span><span class="n ok-i" id="d1">—</span></div>
+      <div class="pill"><span>Средние</span><span class="n" id="d2" style="color:#e0a13a">—</span></div>
+      <div class="pill"><span>Сложные</span><span class="n" id="d3" style="color:var(--bad)">—</span></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="h2">По темам</div>
+    <div id="topics"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="h2">Источники</div>
+    <div class="muted" style="font-size:13px; line-height:1.6">
+      Вопросы составлены по открытым первоисточникам:
+      <b>МППСС-72 (COLREG)</b>, система ограждения <b>IALA MBS</b>,
+      процедуры <b>VHF / GMDSS (SRC)</b>, учебник ISSA «Шкипер прибрежного плавания»
+      и общепринятая навигационная практика. Полные тексты — в разделе
+      <a href="book.html" style="color:var(--accent)">📕 Библиотека</a>,
+      теория — в <a href="konspekt.html" style="color:var(--accent)">📖 Конспекте</a>.
+    </div>
+  </div>
+
+  <p class="foot">Это вспомогательный учебный материал для самостоятельной
+    подготовки. Банк <b>не содержит экзаменационных ключей</b> и
+    <b>не является официальным материалом ISSA</b> или какой-либо школы.</p>
+
+  <a class="btn" href="quiz.html" style="margin-top:8px">🎓 К тренировке</a>
+
+<script>
+"use strict";
+const D = (window.QUIZ_DATA && window.QUIZ_DATA.meta) || null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+if (!D){
+  document.body.innerHTML = '<div class="state">Не удалось загрузить данные банка.<br>'
+    + 'Запусти на сервере: <code>bash deploy/update_webapp.sh</code></div>';
+} else {
+  $("total").textContent = D.total;
+  $("rev").textContent = D.revision || "—";
+  $("cExpl").textContent = D.withExpl + " из " + D.total;
+  $("cRef").textContent  = D.withRef + " из " + D.total;
+  $("cWhy").textContent  = D.withWhy + " из " + D.total;
+  $("d1").textContent = D.byDiff["1"] || 0;
+  $("d2").textContent = D.byDiff["2"] || 0;
+  $("d3").textContent = D.byDiff["3"] || 0;
+
+  const max = Math.max(1, ...D.byTopic.map(t => t.n));
+  $("topics").innerHTML = D.byTopic.map(t => `
+    <div class="tbar">
+      <span class="name" title="${esc(t.topic)}">${esc(t.topic)}</span>
+      <span class="meter" style="flex:1"><i style="width:${Math.round(t.n/max*100)}%"></i></span>
+      <span class="v">${t.n}</span>
+    </div>`).join("");
+}
+</script>
+</body>
+</html>

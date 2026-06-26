@@ -52,8 +52,13 @@
   .timer{font-variant-numeric:tabular-nums}
   .prog{height:6px; background:var(--border); border-radius:4px; overflow:hidden; margin-bottom:14px}
   .prog>i{display:block; height:100%; width:0; background:var(--accent); transition:width .25s}
+  .tagrow{display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:10px}
   .topic-tag{display:inline-block; font-size:11px; color:var(--hint); background:var(--bg);
-    border:1px solid var(--border); border-radius:20px; padding:2px 9px; margin-bottom:10px}
+    border:1px solid var(--border); border-radius:20px; padding:2px 9px}
+  /* чип сложности */
+  .diff{display:inline-block; font-size:11px; border-radius:20px; padding:2px 9px;
+    border:1px solid var(--border)}
+  .diff.d1{color:var(--ok)} .diff.d2{color:#e0a13a} .diff.d3{color:var(--bad)}
   .q{font-size:16px; line-height:1.45; margin:0 0 14px; font-weight:600}
   .opt{display:block; width:100%; text-align:left; padding:13px; margin-bottom:9px; font-size:15px;
     border:1px solid var(--border); background:var(--bg); color:var(--text); border-radius:11px; cursor:pointer}
@@ -61,6 +66,12 @@
   .opt.correct{border-color:var(--ok); background:rgba(76,175,114,.16)}
   .opt.wrong{border-color:var(--bad); background:rgba(229,84,75,.16)}
   .opt[disabled]{cursor:default; opacity:.95}
+  /* разбор под вариантом (почему верен/неверен) — после ответа */
+  .opt .why{display:block; font-size:12px; line-height:1.4; margin-top:6px; font-weight:400;
+    color:var(--hint)}
+  .opt.correct .why{color:var(--ok)} .opt.wrong .why{color:var(--bad)}
+  /* источник под пояснением */
+  .ref{margin-top:8px; font-size:12px; color:var(--hint)}
   .expl{font-size:13px; color:var(--hint); line-height:1.5; margin:6px 0 12px; padding:10px;
     background:var(--bg); border-radius:10px; border:1px solid var(--border)}
   /* источник-лампочка (только тренировка) */
@@ -153,7 +164,10 @@
     <span id="liveScore"></span>
   </div>
   <div class="prog"><i id="progBar"></i></div>
-  <span class="topic-tag" id="qtopic"></span>
+  <div class="tagrow">
+    <span class="topic-tag" id="qtopic"></span>
+    <span class="diff hidden" id="qdiff"></span>
+  </div>
   <p class="q" id="qtext"></p>
   <div id="opts"></div>
   <div class="expl hidden" id="expl"></div>
@@ -278,6 +292,13 @@ function renderQ(){
   document.getElementById("counter").textContent = `Вопрос ${S.idx+1} / ${S.queue.length}`;
   document.getElementById("progBar").style.width = `${(answeredCount()/S.queue.length)*100}%`;
   document.getElementById("qtopic").textContent = q.topic;
+  // чип сложности (если размечена)
+  const dEl = document.getElementById("qdiff");
+  if (q.diff){
+    const names = {1:"лёгкий", 2:"средний", 3:"сложный"};
+    dEl.textContent = names[q.diff] || "";
+    dEl.className = "diff d" + q.diff;
+  } else { dEl.className = "diff hidden"; }
   document.getElementById("qtext").innerHTML = esc(q.q);
   hide("expl");
   hide("src");
@@ -299,6 +320,13 @@ function renderQ(){
         b.disabled = true;
         if (orig === q.answer) b.classList.add("correct");
         if (orig === sel && sel !== q.answer) b.classList.add("wrong");
+        // разбор: почему этот вариант верен/неверен (только у выбранного и правильного,
+        // чтобы не перегружать — но если хочется по всем, убрать условие)
+        if (q.why && (orig === q.answer || orig === sel)){
+          const w = document.createElement("small");
+          w.className = "why"; w.textContent = q.why[orig] || "";
+          if (w.textContent) b.appendChild(w);
+        }
       } else {
         b.onclick = ()=> answerTraining(orig);
       }
@@ -315,9 +343,11 @@ function renderQ(){
       // после ответа — пояснение + кнопка Далее
       hide("trainSkip");
       const ok = sel === q.answer;
-      if (q.expl){
+      if (q.expl || q.ref){
         const e = document.getElementById("expl");
-        e.innerHTML = (ok ? "✅ Верно. " : "❌ Неверно. ") + esc(q.expl);
+        let html = (ok ? "✅ Верно. " : "❌ Неверно. ") + esc(q.expl || "");
+        if (q.ref) html += `<div class="ref">📘 Источник: ${esc(q.ref)}</div>`;
+        e.innerHTML = html;
         show("expl");
       }
       // 💡 источник: где изучить тему (конспект + библиотека). Только в тренировке.
