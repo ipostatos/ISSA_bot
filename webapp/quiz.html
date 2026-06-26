@@ -9,6 +9,7 @@
 <script src="nav.js"></script>
 <script src="quiz_data.js"></script>
 <script src="srs.js"></script>
+<script src="progress.js"></script>
 <style>
   :root{
     --bg: var(--tg-theme-bg-color, #17212b);
@@ -73,6 +74,13 @@
   .opt.correct .why{color:var(--ok)} .opt.wrong .why{color:var(--bad)}
   /* источник под пояснением */
   .ref{margin-top:8px; font-size:12px; color:var(--hint)}
+  /* сертификат самопроверки (после сдачи экзамена) */
+  .cert{background:var(--card); border:2px solid var(--ok); border-radius:16px;
+    padding:18px 16px; text-align:center; margin-bottom:12px}
+  .cert .seal{font-size:40px; line-height:1}
+  .cert .ct{font-size:17px; font-weight:800; margin:6px 0 2px}
+  .cert .cs{color:var(--hint); font-size:13px; line-height:1.5}
+  .cert .cnote{color:var(--hint); font-size:11px; margin-top:8px}
   .expl{font-size:13px; color:var(--hint); line-height:1.5; margin:6px 0 12px; padding:10px;
     background:var(--bg); border-radius:10px; border:1px solid var(--border)}
   /* источник-лампочка (только тренировка) */
@@ -202,6 +210,7 @@
     <div class="verdict" id="rVerdict"></div>
     <button class="next" id="sendBtn">📤 Сохранить результат в боте</button>
   </div>
+  <div id="cert" class="hidden"></div>
   <div id="feedback"></div>
   <div class="review" id="review"></div>
   <button class="big ghost" id="againBtn">↩️ В меню</button>
@@ -435,6 +444,7 @@ function answerTraining(i){
   // SRS: фиксируем результат для интервального повторения (только в тренировке —
   // в экзамене ответы можно менять, грейдить нечего до завершения).
   if (window.SRS) SRS.grade(q.id, ok);
+  if (window.Progress) Progress.recordAnswer();   // дневная цель + streak
   document.getElementById("liveScore").textContent =
     `✔ ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
   haptic(ok ? "light" : "rigid");
@@ -521,10 +531,24 @@ function finish(){
   document.getElementById("rPct").textContent = `${pct}%${tstr}`;
 
   const v = document.getElementById("rVerdict");
+  const cert = document.getElementById("cert");
+  cert.classList.add("hidden");
   if (S.isExam){
     const passed = pct >= DATA.passPercent;
     v.textContent = passed ? "✅ СДАНО" : "❌ НЕ СДАНО";
     v.className = "verdict " + (passed ? "pass" : "fail");
+    if (passed){
+      // сертификат самопроверки — психологическая «финишная черта» (не официальный)
+      const d = new Date();
+      const date = `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${d.getFullYear()}`;
+      cert.innerHTML = `<div class="cert">
+        <div class="seal">🎖️</div>
+        <div class="ct">Готов к экзамену ISSA Inshore Skipper</div>
+        <div class="cs">Пробный экзамен пройден на <b>${pct}%</b> (порог ${DATA.passPercent}%) · ${date}</div>
+        <div class="cnote">Сертификат самопроверки. Не является официальным документом ISSA.</div>
+      </div>`;
+      cert.classList.remove("hidden");
+    }
   } else {
     v.textContent = "🎯 Тренировка завершена";
     v.className = "verdict";
@@ -633,6 +657,7 @@ function toMenu(){
   document.getElementById("topicCard").classList.add("hidden");
   document.getElementById("feedback").innerHTML = "";
   document.getElementById("review").innerHTML = "";
+  document.getElementById("cert").classList.add("hidden");
   renderResumeBanner();   // вдруг есть другая сохранённая сессия — покажем снова
   updateReviewLabel();    // счётчик «Повторить сегодня» мог измениться
 }

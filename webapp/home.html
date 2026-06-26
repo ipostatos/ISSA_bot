@@ -9,6 +9,7 @@
 <script src="nav.js" data-home="true"></script>
 <script src="quiz_data.js"></script>
 <script src="srs.js"></script>
+<script src="progress.js"></script>
 <style>
   /* — дашборд: специфика главного экрана — */
   .hero{ display:flex; align-items:baseline; gap:var(--sp-2); margin-bottom:var(--sp-1) }
@@ -55,6 +56,27 @@
       <a class="btn" id="nextBtn" href="quiz.html">🎓 Начать</a>
       <a class="btn ghost" href="konspekt.html">📖 Теория</a>
     </div>
+  </div>
+
+  <!-- ГОТОВНОСТЬ + дневная цель + серия (видны после первой активности) -->
+  <div class="card hidden" id="readyCard" style="margin-bottom:14px">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px">
+      <div class="h2" style="margin:0">Готовность к экзамену</div>
+      <div style="font-weight:800" id="readyPct">—</div>
+    </div>
+    <div class="meter" id="readyMeter"><i style="width:0"></i></div>
+    <div class="muted" style="font-size:13px; margin-top:6px" id="readyVerdict"></div>
+    <div style="display:flex; gap:10px; margin-top:12px">
+      <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
+        <div style="font-size:11px; color:var(--hint)">Сегодня</div>
+        <div style="font-weight:800; font-size:18px" id="goalToday">0/0</div>
+      </div>
+      <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
+        <div style="font-size:11px; color:var(--hint)">Серия</div>
+        <div style="font-weight:800; font-size:18px" id="streakVal">0 🔥</div>
+      </div>
+    </div>
+    <div class="muted" style="font-size:12px; margin-top:8px" id="weakLine"></div>
   </div>
 
   <!-- РАЗДЕЛЫ -->
@@ -145,6 +167,28 @@
     document.getElementById("nextLabel").textContent = "Так держать";
     document.getElementById("nextHint").textContent =
       `На сегодня всё повторено · закреплено ${st.learned} из ${total}`;
+  }
+
+  // ── карточка «Готовность» (показываем только после первой активности) ──
+  if (window.Progress && st.started > 0){
+    const boxOf = id => { const s = SRS.state(id); return s ? s.box : null; };
+    const r = Progress.readiness(D.questions, boxOf);
+    const goal = Progress.getGoal();
+    const todayN = Progress.todayCount();
+    const streak = Progress.streakInfo();
+
+    const card = document.getElementById("readyCard");
+    document.getElementById("readyPct").textContent = r.percent + "%";
+    const meter = document.getElementById("readyMeter");
+    meter.querySelector("i").style.width = r.percent + "%";
+    meter.className = "meter " + (r.percent>=80?"ok":r.percent>=50?"warn":"bad");
+    document.getElementById("readyVerdict").textContent = r.verdict;
+    document.getElementById("goalToday").textContent = `${todayN}/${goal}`;
+    document.getElementById("streakVal").textContent = `${streak.streak} 🔥`;
+    const weak = r.topics.filter(t=>t.pct<60).slice(0,3).map(t=>t.topic);
+    document.getElementById("weakLine").textContent =
+      weak.length ? "Слабее всего: " + weak.join(", ") : "Слабых тем нет — отличная база!";
+    card.classList.remove("hidden");
   }
 })();
 </script>
