@@ -4,104 +4,107 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>ISSA Trainer</title>
+<link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js" data-home="true"></script>
 <style>
-  :root{
-    --bg: var(--tg-theme-bg-color, #17212b);
-    --text: var(--tg-theme-text-color, #fff);
-    --hint: var(--tg-theme-hint-color, #8a9aa9);
-    --card: var(--tg-theme-secondary-bg-color, #232e3c);
-    --accent: var(--tg-theme-button-color, #50a8eb);
-    --accent-text: var(--tg-theme-button-text-color, #fff);
-    --border: rgba(255,255,255,.10);
-  }
-  /* Светлый системный режим: если Telegram НЕ передал тему (--tg-theme-*),
-     берём светлый fallback, а не тёмный (иначе белый текст на белом фоне). */
-  @media (prefers-color-scheme: light){
-    :root{
-      --bg: var(--tg-theme-bg-color, #ffffff);
-      --text: var(--tg-theme-text-color, #1a1a1a);
-      --hint: var(--tg-theme-hint-color, #7d8a99);
-      --card: var(--tg-theme-secondary-bg-color, #f1f3f5);
-      --accent: var(--tg-theme-button-color, #3390ec);
-      --accent-text: var(--tg-theme-button-text-color, #ffffff);
-      --border: rgba(0,0,0,.10);
-    }
-  }
-  *{box-sizing:border-box}
-  body{margin:0; padding:20px 16px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:var(--bg); color:var(--text); -webkit-tap-highlight-color:transparent}
-  h1{font-size:22px; margin:0 0 4px}
-  .sub{color:var(--hint); font-size:13px; margin:0 0 22px}
-  a.tile{display:block; text-decoration:none; color:var(--text);
-    background:var(--card); border:1px solid var(--border); border-radius:16px;
-    padding:18px; margin-bottom:14px; transition:.12s}
-  a.tile:active{transform:scale(.99)}
-  .tile .ic{font-size:30px}
-  .tile .t{font-size:17px; font-weight:700; margin-top:8px}
-  .tile .d{color:var(--hint); font-size:13px; margin-top:4px; line-height:1.45}
-  .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:22px; line-height:1.5}
+  /* — дашборд: специфика главного экрана — */
+  .hero{ display:flex; align-items:baseline; gap:var(--sp-2); margin-bottom:var(--sp-1) }
+  .hero .logo{ font-size:24px }
+
+  /* приоритетный блок «что дальше» */
+  .next{ background:linear-gradient(180deg, var(--card), var(--card));
+    border:1px solid var(--border); border-radius:var(--r-lg);
+    padding:var(--sp-4); margin-bottom:var(--sp-4); box-shadow:var(--shadow) }
+  .next .label{ font-size:var(--fs-xs); letter-spacing:.04em; text-transform:uppercase;
+    color:var(--hint); margin-bottom:var(--sp-2) }
+  .next .big{ font-size:var(--fs-h2); font-weight:700; margin-bottom:var(--sp-1) }
+  .next .hintline{ color:var(--hint); font-size:var(--fs-sm); margin-bottom:var(--sp-3) }
+  .next .actions{ display:flex; gap:var(--sp-2) }
+  .next .actions .btn{ width:auto; flex:1 }
+
+  /* сетка разделов 2 колонки */
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-2) }
+  .cell{ display:flex; flex-direction:column; gap:var(--sp-1);
+    text-decoration:none; color:var(--text); background:var(--card);
+    border:1px solid var(--border); border-radius:var(--r-md);
+    padding:var(--sp-3) var(--sp-4); min-height:84px; transition:transform .12s }
+  .cell:active{ transform:scale(.98) }
+  .cell .ic{ font-size:24px; line-height:1 }
+  .cell .t{ font-size:var(--fs-body); font-weight:700 }
+  .cell .d{ color:var(--hint); font-size:var(--fs-xs); line-height:1.35 }
+  .cell.wide{ grid-column:1 / -1; flex-direction:row; align-items:center; gap:var(--sp-3); min-height:0 }
+  .cell.wide .body{ flex:1 } .cell.wide .chev{ color:var(--hint) }
+
+  .section-title{ font-size:var(--fs-sm); font-weight:700; color:var(--hint);
+    margin:var(--sp-4) 0 var(--sp-2); text-transform:uppercase; letter-spacing:.03em }
 </style>
 </head>
 <body>
-  <h1>⚓ ISSA Trainer</h1>
-  <p class="sub">Inshore Skipper + SRC — тренажёр</p>
+  <div class="hero"><span class="logo">⚓</span><h1>ISSA Trainer</h1></div>
+  <p class="sub">Подготовка к экзамену Inshore Skipper + SRC</p>
 
-  <a class="tile" href="quiz.html">
-    <div class="ic">🎓</div>
-    <div class="t">Тесты</div>
-    <div class="d">Тренировка по темам и экзамен (100 вопросов, таймер, разбор ошибок).</div>
-  </a>
+  <!-- ПРИОРИТЕТ: что делать прямо сейчас -->
+  <div class="next">
+    <div class="label">С чего начать</div>
+    <div class="big">Тренировка и экзамен</div>
+    <div class="hintline">525 вопросов по 15 темам · перемешанные варианты · разбор и источники</div>
+    <div class="actions">
+      <a class="btn" href="quiz.html">🎓 Начать</a>
+      <a class="btn ghost" href="konspekt.html">📖 Теория</a>
+    </div>
+  </div>
 
-  <a class="tile" href="calc.html">
-    <div class="ic">🧮</div>
-    <div class="t">Морской калькулятор</div>
-    <div class="d">Поправки компаса (TVMDC) и скорость · время · ETA с пошаговым решением.</div>
-  </a>
+  <!-- РАЗДЕЛЫ -->
+  <div class="section-title">Практика</div>
+  <div class="grid">
+    <a class="cell" href="quiz.html">
+      <div class="ic">🎓</div>
+      <div class="t">Тесты</div>
+      <div class="d">Темы и экзамен, таймер, разбор</div>
+    </a>
+    <a class="cell" href="tasks.html">
+      <div class="ic">📝</div>
+      <div class="t">Задачки</div>
+      <div class="d">Скорость·время·ETA, приливы</div>
+    </a>
+    <a class="cell" href="navtasks.html">
+      <div class="ic">🧭</div>
+      <div class="t">T-V-M-D-C</div>
+      <div class="d">50 задач на поправки компаса</div>
+    </a>
+    <a class="cell" href="calc.html">
+      <div class="ic">🧮</div>
+      <div class="t">Калькулятор</div>
+      <div class="d">TVMDC и S·D·T·ETA</div>
+    </a>
+  </div>
 
-  <a class="tile" href="konspekt.html">
-    <div class="ic">📖</div>
-    <div class="t">Конспект</div>
-    <div class="d">Теория по темам со схемами, правило 12 и быстрым поиском по тексту.</div>
-  </a>
-
-  <a class="tile" href="tasks.html">
-    <div class="ic">📝</div>
-    <div class="t">Задачки</div>
-    <div class="d">Практика: скорость · время · ETA и приливы (правило 12) с проверкой.</div>
-  </a>
-
-  <a class="tile" href="glossary.html">
-    <div class="ic">📚</div>
-    <div class="t">Словарь яхтсмена</div>
-    <div class="d">180+ морских терминов простыми словами, поиск по русскому и English.</div>
-  </a>
-
-  <a class="tile" href="navtasks.html">
-    <div class="ic">🧭</div>
-    <div class="t">Задачи T-V-M-D-C</div>
-    <div class="d">50 задач на поправки компаса с проверкой и решением.</div>
-  </a>
-
-  <a class="tile" href="cheatsheet.html">
-    <div class="ic">📌</div>
-    <div class="t">Шпаргалки</div>
-    <div class="d">Короткие выжимки: МППСС, огни, сигналы, IALA, Бофорт, узлы, VHF.</div>
-  </a>
-
-  <a class="tile" href="book.html">
-    <div class="ic">📖</div>
-    <div class="t">Библиотека</div>
-    <div class="d">Учебник ISSA, рабочая тетрадь и пособие по яхтингу целиком (PDF).</div>
-  </a>
+  <div class="section-title">Теория и справка</div>
+  <div class="grid">
+    <a class="cell" href="konspekt.html">
+      <div class="ic">📖</div>
+      <div class="t">Конспект</div>
+      <div class="d">16 тем по учебнику ISSA</div>
+    </a>
+    <a class="cell" href="cheatsheet.html">
+      <div class="ic">📌</div>
+      <div class="t">Шпаргалки</div>
+      <div class="d">МППСС, огни, IALA, узлы…</div>
+    </a>
+    <a class="cell" href="glossary.html">
+      <div class="ic">📚</div>
+      <div class="t">Словарь</div>
+      <div class="d">180+ терминов с поиском</div>
+    </a>
+    <a class="cell" href="book.html">
+      <div class="ic">📕</div>
+      <div class="t">Библиотека</div>
+      <div class="d">Учебники целиком (PDF)</div>
+    </a>
+  </div>
 
   <p class="foot">Учебный тренажёр. Не является официальным материалом ISSA
     и не содержит экзаменационных ключей.</p>
-
-<script>
-  const tg = window.Telegram?.WebApp;
-  if (tg){ tg.ready(); tg.expand(); }
-</script>
 </body>
 </html>

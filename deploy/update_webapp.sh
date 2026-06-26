@@ -39,6 +39,7 @@ cp -f "$SRC/book.html"       "$DST/book.html"
 cp -f "$SRC/reader.html"     "$DST/reader.html"   # встроенный PDF-просмотрщик
 cp -f "$SRC/nav.js"          "$DST/nav.js"        # общая навигация (BackButton)
 cp -f "$SRC/lightbox.js"     "$DST/lightbox.js"   # зум картинок
+cp -f "$SRC/theme.css"       "$DST/theme.css"     # единая дизайн-система
 cp -f "$SRC/quiz_data.js"     "$DST/quiz_data.js"
 cp -f "$SRC/konspekt_data.js" "$DST/konspekt_data.js"
 cp -f "$SRC/tasks_data.js"    "$DST/tasks_data.js"
