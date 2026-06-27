@@ -10,6 +10,7 @@
 <script src="quiz_data.js"></script>
 <script src="srs.js"></script>
 <script src="progress.js"></script>
+<script src="sync.js"></script>
 <style>
   /* — дашборд: специфика главного экрана — */
   .hero{ display:flex; align-items:baseline; gap:var(--sp-2); margin-bottom:var(--sp-1) }
@@ -144,7 +145,7 @@
 "use strict";
 // Оживляем блок «С чего начать»: если есть вопросы к повтору по SRS —
 // предлагаем повторение приоритетом, иначе обычный старт. Всё на устройстве.
-(function(){
+function render(){
   const D = window.QUIZ_DATA;
   const total = D && D.meta ? D.meta.total : (D && D.questions ? D.questions.length : 0);
   if (D && D.questions) document.getElementById("nextHint").textContent =
@@ -190,7 +191,13 @@
       weak.length ? "Слабее всего: " + weak.join(", ") : "Слабых тем нет — отличная база!";
     card.classList.remove("hidden");
   }
-})();
+}
+
+render();
+// синхрон с сервером: подтянуть прогресс с других устройств и перерисовать.
+if (window.Sync && Sync.enabled){
+  Sync.pull().then(function(changed){ if (changed) render(); });
+}
 </script>
 </body>
 </html>

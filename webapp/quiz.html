@@ -10,6 +10,7 @@
 <script src="quiz_data.js"></script>
 <script src="srs.js"></script>
 <script src="progress.js"></script>
+<script src="sync.js"></script>
 <style>
   :root{
     --bg: var(--tg-theme-bg-color, #17212b);
@@ -445,6 +446,7 @@ function answerTraining(i){
   // в экзамене ответы можно менять, грейдить нечего до завершения).
   if (window.SRS) SRS.grade(q.id, ok);
   if (window.Progress) Progress.recordAnswer();   // дневная цель + streak
+  if (window.Sync) Sync.schedulePush();           // синхрон с сервером (debounce)
   document.getElementById("liveScore").textContent =
     `✔ ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
   haptic(ok ? "light" : "rigid");
@@ -708,6 +710,12 @@ document.getElementById("resumeDrop").onclick = () => {
 // при открытии страницы — предложить продолжить, если есть сессия
 renderResumeBanner();
 updateReviewLabel();   // показать, сколько вопросов к повтору
+
+// синхрон с сервером: подтянуть прогресс с других устройств, затем обновить
+// счётчик повтора. Если sync недоступен (нет initData/сети) — тихо пропускаем.
+if (window.Sync && Sync.enabled){
+  Sync.pull().then(function(changed){ if (changed) updateReviewLabel(); });
+}
 </script>
 </body>
 </html>

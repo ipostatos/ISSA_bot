@@ -1,0 +1,4 @@
+# API синхронизации прогресса (ISSA Trainer). Ставится отдельно от бота.
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+httpx==0.28.1          # для TestClient в тестах

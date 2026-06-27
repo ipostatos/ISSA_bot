@@ -1,0 +1,147 @@
+"""
+Тесты API синхронизации: HMAC initData, merge-логика, эндпоинты.
+Запуск:  python api/test_api.py   (или pytest api/test_api.py)
+
+Часть тестов (merge, auth) не требует fastapi и идёт всегда.
+Эндпоинты проверяются через TestClient, если установлен fastapi+httpx.
+"""
+import json
+import os
+import sys
+import time
+import tempfile
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from auth import verify_init_data, build_init_data, InitDataError
+from merge import merge_srs, merge_progress, merge_state
+
+TOKEN = "123456:TEST-TOKEN-abcdef"
+fails = 0
+
+
+def check(name, cond):
+    global fails
+    print(("  ✓ " if cond else "  ✗ ") + name)
+    if not cond:
+        fails += 1
+
+
+# ── auth: HMAC initData ──
+def test_auth():
+    init = build_init_data(TOKEN, {"id": 777, "first_name": "Skip"})
+    info = verify_init_data(init, TOKEN)
+    check("валидный initData → user_id", info["user_id"] == 777)
+
+    # подделка: чужой токен не проходит
+    try:
+        verify_init_data(init, "999:WRONG"); ok = False
+    except InitDataError:
+        ok = True
+    check("неверный токен → отказ", ok)
+
+    # подмена user_id внутри строки ломает подпись
+    tampered = init.replace("777", "778")
+    try:
+        verify_init_data(tampered, TOKEN); ok = False
+    except InitDataError:
+        ok = True
+    check("подмена user_id → отказ", ok)
+
+    # протухший auth_date
+    old = build_init_data(TOKEN, {"id": 1}, auth_date=int(time.time()) - 100000)
+    try:
+        verify_init_data(old, TOKEN, max_age_sec=3600); ok = False
+    except InitDataError:
+        ok = True
+    check("протухший initData → отказ", ok)
+
+
+# ── merge: SRS ──
+def test_merge_srs():
+    server = {"a": {"box": 3, "due": 100}, "b": {"box": 1, "due": 50}}
+    incoming = {"a": {"box": 2, "due": 999}, "c": {"box": 0, "due": 10}}
+    m = merge_srs(server, incoming)
+    check("SRS: выше box побеждает (a=3)", m["a"]["box"] == 3)
+    check("SRS: server-only сохранён (b)", m["b"]["box"] == 1)
+    check("SRS: incoming-only добавлен (c)", m["c"]["box"] == 0)
+
+    # равный box → больший due
+    m2 = merge_srs({"x": {"box": 2, "due": 100}}, {"x": {"box": 2, "due": 200}})
+    check("SRS: равный box → больший due", m2["x"]["due"] == 200)
+
+    # битые записи игнорируются
+    m3 = merge_srs({"x": {"box": 9, "due": 1}}, {"x": {"box": 4, "due": 5}})
+    check("SRS: невалидный box>5 отброшен", m3["x"]["box"] == 4)
+
+
+# ── merge: progress ──
+def test_merge_progress():
+    server = {"streak": 5, "best": 7, "days": {"2026-06-20": 3}, "lastDay": "2026-06-20", "goal": 15}
+    incoming = {"streak": 3, "best": 4, "days": {"2026-06-20": 5, "2026-06-21": 2}, "lastDay": "2026-06-21", "goal": 20}
+    m = merge_progress(server, incoming)
+    check("progress: streak = max", m["streak"] == 5)
+    check("progress: best = max(best, streak)", m["best"] == 7)
+    check("progress: days union, max по дню", m["days"]["2026-06-20"] == 5 and m["days"]["2026-06-21"] == 2)
+    check("progress: lastDay = более поздний", m["lastDay"] == "2026-06-21")
+    check("progress: goal из incoming", m["goal"] == 20)
+
+    # пустые/None не падают
+    check("progress: None-входы → дефолт", merge_progress(None, None)["streak"] == 0)
+
+
+# ── эндпоинты (если есть fastapi) ──
+def test_endpoints():
+    try:
+        from fastapi.testclient import TestClient
+    except Exception:
+        print("  ⚠ fastapi/httpx не установлены — пропускаю тесты эндпоинтов")
+        return
+    # отдельная временная БД и токен
+    tmp = tempfile.mkdtemp()
+    os.environ["ISSA_API_DB"] = str(Path(tmp) / "t.db")
+    os.environ["BOT_TOKEN"] = TOKEN
+    # переимпорт модуля с новым окружением
+    import importlib
+    import api as apimod
+    importlib.reload(apimod)
+    client = TestClient(apimod.app)
+
+    init = build_init_data(TOKEN, {"id": 42, "first_name": "T"})
+    h = {"X-Init-Data": init}
+
+    check("health 200", client.get("/api/health").status_code == 200)
+    check("state без initData → 401", client.get("/api/state").status_code == 401)
+
+    # пустое состояние
+    r = client.get("/api/state", headers=h).json()
+    check("новое состояние пустое", r["state"]["srs"] == {} and r["state"]["progress"] == {})
+
+    # POST мёрджит и возвращает merged
+    body = {"srs": {"q1": {"box": 2, "due": 500}}, "progress": {"streak": 4, "best": 4, "days": {"2026-06-25": 6}, "lastDay": "2026-06-25"}}
+    r = client.post("/api/state", headers=h, content=json.dumps(body)).json()
+    check("POST вернул merged srs", r["state"]["srs"]["q1"]["box"] == 2)
+
+    # второй POST с другого «устройства» — мёрдж, не перезапись
+    body2 = {"srs": {"q1": {"box": 1, "due": 9999}, "q2": {"box": 0, "due": 1}}, "progress": {"streak": 2, "best": 2, "days": {"2026-06-26": 3}, "lastDay": "2026-06-26"}}
+    r = client.post("/api/state", headers=h, content=json.dumps(body2)).json()
+    check("merge: q1 сохранил box=2 (не затёрт)", r["state"]["srs"]["q1"]["box"] == 2)
+    check("merge: q2 добавлен", r["state"]["srs"]["q2"]["box"] == 0)
+    check("merge: streak=max(4,2)=4", r["state"]["progress"]["streak"] == 4)
+    check("merge: days объединены", set(r["state"]["progress"]["days"]) == {"2026-06-25", "2026-06-26"})
+
+    # лимит тела
+    big = client.post("/api/state", headers=h, content=b"x" * (300 * 1024))
+    check("слишком большое тело → 413", big.status_code == 413)
+
+
+if __name__ == "__main__":
+    test_auth()
+    test_merge_srs()
+    test_merge_progress()
+    test_endpoints()
+    if fails:
+        print(f"\nAPI TESTS: {fails} провал(ов)")
+        sys.exit(1)
+    print("\nAPI TESTS OK")

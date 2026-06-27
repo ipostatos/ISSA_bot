@@ -38,6 +38,11 @@ jobs:
       - name: Mini App quiz-result parser tests
         run: python test_webapp.py
 
+      - name: Sync API tests (HMAC initData + merge + endpoints)
+        run: |
+          pip install -r api/requirements.txt
+          python api/test_api.py
+
       - name: Quiz data is up to date with questions.json
         run: |
           python webapp/build_quiz_data.py
@@ -102,6 +107,7 @@ jobs:
           node webapp/_quiz_check.mjs
           node webapp/_srs_check.mjs
           node webapp/_progress_check.mjs
+          node webapp/_sync_check.mjs
           node webapp/_konspekt_check.mjs
           node webapp/_tasks_check.mjs
           node webapp/_glossary_check.mjs

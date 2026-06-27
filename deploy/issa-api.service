@@ -1,0 +1,17 @@
+[Unit]
+Description=ISSA Trainer Sync API (FastAPI/uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=issa
+WorkingDirectory=/opt/issa-bot/api
+# .env с BOT_TOKEN — общий с ботом (лежит в /opt/issa-bot/.env)
+EnvironmentFile=/opt/issa-bot/.env
+# слушаем только localhost — наружу отдаёт Caddy на пути /api/*
+ExecStart=/opt/issa-bot/.venv/bin/uvicorn api:app --host 127.0.0.1 --port 4100
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

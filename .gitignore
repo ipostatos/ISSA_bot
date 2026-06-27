@@ -1,5 +1,8 @@
 .env
 progress/
+api/state.db
+api/state.db-*
+api/__pycache__/
 __pycache__/
 *.pyc
 *.tmp
