@@ -73,8 +73,8 @@
       </div>
     </div>
     <div style="display:flex; gap:10px; margin-top:12px">
-      <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
-        <div style="font-size:11px; color:var(--hint)">Сегодня</div>
+      <div id="goalBox" style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px; cursor:pointer">
+        <div style="font-size:11px; color:var(--hint)">Сегодня ⚙</div>
         <div style="font-weight:800; font-size:18px" id="goalToday">0/0</div>
       </div>
       <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
@@ -213,6 +213,14 @@ function render(){
     document.getElementById("goalToday").textContent = `${todayN}/${goal}`;
     document.getElementById("streakVal").textContent = `${streak.streak} 🔥`;
     document.getElementById("bestVal").textContent = `${streak.best}`;
+    // настройка дневной цели: тап по «Сегодня» → выбор значения
+    document.getElementById("goalBox").onclick = ()=>{
+      const cur = Progress.getGoal();
+      const v = prompt("Дневная цель — сколько вопросов в день? (5–100)", cur);
+      if (v === null) return;
+      const n = parseInt(v, 10);
+      if (!isNaN(n)){ Progress.setGoal(n); if (window.Sync) Sync.schedulePush(); render(); }
+    };
     const weak = r.topics.filter(t=>t.pct<60).slice(0,3).map(t=>t.topic);
     document.getElementById("weakLine").textContent =
       weak.length ? "Слабее всего: " + weak.join(", ") : "Слабых тем нет — отличная база!";

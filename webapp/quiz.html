@@ -138,6 +138,25 @@
   .recs a{display:inline-block; text-decoration:none; color:var(--accent);
     border:1px solid var(--border); border-radius:9px; padding:6px 11px; margin:0 6px 6px 0; font-size:13px}
   .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px}
+
+  /* путь обучения: уровни-темы */
+  .lvl{display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    padding:13px 14px; margin-bottom:10px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); border-radius:14px; cursor:pointer; position:relative}
+  .lvl:active{transform:scale(.995)}
+  .lvl .badge-num{width:34px; height:34px; flex:0 0 auto; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800;
+    background:var(--bg); border:2px solid var(--border)}
+  .lvl.done  .badge-num{border-color:var(--ok);  background:color-mix(in srgb,var(--ok) 20%,var(--bg))}
+  .lvl.doing .badge-num{border-color:var(--accent); background:color-mix(in srgb,var(--accent) 20%,var(--bg))}
+  .lvl.next  .badge-num{border-color:var(--warn); background:color-mix(in srgb,var(--warn) 20%,var(--bg))}
+  .lvl .lbody{flex:1; min-width:0}
+  .lvl .lname{font-size:15px; font-weight:700}
+  .lvl .lmeta{font-size:12px; color:var(--hint); margin-top:2px}
+  .lvl .lbar{height:6px; background:var(--border); border-radius:4px; overflow:hidden; margin-top:7px}
+  .lvl .lbar>i{display:block; height:100%; border-radius:4px; background:var(--accent)}
+  .lvl.done .lbar>i{background:var(--ok)}
+  .lvl .lstatus{flex:0 0 auto; font-size:18px}
 </style>
 </head>
 <body>
@@ -156,10 +175,12 @@
 
   <button class="big" id="startReview">🔁 Повторить сегодня
     <small id="reviewSub">вопросы к повторению по расписанию</small></button>
+  <button class="big ghost" id="startPath">🗺 Путь обучения
+    <small>Темы по порядку, от основ к экзамену</small></button>
   <button class="big ghost" id="startRandom">🎯 Тренировка — случайные
     <small>Вопросы вперемешку, с пояснениями</small></button>
-  <button class="big ghost" id="startTopic">📚 Тренировка по темам
-    <small>Выбрать тему</small></button>
+  <button class="big ghost" id="startTopic">📚 Все темы списком
+    <small>Выбрать любую тему</small></button>
   <button class="big ghost" id="startExam">📝 Экзамен
     <small id="examSub">100 вопросов · таймер · проходной балл</small></button>
 
@@ -167,6 +188,14 @@
     <div class="topics" id="topics"></div>
   </div>
   <p class="foot">Учебный тренажёр. Не является официальным материалом ISSA и не содержит экзаменационных ключей.</p>
+</section>
+
+<!-- ЭКРАН «ПУТЬ ОБУЧЕНИЯ» (уровни-темы) -->
+<section id="path" class="hidden">
+  <h1 style="font-size:19px; margin:0 0 4px">🗺 Путь обучения</h1>
+  <p class="sub" style="margin:0 0 14px">От основ к экзамену · нажми тему, чтобы тренироваться</p>
+  <div id="pathList"></div>
+  <button class="next ghost" id="pathBack" style="margin-top:6px">← В меню</button>
 </section>
 
 <!-- ЭКРАН ВОПРОСА -->
@@ -608,6 +637,78 @@ document.getElementById("sendBtn").onclick = ()=>{
 // ── навигация по меню ──
 const ALL_IDS = ALL.map(q=>q.id);
 
+// ── ПУТЬ ОБУЧЕНИЯ: уровни-темы в учебном порядке (основы → экзамен) ──
+// Желаемый порядок; темы вне списка добавятся в конец в исходном виде.
+const PATH_ORDER = [
+  "Терминология","Принятие яхты","Паруса","Маневры","Якорение",
+  "Навигация","Планирование","Метео","IALA","Огни и знаки",
+  "Звуковые сигналы","COLREG","VHF / SRC","Безопасность","Практика",
+];
+function pathTopics(){
+  const present = new Set(ALL.map(q=>q.topic));
+  const ordered = PATH_ORDER.filter(t=>present.has(t));
+  ALL.forEach(q=>{ if(!ordered.includes(q.topic)) ordered.push(q.topic); });
+  return [...new Set(ordered)];
+}
+// «закреплённость» темы 0..1 по коробкам SRS (как в Progress.readiness)
+function topicProgress(topic){
+  const qs = ALL.filter(q=>q.topic===topic);
+  if(!qs.length) return 0;
+  let sum=0;
+  qs.forEach(q=>{ const s=window.SRS&&SRS.state(q.id); const box=s?s.box:0; sum+=Math.min(box,5)/5; });
+  return sum/qs.length;
+}
+function renderPath(){
+  const topics = pathTopics();
+  const box = document.getElementById("pathList");
+  const DONE = 0.8;           // порог «освоено»
+  // индекс первой не-освоенной темы = «рекомендуется сейчас»
+  let nextIdx = topics.findIndex(t=>topicProgress(t) < DONE);
+  if (nextIdx < 0) nextIdx = topics.length;   // всё освоено
+  box.innerHTML = topics.map((t,i)=>{
+    const p = topicProgress(t);
+    const pct = Math.round(p*100);
+    const cnt = ALL.filter(q=>q.topic===t).length;
+    let cls="", status="", meta=`${cnt} вопросов · ${pct}%`;
+    if (p>=DONE){ cls="done"; status="✅"; }
+    else if (p>0){ cls="doing"; status="🔵"; }
+    else if (i===nextIdx){ cls="next"; status="▶️"; meta=`${cnt} вопросов · рекомендуется`; }
+    else { status="⚪"; }
+    return `<button class="lvl ${cls}" data-topic="${esc(t)}">
+      <span class="badge-num">${i+1}</span>
+      <span class="lbody">
+        <span class="lname">${esc(t)}</span>
+        <span class="lmeta">${meta}</span>
+        <span class="lbar"><i style="width:${pct}%"></i></span>
+      </span>
+      <span class="lstatus">${status}</span>
+    </button>`;
+  }).join("");
+  box.querySelectorAll(".lvl").forEach(b=>{
+    b.onclick = ()=>{
+      const t = b.dataset.topic;
+      // тренировка по теме: приоритет слабым/новым внутри темы (через SRS), добор остальными
+      const inTopic = ALL.filter(q=>q.topic===t);
+      let queue;
+      if (window.SRS){
+        const ids = inTopic.map(q=>q.id);
+        const due = SRS.pickDue(ids, 20).map(id=>byId[id]).filter(Boolean);
+        const have = new Set(due.map(q=>q.id));
+        const rest = shuffle(inTopic.filter(q=>!have.has(q.id)));
+        queue = due.concat(rest).slice(0, Math.min(20, inTopic.length));
+      } else {
+        queue = shuffle(inTopic).slice(0, Math.min(20, inTopic.length));
+      }
+      startQuiz("topic:"+t, false, queue);
+    };
+  });
+}
+document.getElementById("startPath").onclick = ()=>{
+  renderPath();
+  hide("home"); show("path");
+};
+document.getElementById("pathBack").onclick = ()=>{ hide("path"); show("home"); };
+
 document.getElementById("startExam").onclick = ()=>{
   const size = Math.min(DATA.examSize, ALL.length);
   startQuiz("exam", true, shuffle(ALL).slice(0, size));
@@ -685,7 +786,7 @@ function toMenu(){
   if (S && S.timerH) clearInterval(S.timerH);
   clearSession();   // явный выход в меню = отказ от теста, сохранять нечего
   S = null;
-  hide("quiz"); hide("result"); show("home");
+  hide("quiz"); hide("result"); hide("path"); show("home");
   document.getElementById("topicCard").classList.add("hidden");
   document.getElementById("feedback").innerHTML = "";
   document.getElementById("review").innerHTML = "";
@@ -695,11 +796,13 @@ function toMenu(){
 }
 document.getElementById("againBtn").onclick = toMenu;
 
-// Системная «Назад» Telegram: из теста/результата вернуть в меню, иначе на home.
+// Системная «Назад» Telegram: из теста/результата/пути вернуть в меню, иначе на home.
 window.__navBack = () => {
   const inQuiz = !document.getElementById("quiz").classList.contains("hidden");
   const inResult = !document.getElementById("result").classList.contains("hidden");
+  const inPath = !document.getElementById("path").classList.contains("hidden");
   if (inQuiz || inResult){ toMenu(); return true; }
+  if (inPath){ hide("path"); show("home"); return true; }
   return false;
 };
 
