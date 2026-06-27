@@ -10,6 +10,7 @@
 <script src="quiz_data.js"></script>
 <script src="srs.js"></script>
 <script src="progress.js"></script>
+<script src="heatmap.js"></script>
 <script src="sync.js"></script>
 <style>
   /* — дашборд: специфика главного экрана — */
@@ -76,8 +77,18 @@
         <div style="font-size:11px; color:var(--hint)">Серия</div>
         <div style="font-weight:800; font-size:18px" id="streakVal">0 🔥</div>
       </div>
+      <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
+        <div style="font-size:11px; color:var(--hint)">Рекорд</div>
+        <div style="font-weight:800; font-size:18px" id="bestVal">0</div>
+      </div>
     </div>
     <div class="muted" style="font-size:12px; margin-top:8px" id="weakLine"></div>
+  </div>
+
+  <!-- АКТИВНОСТЬ (heatmap по дням) -->
+  <div class="card hidden" id="activityCard" style="margin-bottom:14px">
+    <div class="h2" style="margin:0 0 10px">Активность</div>
+    <div id="heatmap"></div>
   </div>
 
   <!-- РАЗДЕЛЫ -->
@@ -186,10 +197,17 @@ function render(){
     document.getElementById("readyVerdict").textContent = r.verdict;
     document.getElementById("goalToday").textContent = `${todayN}/${goal}`;
     document.getElementById("streakVal").textContent = `${streak.streak} 🔥`;
+    document.getElementById("bestVal").textContent = `${streak.best}`;
     const weak = r.topics.filter(t=>t.pct<60).slice(0,3).map(t=>t.topic);
     document.getElementById("weakLine").textContent =
       weak.length ? "Слабее всего: " + weak.join(", ") : "Слабых тем нет — отличная база!";
     card.classList.remove("hidden");
+
+    // heatmap активности (как на GitHub) — поверх темы, в тёмной и светлой
+    if (window.Heatmap){
+      document.getElementById("activityCard").classList.remove("hidden");
+      Heatmap.render(document.getElementById("heatmap"), { weeks: 18 });
+    }
   }
 }
 

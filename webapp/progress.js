@@ -90,6 +90,9 @@
       return (s.days && s.days[k]) || 0;
     },
 
+    // карта активности по дням { "YYYY-MM-DD": count } — для heatmap
+    days: function () { return load().days || {}; },
+
     recordAnswer: function (today) {
       var s = load(); var k = today || dayKey();
       s.days = s.days || {};
