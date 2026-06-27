@@ -11,6 +11,7 @@
 <script src="srs.js"></script>
 <script src="progress.js"></script>
 <script src="heatmap.js"></script>
+<script src="badges.js"></script>
 <script src="sync.js"></script>
 <style>
   /* — дашборд: специфика главного экрана — */
@@ -143,7 +144,16 @@
     </a>
   </div>
 
-  <a class="cell wide" href="about.html" style="margin-top:12px">
+  <a class="cell wide" href="profile.html" style="margin-top:12px">
+    <div class="ic-tile gold">🎖️</div>
+    <div class="body">
+      <div class="t">Профиль и достижения</div>
+      <div class="d" id="profileSub">Звания, бейджи, прогресс</div>
+    </div>
+    <div class="chev">›</div>
+  </a>
+
+  <a class="cell wide" href="about.html" style="margin-top:10px">
     <div class="ic-tile">🛡️</div>
     <div class="body">
       <div class="t">О банке вопросов</div>
@@ -213,6 +223,14 @@ function render(){
       document.getElementById("activityCard").classList.remove("hidden");
       Heatmap.render(document.getElementById("heatmap"), { weeks: 18 });
     }
+  }
+
+  // подпись плитки профиля: сколько достижений открыто
+  if (window.Badges){
+    const bm = Badges.computeMetrics();
+    const nb = Badges.unlockedCount(bm), tot = Badges.DEFS.length;
+    document.getElementById("profileSub").textContent =
+      `Достижения: ${nb} из ${tot} · звания, бейджи`;
   }
 }
 

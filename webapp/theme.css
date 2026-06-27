@@ -124,4 +124,28 @@ body{
 .ring .ring-num{ font-size:22px; font-weight:800 }
 .ring .ring-cap{ font-size:10px; color:var(--hint); margin-top:2px }
 
+/* ── медальоны достижений (бейджи) ── */
+.badge{ display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px }
+.badge .medal{ position:relative; width:64px; height:64px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-size:28px;
+  background:var(--card); border:3px solid var(--border) }
+.badge.bronze .medal{ border-color:#cd7f32; background:color-mix(in srgb,#cd7f32 16%,var(--card)) }
+.badge.silver .medal{ border-color:#9aa7b4; background:color-mix(in srgb,#9aa7b4 16%,var(--card)) }
+.badge.gold   .medal{ border-color:#e3b341; background:color-mix(in srgb,#e3b341 18%,var(--card)) }
+.badge.locked .medal{ filter:grayscale(1) opacity(.45); border-color:var(--border); background:var(--bg) }
+.badge .bt{ font-size:12px; font-weight:700; line-height:1.2 }
+.badge .bd{ font-size:10px; color:var(--hint); line-height:1.25 }
+/* мини-индикатор прогресса под закрытым бейджем */
+.badge .bprog{ width:48px; height:4px; background:var(--border); border-radius:3px; overflow:hidden }
+.badge .bprog>i{ display:block; height:100%; background:var(--accent) }
+
+/* всплывашка «получен бейдж» */
+.badge-toast{ position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(120%);
+  background:var(--card); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow);
+  padding:10px 14px; display:flex; align-items:center; gap:10px; z-index:9998; transition:transform .35s;
+  max-width:90%; }
+.badge-toast.show{ transform:translateX(-50%) translateY(0) }
+.badge-toast .em{ font-size:24px }
+.badge-toast .tt{ font-size:13px } .badge-toast .tt b{ display:block }
+
 .hidden{ display:none !important }

@@ -10,6 +10,7 @@
 <script src="quiz_data.js"></script>
 <script src="srs.js"></script>
 <script src="progress.js"></script>
+<script src="badges.js"></script>
 <script src="sync.js"></script>
 <style>
   :root{
@@ -447,6 +448,7 @@ function answerTraining(i){
   if (window.SRS) SRS.grade(q.id, ok);
   if (window.Progress) Progress.recordAnswer();   // дневная цель + streak
   if (window.Sync) Sync.schedulePush();           // синхрон с сервером (debounce)
+  maybeBadgeToast();                              // вдруг открылся бейдж
   document.getElementById("liveScore").textContent =
     `✔ ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
   haptic(ok ? "light" : "rigid");
@@ -539,6 +541,11 @@ function finish(){
     const passed = pct >= DATA.passPercent;
     v.textContent = passed ? "✅ СДАНО" : "❌ НЕ СДАНО";
     v.className = "verdict " + (passed ? "pass" : "fail");
+    // флаги достижений: сдан экзамен / без ошибок (для бейджей)
+    if (window.Progress){
+      if (passed) Progress.setFlag("examPass", true);
+      if (pct === 100) Progress.setFlag("flawless", true);
+    }
     if (passed){
       // сертификат самопроверки — психологическая «финишная черта» (не официальный)
       const d = new Date();
@@ -574,6 +581,8 @@ function finish(){
   }
   document.getElementById("sentNote").textContent = "";
   haptic(S.isExam ? "warning" : "success");
+  maybeBadgeToast();                 // бейджи за экзамен/готовность
+  if (window.Sync) Sync.schedulePush();
 }
 
 // отправка компактного результата в бота
@@ -651,6 +660,27 @@ document.getElementById("startTopic").onclick = ()=>{
     box.appendChild(b);
   });
 };
+
+// всплывашка о новом открытом бейдже (морские достижения)
+function maybeBadgeToast(){
+  if (!window.Badges) return;
+  const fresh = Badges.checkNew(Badges.computeMetrics());
+  if (!fresh.length) return;
+  const b = fresh[0];   // показываем по одному, первый из новых
+  let el = document.getElementById("badgeToast");
+  if (!el){
+    el = document.createElement("div");
+    el.id = "badgeToast"; el.className = "badge-toast";
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<span class="em">${b.icon}</span>`
+    + `<span class="tt">Новое достижение!<b>${esc(b.title)}</b></span>`;
+  el.classList.add("show");
+  haptic("success");
+  clearTimeout(el._t);
+  el._t = setTimeout(()=> el.classList.remove("show"), 3500);
+}
+
 function toMenu(){
   if (S && S.timerH) clearInterval(S.timerH);
   clearSession();   // явный выход в меню = отказ от теста, сохранять нечего

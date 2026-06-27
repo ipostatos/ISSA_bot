@@ -93,6 +93,12 @@
     // карта активности по дням { "YYYY-MM-DD": count } — для heatmap
     days: function () { return load().days || {}; },
 
+    // флаги достижений (сдан экзамен, без ошибок) — для бейджей
+    flags: function () { return load().flags || {}; },
+    setFlag: function (name, val) {
+      var s = load(); s.flags = s.flags || {}; s.flags[name] = !!val; save(s);
+    },
+
     recordAnswer: function (today) {
       var s = load(); var k = today || dayKey();
       s.days = s.days || {};

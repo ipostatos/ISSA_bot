@@ -107,6 +107,7 @@ jobs:
           node webapp/_quiz_check.mjs
           node webapp/_srs_check.mjs
           node webapp/_progress_check.mjs
+          node webapp/_badges_check.mjs
           node webapp/_sync_check.mjs
           node webapp/_konspekt_check.mjs
           node webapp/_tasks_check.mjs

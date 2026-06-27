@@ -37,6 +37,7 @@ cp -f "$SRC/navtasks.html"   "$DST/navtasks.html"
 cp -f "$SRC/cheatsheet.html" "$DST/cheatsheet.html"
 cp -f "$SRC/book.html"       "$DST/book.html"
 cp -f "$SRC/about.html"      "$DST/about.html"    # экран «О банке» (прозрачность)
+cp -f "$SRC/profile.html"    "$DST/profile.html"  # профиль и достижения
 cp -f "$SRC/reader.html"     "$DST/reader.html"   # встроенный PDF-просмотрщик
 cp -f "$SRC/nav.js"          "$DST/nav.js"        # общая навигация (BackButton)
 cp -f "$SRC/lightbox.js"     "$DST/lightbox.js"   # зум картинок
@@ -44,6 +45,7 @@ cp -f "$SRC/srs.js"          "$DST/srs.js"        # интервальное п�
 cp -f "$SRC/progress.js"     "$DST/progress.js"   # мотивация: готовность/цель/streak
 cp -f "$SRC/sync.js"         "$DST/sync.js"       # синхрон прогресса через /api/state
 cp -f "$SRC/heatmap.js"      "$DST/heatmap.js"    # heatmap активности на дашборде
+cp -f "$SRC/badges.js"       "$DST/badges.js"     # достижения (бейджи)
 cp -f "$SRC/theme.css"       "$DST/theme.css"     # единая дизайн-система
 cp -f "$SRC/quiz_data.js"     "$DST/quiz_data.js"
 cp -f "$SRC/konspekt_data.js" "$DST/konspekt_data.js"
