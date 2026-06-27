@@ -62,12 +62,15 @@
 
   <!-- ГОТОВНОСТЬ + дневная цель + серия (видны после первой активности) -->
   <div class="card hidden" id="readyCard" style="margin-bottom:14px">
-    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px">
-      <div class="h2" style="margin:0">Готовность к экзамену</div>
-      <div style="font-weight:800" id="readyPct">—</div>
+    <div style="display:flex; align-items:center; gap:16px">
+      <div class="ring" id="readyRing">
+        <div class="ring-val"><span class="ring-num" id="readyPct">0%</span><span class="ring-cap">готовность</span></div>
+      </div>
+      <div style="flex:1; min-width:0">
+        <div class="h2" style="margin:0 0 4px">Готовность к экзамену</div>
+        <div class="muted" style="font-size:13px" id="readyVerdict"></div>
+      </div>
     </div>
-    <div class="meter" id="readyMeter"><i style="width:0"></i></div>
-    <div class="muted" style="font-size:13px; margin-top:6px" id="readyVerdict"></div>
     <div style="display:flex; gap:10px; margin-top:12px">
       <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
         <div style="font-size:11px; color:var(--hint)">Сегодня</div>
@@ -95,22 +98,22 @@
   <div class="section-title">Практика</div>
   <div class="grid">
     <a class="cell" href="quiz.html">
-      <div class="ic">🎓</div>
+      <div class="ic-tile blue">🎓</div>
       <div class="t">Тесты</div>
       <div class="d">Темы и экзамен, таймер, разбор</div>
     </a>
     <a class="cell" href="tasks.html">
-      <div class="ic">📝</div>
+      <div class="ic-tile green">📝</div>
       <div class="t">Задачки</div>
       <div class="d">Скорость·время·ETA, приливы</div>
     </a>
     <a class="cell" href="navtasks.html">
-      <div class="ic">🧭</div>
+      <div class="ic-tile cyan">🧭</div>
       <div class="t">T-V-M-D-C</div>
       <div class="d">50 задач на поправки компаса</div>
     </a>
     <a class="cell" href="calc.html">
-      <div class="ic">🧮</div>
+      <div class="ic-tile violet">🧮</div>
       <div class="t">Калькулятор</div>
       <div class="d">TVMDC и S·D·T·ETA</div>
     </a>
@@ -119,29 +122,29 @@
   <div class="section-title">Теория и справка</div>
   <div class="grid">
     <a class="cell" href="konspekt.html">
-      <div class="ic">📖</div>
+      <div class="ic-tile amber">📖</div>
       <div class="t">Конспект</div>
       <div class="d">16 тем по учебнику ISSA</div>
     </a>
     <a class="cell" href="cheatsheet.html">
-      <div class="ic">📌</div>
+      <div class="ic-tile red">📌</div>
       <div class="t">Шпаргалки</div>
       <div class="d">МППСС, огни, IALA, узлы…</div>
     </a>
     <a class="cell" href="glossary.html">
-      <div class="ic">📚</div>
+      <div class="ic-tile blue">📚</div>
       <div class="t">Словарь</div>
       <div class="d">180+ терминов с поиском</div>
     </a>
     <a class="cell" href="book.html">
-      <div class="ic">📕</div>
+      <div class="ic-tile green">📕</div>
       <div class="t">Библиотека</div>
       <div class="d">Учебники целиком (PDF)</div>
     </a>
   </div>
 
   <a class="cell wide" href="about.html" style="margin-top:12px">
-    <div class="ic">🛡️</div>
+    <div class="ic-tile">🛡️</div>
     <div class="body">
       <div class="t">О банке вопросов</div>
       <div class="d">Источники, проверка, состав — прозрачно</div>
@@ -191,9 +194,11 @@ function render(){
 
     const card = document.getElementById("readyCard");
     document.getElementById("readyPct").textContent = r.percent + "%";
-    const meter = document.getElementById("readyMeter");
-    meter.querySelector("i").style.width = r.percent + "%";
-    meter.className = "meter " + (r.percent>=80?"ok":r.percent>=50?"warn":"bad");
+    // кольцо готовности: заполнение --p и цвет по уровню
+    const ring = document.getElementById("readyRing");
+    ring.style.setProperty("--p", r.percent);
+    ring.style.setProperty("--ring-color",
+      r.percent>=80 ? "var(--ok)" : r.percent>=50 ? "var(--warn)" : "var(--bad)");
     document.getElementById("readyVerdict").textContent = r.verdict;
     document.getElementById("goalToday").textContent = `${todayN}/${goal}`;
     document.getElementById("streakVal").textContent = `${streak.streak} 🔥`;

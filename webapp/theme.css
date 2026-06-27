@@ -102,4 +102,26 @@ body{
 .state{ color:var(--hint); font-size:var(--fs-body); text-align:center;
   padding:24px var(--sp-2); line-height:1.5 }
 
+/* ── цветные плашки для иконок-эмодзи (продуктовый вид) ──
+   Цвет — мягкая подложка из акцентных тонов, читается в тёмной и светлой теме. */
+.ic-tile{ display:inline-flex; align-items:center; justify-content:center;
+  width:40px; height:40px; border-radius:11px; font-size:20px; flex:0 0 auto;
+  background:color-mix(in srgb, var(--accent) 18%, transparent) }
+.ic-tile.blue  { background:color-mix(in srgb, #3390ec 20%, transparent) }
+.ic-tile.green { background:color-mix(in srgb, #4caf72 20%, transparent) }
+.ic-tile.amber { background:color-mix(in srgb, #e0a13a 22%, transparent) }
+.ic-tile.violet{ background:color-mix(in srgb, #8e7bef 22%, transparent) }
+.ic-tile.red   { background:color-mix(in srgb, #e5544b 20%, transparent) }
+.ic-tile.cyan  { background:color-mix(in srgb, #2bb6c4 22%, transparent) }
+
+/* ── кольцо прогресса (готовность) — conic-gradient, без SVG ── */
+.ring{ --p:0; --ring-color:var(--accent); position:relative;
+  width:92px; height:92px; border-radius:50%; flex:0 0 auto;
+  background:conic-gradient(var(--ring-color) calc(var(--p)*1%), var(--border) 0) }
+.ring::before{ content:""; position:absolute; inset:9px; border-radius:50%; background:var(--card) }
+.ring .ring-val{ position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; line-height:1 }
+.ring .ring-num{ font-size:22px; font-weight:800 }
+.ring .ring-cap{ font-size:10px; color:var(--hint); margin-top:2px }
+
 .hidden{ display:none !important }
