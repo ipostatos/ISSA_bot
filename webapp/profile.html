@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="icons.js"></script>
 <script src="quiz_data.js"></script>
 <script src="srs.js"></script>
 <script src="progress.js"></script>
@@ -23,11 +24,12 @@
   .pstats .n{ font-size:20px; font-weight:800 }
   .pstats .c{ font-size:11px; color:var(--hint); margin-top:2px }
   .bgrid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px 8px; margin-top:4px }
+  .emi{ display:inline-flex; vertical-align:-2px } .emi svg{ width:1em; height:1em }
 </style>
 </head>
 <body>
   <div class="phead">
-    <div class="rank" id="rankIcon">⚓</div>
+    <div class="rank emi" id="rankIcon" data-icon="anchor"></div>
     <div style="flex:1; min-width:0">
       <div class="h1" id="rankTitle" style="font-size:20px">Профиль</div>
       <div class="muted" style="font-size:13px" id="rankSub">—</div>
@@ -36,7 +38,7 @@
 
   <div class="pstats">
     <div class="s"><div class="n" id="stReady">0%</div><div class="c">готовность</div></div>
-    <div class="s"><div class="n" id="stStreak">0</div><div class="c">серия 🔥</div></div>
+    <div class="s"><div class="n" id="stStreak">0</div><div class="c">серия <span class="emi" data-icon="flame"></span></div></div>
     <div class="s"><div class="n" id="stBadges">0</div><div class="c">бейджей</div></div>
   </div>
 
@@ -50,6 +52,16 @@
 "use strict";
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+// эмодзи бейджа/звания → доступная SVG-иконка (если Icons загружен)
+function badgeIcon(emoji){
+  const m = {
+    "⚓":"anchor", "🧭":"compass", "🚢":"ship", "🔥":"flame", "🌊":"waves",
+    "💡":"lightbulb", "📍":"map-pin", "🗺️":"map", "🎖️":"medal",
+    "🧑‍✈️":"ship-wheel", "⭐":"star", "🌙":"moon"
+  };
+  return (window.Icons && m[emoji]) ? Icons.svg(m[emoji]) : esc(emoji);
+}
 
 // звание по числу открытых бейджей
 function rankFor(n, total){
@@ -68,7 +80,7 @@ function render(){
   const unlocked = list.filter(b=>b.unlocked).length;
 
   const r = rankFor(unlocked, list.length);
-  $("rankIcon").textContent = r.icon;
+  $("rankIcon").innerHTML = badgeIcon(r.icon);
   $("rankTitle").textContent = r.title;
   $("rankSub").textContent = `Открыто ${unlocked} из ${list.length} достижений`;
 
@@ -78,7 +90,7 @@ function render(){
 
   $("badges").innerHTML = list.map(b => `
     <div class="badge ${b.unlocked ? b.tier : "locked"}">
-      <div class="medal">${b.icon}</div>
+      <div class="medal">${badgeIcon(b.icon)}</div>
       <div class="bt">${esc(b.title)}</div>
       <div class="bd">${esc(b.desc)}</div>
       ${b.unlocked ? "" :
@@ -86,6 +98,7 @@ function render(){
     </div>`).join("");
 }
 
+if (window.Icons) Icons.hydrate();
 render();
 // подтянуть прогресс с других устройств и перерисовать
 if (window.Sync && Sync.enabled){

@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="icons.js"></script>
 <script src="quiz_data.js"></script>
 <style>
   .stat-row{ display:flex; justify-content:space-between; align-items:center;
@@ -24,6 +25,7 @@
   .difrow .pill .n{ display:block; font-size:20px; font-weight:800; margin-top:2px }
   .ok-i{ color:var(--ok) } .li{ display:flex; gap:8px; margin:6px 0; font-size:var(--fs-sm); line-height:1.5 }
   .li .b{ color:var(--ok); flex:0 0 auto }
+  .emi{ display:inline-flex; vertical-align:-2px } .emi svg{ width:1em; height:1em }
 </style>
 </head>
 <body>
@@ -37,10 +39,10 @@
 
   <div class="card" style="margin-bottom:12px">
     <div class="h2">Что выверено</div>
-    <div class="li"><span class="b">✓</span><span>У каждого вопроса <b id="cExpl">—</b> — пояснение к правильному ответу.</span></div>
-    <div class="li"><span class="b">✓</span><span>У <b id="cRef">—</b> указан <b>источник</b> (правило МППСС / раздел учебника ISSA).</span></div>
-    <div class="li"><span class="b">✓</span><span>У <b id="cWhy">—</b> — разбор <b>каждого</b> варианта: почему он верен или неверен.</span></div>
-    <div class="li"><span class="b">✓</span><span>Каждый вопрос прошёл <b>независимую перепроверку</b> (корректность ответа, источника и разбора).</span></div>
+    <div class="li"><span class="b emi" data-icon="check"></span><span>У каждого вопроса <b id="cExpl">—</b> — пояснение к правильному ответу.</span></div>
+    <div class="li"><span class="b emi" data-icon="check"></span><span>У <b id="cRef">—</b> указан <b>источник</b> (правило МППСС / раздел учебника ISSA).</span></div>
+    <div class="li"><span class="b emi" data-icon="check"></span><span>У <b id="cWhy">—</b> — разбор <b>каждого</b> варианта: почему он верен или неверен.</span></div>
+    <div class="li"><span class="b emi" data-icon="check"></span><span>Каждый вопрос прошёл <b>независимую перепроверку</b> (корректность ответа, источника и разбора).</span></div>
   </div>
 
   <div class="card" style="margin-bottom:12px">
@@ -64,8 +66,8 @@
       <b>МППСС-72 (COLREG)</b>, система ограждения <b>IALA MBS</b>,
       процедуры <b>VHF / GMDSS (SRC)</b>, учебник ISSA «Шкипер прибрежного плавания»
       и общепринятая навигационная практика. Полные тексты — в разделе
-      <a href="book.html" style="color:var(--accent)">📕 Библиотека</a>,
-      теория — в <a href="konspekt.html" style="color:var(--accent)">📖 Конспекте</a>.
+      <a href="book.html" style="color:var(--accent)"><span class="emi" data-icon="library"></span> Библиотека</a>,
+      теория — в <a href="konspekt.html" style="color:var(--accent)"><span class="emi" data-icon="book-open"></span> Конспекте</a>.
     </div>
   </div>
 
@@ -73,7 +75,7 @@
     подготовки. Банк <b>не содержит экзаменационных ключей</b> и
     <b>не является официальным материалом ISSA</b> или какой-либо школы.</p>
 
-  <a class="btn" href="quiz.html" style="margin-top:8px">🎓 К тренировке</a>
+  <a class="btn" href="quiz.html" style="margin-top:8px"><span class="emi" data-icon="graduation-cap"></span> К тренировке</a>
 
 <script>
 "use strict";
@@ -102,6 +104,8 @@ if (!D){
       <span class="v">${t.n}</span>
     </div>`).join("");
 }
+
+if (window.Icons) Icons.hydrate();
 </script>
 </body>
 </html>

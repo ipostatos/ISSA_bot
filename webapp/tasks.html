@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="icons.js"></script>
 <script src="tasks_data.js"></script>
 <style>
   :root{
@@ -59,19 +60,20 @@
     white-space:pre-wrap; color:var(--hint); display:none}
   .sol.show{display:block}
   .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px}
+  .emi{display:inline-flex; vertical-align:-2px} .emi svg{width:1em;height:1em}
 </style>
 </head>
 <body>
-  <h1>📝 Задачки</h1>
+  <h1><span class="emi" data-icon="clipboard-list"></span> Задачки</h1>
   <div class="bar">
     <span id="cat">Навигация и приливы</span>
-    <span id="streak">🔥 серия: 0</span>
+    <span id="streak"><span class="emi" data-icon="flame"></span> серия: 0</span>
   </div>
 
   <div class="seg" id="cats">
     <button data-c="all" class="active">Все</button>
     <button data-c="nav">⏱ Скорость/ETA</button>
-    <button data-c="tide">🌊 Прилив</button>
+    <button data-c="tide"><span class="emi" data-icon="waves"></span> Прилив</button>
   </div>
 
   <div class="card">
@@ -83,7 +85,7 @@
     <div class="fb" id="fb"></div>
     <div class="sol" id="sol"></div>
     <div class="row">
-      <button class="btn ghost" id="solveBtn">💡 Решение</button>
+      <button class="btn ghost" id="solveBtn"><span class="emi" data-icon="lightbulb"></span> Решение</button>
       <button class="btn" id="next">Новая →</button>
     </div>
   </div>
@@ -100,7 +102,8 @@ const $ = id => document.getElementById(id);
 
 let CAT = "all", cur = null, streak = 0;
 try { streak = parseInt(localStorage.getItem("issa_task_streak") || "0", 10) || 0; } catch(e){}
-$("streak").textContent = `🔥 серия: ${streak}`;
+const FLAME = window.Icons ? Icons.svg("flame") : "";
+$("streak").innerHTML = `${FLAME} серия: ${streak}`;
 
 function pool(){ return CAT === "all" ? ALL : ALL.filter(t => t.cat === CAT); }
 
@@ -134,15 +137,15 @@ function check(){
   const ok = Math.abs(val - cur.answer) <= cur.tol + 1e-9;
   if (ok){
     streak++; fb.className = "fb ok";
-    fb.textContent = `✅ Верно! Ответ ${fmt(cur.answer)} ${cur.unit}.`;
+    fb.innerHTML = `${window.Icons?Icons.svg("check-circle"):""} Верно! Ответ ${fmt(cur.answer)} ${cur.unit}.`;
     haptic("success");
   } else {
     streak = 0; fb.className = "fb bad";
-    fb.textContent = `❌ Не то. Нажми «Решение» и попробуй разобраться.`;
+    fb.innerHTML = `${window.Icons?Icons.svg("x-circle"):""} Не то. Нажми «Решение» и попробуй разобраться.`;
     haptic("error");
   }
   try { localStorage.setItem("issa_task_streak", String(streak)); } catch(e){}
-  $("streak").textContent = `🔥 серия: ${streak}`;
+  $("streak").innerHTML = `${FLAME} серия: ${streak}`;
 }
 
 $("check").onclick = check;
@@ -157,6 +160,8 @@ $("cats").addEventListener("click", e => {
 });
 
 pick();
+
+if (window.Icons) Icons.hydrate();
 </script>
 </body>
 </html>

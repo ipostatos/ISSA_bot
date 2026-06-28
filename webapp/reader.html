@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="icons.js"></script>
 <style>
   :root{
     --bg: var(--tg-theme-bg-color, #17212b);
@@ -62,6 +63,7 @@
   .hidden{display:none !important}
   .bar{height:4px; background:var(--border); border-radius:3px; overflow:hidden; width:70%; max-width:240px}
   .bar>i{display:block; height:100%; width:0; background:var(--accent); transition:width .2s}
+  .emi{display:inline-flex; vertical-align:-2px} .emi svg{width:1em;height:1em}
 </style>
 </head>
 <body>
@@ -79,7 +81,7 @@
   <span class="zoom" id="zoomLbl">100%</span>
   <button id="zoomIn" title="Больше">+</button>
   <span class="pageinfo" id="pageInfo">—</span>
-  <button id="dl" title="Скачать">⤓</button>
+  <button id="dl" title="Скачать"><span class="emi" data-icon="download"></span></button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -88,6 +90,7 @@
 const tg = window.Telegram?.WebApp;
 
 const $ = id => document.getElementById(id);
+if (window.Icons) Icons.hydrate();
 const params = new URLSearchParams(location.search);
 const file = params.get("file") || "";
 const title = params.get("title") || "Книга";

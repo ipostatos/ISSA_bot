@@ -109,11 +109,13 @@
     border:1px solid var(--border); border-radius:11px; background:var(--card);
     color:var(--text); cursor:pointer}
   .gridToggle .meta{color:var(--hint); font-weight:400}
-  .strip{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:10px 0 0;
-    max-height:42vh; overflow:auto; -webkit-overflow-scrolling:touch}
+  /* лента номеров: пусть растёт и скроллит всю страницу (вложенный скролл
+     обрезал номера на мобильном). Сетка с авто-заполнением — ровные ряды. */
+  .strip{display:grid; grid-template-columns:repeat(auto-fill, minmax(34px, 1fr));
+    gap:6px; margin:10px 0 0}
   .strip.collapsed{display:none}
-  .cell{width:30px; height:30px; border-radius:8px; border:1px solid var(--border);
-    background:var(--bg); color:var(--hint); font-size:12px; cursor:pointer;
+  .cell{height:34px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg); color:var(--hint); font-size:13px; cursor:pointer;
     display:flex; align-items:center; justify-content:center; padding:0}
   .cell.answered{background:var(--ok); color:#fff; border-color:var(--ok)}
   .cell.current{outline:2px solid var(--accent); outline-offset:1px; color:var(--text)}
@@ -160,20 +162,22 @@
   .lvl .lbar>i{display:block; height:100%; border-radius:4px; background:var(--accent)}
   .lvl.done .lbar>i{background:var(--ok)}
   .lvl .lstatus{flex:0 0 auto; font-size:18px}
+  /* инлайн-иконки в тексте (вставляются через data-icon + Icons.hydrate) */
+  .emi{display:inline-flex; vertical-align:-2px} .emi svg{width:1em;height:1em}
 </style>
 </head>
 <body>
 
 <!-- ГЛАВНЫЙ ЭКРАН -->
 <section id="home">
-  <h1>⚓ Тесты ISSA</h1>
+  <h1><span class="emi" data-icon="anchor"></span> Тесты ISSA</h1>
   <p class="sub">Inshore Skipper + SRC · банк <span id="qcount">…</span> вопросов</p>
 
   <!-- баннер продолжения незавершённого теста (показывается, если есть сессия) -->
   <div class="card hidden" id="resumeCard" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
     <div style="flex:1 1 100%; font-size:14px">⏸ Есть незавершённый тест: <b><span id="resumeInfo"></span></b></div>
-    <button class="next" id="resumeBtn" style="flex:1; min-width:130px">▶️ Продолжить</button>
-    <button class="next ghost" id="resumeDrop" style="flex:1; min-width:130px; margin:0">🗑 Начать заново</button>
+    <button class="next" id="resumeBtn" style="flex:1; min-width:130px"><span class="emi" style="color:var(--warn)" data-icon="play"></span> Продолжить</button>
+    <button class="next ghost" id="resumeDrop" style="flex:1; min-width:130px; margin:0"><span class="emi" data-icon="refresh-cw"></span> Начать заново</button>
   </div>
 
   <button class="big" id="startReview"><span class="bic" data-icon="refresh-cw"></span>Повторить сегодня
@@ -195,7 +199,7 @@
 
 <!-- ЭКРАН «ПУТЬ ОБУЧЕНИЯ» (уровни-темы) -->
 <section id="path" class="hidden">
-  <h1 style="font-size:19px; margin:0 0 4px">🗺 Путь обучения</h1>
+  <h1 style="font-size:19px; margin:0 0 4px"><span class="emi" data-icon="map"></span> Путь обучения</h1>
   <p class="sub" style="margin:0 0 14px">От основ к экзамену · нажми тему, чтобы тренироваться</p>
   <div id="pathList"></div>
   <button class="next ghost" id="pathBack" style="margin-top:6px">← В меню</button>
@@ -229,7 +233,7 @@
       <button class="navbtn" id="skipBtn">Пропустить →</button>
     </div>
     <button class="gridToggle" id="gridToggle" type="button">
-      <span>🗒 Список вопросов</span><span class="meta" id="gridMeta"></span>
+      <span><span class="emi" data-icon="list"></span> Список вопросов</span><span class="meta" id="gridMeta"></span>
     </button>
     <div class="strip collapsed" id="strip"></div>
     <button class="finishBtn" id="finishBtn">Завершить тест</button>
@@ -242,12 +246,12 @@
     <div class="score" id="rScore"></div>
     <div class="pct" id="rPct"></div>
     <div class="verdict" id="rVerdict"></div>
-    <button class="next" id="sendBtn">📤 Сохранить результат в боте</button>
+    <button class="next" id="sendBtn"><span class="emi" data-icon="download"></span> Сохранить результат в боте</button>
   </div>
   <div id="cert" class="hidden"></div>
   <div id="feedback"></div>
   <div class="review" id="review"></div>
-  <button class="big ghost" id="againBtn">↩️ В меню</button>
+  <button class="big ghost" id="againBtn">← В меню</button>
   <p class="foot" id="sentNote"></p>
 </section>
 
@@ -331,7 +335,7 @@ function startQuiz(mode, isExam, queue){
   hide("home"); hide("result"); show("quiz");
   document.getElementById("timer").classList.toggle("hidden", !isExam);
   document.getElementById("examNav").classList.toggle("hidden", !isExam);
-  document.getElementById("liveScore").textContent = isExam ? "" : "✔ 0";
+  document.getElementById("liveScore").innerHTML = isExam ? "" : `${Icons.svg("check")} 0`;
   if (isExam){ tickTimer(); S.timerH = setInterval(tickTimer, 1000); }
   renderQ();
 }
@@ -403,8 +407,9 @@ function renderQ(){
       const ok = sel === q.answer;
       if (q.expl || q.ref){
         const e = document.getElementById("expl");
-        let html = (ok ? "✅ Верно. " : "❌ Неверно. ") + esc(q.expl || "");
-        if (q.ref) html += `<div class="ref">📘 Источник: ${esc(q.ref)}</div>`;
+        let html = (ok ? `<span style="color:var(--ok)">${Icons.svg("check-circle")}</span> Верно. `
+                       : `<span style="color:var(--bad)">${Icons.svg("x-circle")}</span> Неверно. `) + esc(q.expl || "");
+        if (q.ref) html += `<div class="ref">${Icons.svg("book")} Источник: ${esc(q.ref)}</div>`;
         e.innerHTML = html;
         show("expl");
       }
@@ -412,9 +417,9 @@ function renderQ(){
       const links = srcLinks(q);
       if (links.length){
         const s = document.getElementById("src");
-        s.innerHTML = '<span class="lbl">💡 Где изучить:</span>'
-          + links.map(l => `<a href="konspekt.html#${encodeURIComponent(l.key)}">📖 ${esc(l.title)}</a>`).join("")
-          + '<a href="book.html">📚 Библиотека</a>';
+        s.innerHTML = `<span class="lbl"><span style="color:var(--warn)">${Icons.svg("lightbulb")}</span> Где изучить:</span>`
+          + links.map(l => `<a href="konspekt.html#${encodeURIComponent(l.key)}">${Icons.svg("book-open")} ${esc(l.title)}</a>`).join("")
+          + `<a href="book.html">${Icons.svg("library")} Библиотека</a>`;
         show("src");
       }
       const nb = document.getElementById("nextBtn");
@@ -436,7 +441,7 @@ function renderExamNav(){
   const skip = document.getElementById("skipBtn");
   const last = S.idx === S.queue.length - 1;
   const answered = S.answers[S.idx] !== null;
-  skip.textContent = last ? (answered ? "Готово ✓" : "Дальше →")
+  skip.innerHTML = last ? (answered ? `Готово ${Icons.svg("check")}` : "Дальше →")
                           : (answered ? "Далее →" : "Пропустить →");
   skip.disabled = last;
   // лента номеров (по умолчанию свёрнута; раскрывается кнопкой gridToggle)
@@ -481,8 +486,8 @@ function answerTraining(i){
   if (window.Progress) Progress.recordAnswer();   // дневная цель + streak
   if (window.Sync) Sync.schedulePush();           // синхрон с сервером (debounce)
   maybeBadgeToast();                              // вдруг открылся бейдж
-  document.getElementById("liveScore").textContent =
-    `✔ ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
+  document.getElementById("liveScore").innerHTML =
+    `${Icons.svg("check")} ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
   haptic(ok ? "light" : "rigid");
   renderQ();
 }
@@ -524,7 +529,7 @@ function renderFeedback(pct){
   })).sort((a,b)=> a.pct - b.pct || b.total - a.total);   // слабые сверху
 
   const color = p => p>=75 ? "var(--ok)" : p>=50 ? "#e0a13a" : "var(--bad)";
-  let html = '<div class="card"><h3 style="margin:0 0 10px">📊 По темам</h3><div class="fb">';
+  let html = `<div class="card"><h3 style="margin:0 0 10px">${Icons.svg("bar-chart")} По темам</h3><div class="fb">`;
   html += rows.map(r=>`
     <div class="fbrow">
       <span class="name" title="${esc(r.topic)}">${esc(r.topic)}</span>
@@ -541,11 +546,11 @@ function renderFeedback(pct){
       if (KTITLES[k] && !seen.has(k)){ seen.add(k); recs.push({key:k, title:KTITLES[k]}); }
     }));
     const names = weak.map(r=>r.topic).join(", ");
-    html += `<div class="recs"><div class="lbl">📌 Стоит повторить: <b>${esc(names)}</b></div>`
-      + recs.map(l=>`<a href="konspekt.html#${encodeURIComponent(l.key)}">📖 ${esc(l.title)}</a>`).join("")
-      + '<a href="book.html">📚 Библиотека</a></div>';
+    html += `<div class="recs"><div class="lbl">${Icons.svg("bookmark")} Стоит повторить: <b>${esc(names)}</b></div>`
+      + recs.map(l=>`<a href="konspekt.html#${encodeURIComponent(l.key)}">${Icons.svg("book-open")} ${esc(l.title)}</a>`).join("")
+      + `<a href="book.html">${Icons.svg("library")} Библиотека</a></div>`;
   } else {
-    html += `<div class="recs"><div class="lbl">💪 Слабых тем нет — отличная подготовка!</div></div>`;
+    html += `<div class="recs"><div class="lbl">${Icons.svg("award")} Слабых тем нет — отличная подготовка!</div></div>`;
   }
   html += '</div>';
   box.innerHTML = html;
@@ -563,15 +568,15 @@ function finish(){
   const pct = total ? Math.round(correct/total*100) : 0;
   document.getElementById("rScore").textContent = `${correct} / ${total}`;
   const secs = Math.floor((Date.now()-S.startTs)/1000);
-  const tstr = S.isExam ? ` · ⏱ ${Math.floor(secs/60)}м ${secs%60}с` : "";
-  document.getElementById("rPct").textContent = `${pct}%${tstr}`;
+  const tstr = S.isExam ? ` · ${Icons.svg("history")} ${Math.floor(secs/60)}м ${secs%60}с` : "";
+  document.getElementById("rPct").innerHTML = `${pct}%${tstr}`;
 
   const v = document.getElementById("rVerdict");
   const cert = document.getElementById("cert");
   cert.classList.add("hidden");
   if (S.isExam){
     const passed = pct >= DATA.passPercent;
-    v.textContent = passed ? "✅ СДАНО" : "❌ НЕ СДАНО";
+    v.innerHTML = passed ? `${Icons.svg("check-circle")} СДАНО` : `${Icons.svg("x-circle")} НЕ СДАНО`;
     v.className = "verdict " + (passed ? "pass" : "fail");
     // флаги достижений: сдан экзамен / без ошибок (для бейджей)
     if (window.Progress){
@@ -583,7 +588,7 @@ function finish(){
       const d = new Date();
       const date = `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${d.getFullYear()}`;
       cert.innerHTML = `<div class="cert">
-        <div class="seal">🎖️</div>
+        <div class="seal">${Icons.svg("medal")}</div>
         <div class="ct">Готов к экзамену ISSA Inshore Skipper</div>
         <div class="cs">Пробный экзамен пройден на <b>${pct}%</b> (порог ${DATA.passPercent}%) · ${date}</div>
         <div class="cnote">Сертификат самопроверки. Не является официальным документом ISSA.</div>
@@ -591,7 +596,7 @@ function finish(){
       cert.classList.remove("hidden");
     }
   } else {
-    v.textContent = "🎯 Тренировка завершена";
+    v.innerHTML = `${Icons.svg("target")} Тренировка завершена`;
     v.className = "verdict";
   }
 
@@ -606,10 +611,10 @@ function finish(){
       <div class="miss">
         <div class="t">${esc(q.topic)}</div>
         <div>${esc(q.q)}</div>
-        <div class="a">✔️ ${esc(q.options[q.answer])}</div>
+        <div class="a">${Icons.svg("check")} ${esc(q.options[q.answer])}</div>
       </div>`).join("");
   } else {
-    rev.innerHTML = `<div class="miss" style="border-color:var(--ok)">🎉 Без ошибок!</div>`;
+    rev.innerHTML = `<div class="miss" style="border-color:var(--ok)">${Icons.svg("trophy")} Без ошибок!</div>`;
   }
   document.getElementById("sentNote").textContent = "";
   haptic(S.isExam ? "warning" : "success");
@@ -677,10 +682,10 @@ function renderPath(){
     const pct = Math.round(p*100);
     const cnt = ALL.filter(q=>q.topic===t).length;
     let cls="", status="", meta=`${cnt} вопросов · ${pct}%`;
-    if (p>=DONE){ cls="done"; status="✅"; }
-    else if (p>0){ cls="doing"; status="🔵"; }
-    else if (i===nextIdx){ cls="next"; status="▶️"; meta=`${cnt} вопросов · рекомендуется`; }
-    else { status="⚪"; }
+    if (p>=DONE){ cls="done"; status=`<span style="color:var(--ok)">${Icons.svg("check-circle")}</span>`; }
+    else if (p>0){ cls="doing"; status=`<span style="color:var(--accent)">${Icons.svg("circle-dot")}</span>`; }
+    else if (i===nextIdx){ cls="next"; status=`<span style="color:var(--warn)">${Icons.svg("play")}</span>`; meta=`${cnt} вопросов · рекомендуется`; }
+    else { status=`<span style="color:var(--hint)">${Icons.svg("circle")}</span>`; }
     return `<button class="lvl ${cls}" data-topic="${esc(t)}">
       <span class="badge-num">${i+1}</span>
       <span class="lbody">
@@ -823,8 +828,8 @@ function resumeQuiz(){
   hide("home"); hide("result"); show("quiz");
   document.getElementById("timer").classList.toggle("hidden", !s.isExam);
   document.getElementById("examNav").classList.toggle("hidden", !s.isExam);
-  document.getElementById("liveScore").textContent = s.isExam ? ""
-    : `✔ ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
+  document.getElementById("liveScore").innerHTML = s.isExam ? ""
+    : `${Icons.svg("check")} ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
   if (s.isExam){ tickTimer(); S.timerH = setInterval(tickTimer, 1000); }
   renderQ();
 }

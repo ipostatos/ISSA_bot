@@ -45,10 +45,11 @@
 
   .section-title{ font-size:var(--fs-sm); font-weight:700; color:var(--hint);
     margin:var(--sp-4) 0 var(--sp-2); text-transform:uppercase; letter-spacing:.03em }
+  .emi{ display:inline-flex; vertical-align:-2px } .emi svg{ width:1em; height:1em }
 </style>
 </head>
 <body>
-  <div class="hero"><span class="logo">⚓</span><h1>ISSA Trainer</h1></div>
+  <div class="hero"><span class="logo emi" data-icon="anchor"></span><h1>ISSA Trainer</h1></div>
   <p class="sub">Подготовка к экзамену Inshore Skipper + SRC</p>
 
   <!-- ПРИОРИТЕТ: что делать прямо сейчас (динамически: повтор или старт) -->
@@ -57,8 +58,8 @@
     <div class="big" id="nextTitle">Тренировка и экзамен</div>
     <div class="hintline" id="nextHint">525 вопросов · перемешанные варианты · разбор и источники</div>
     <div class="actions">
-      <a class="btn" id="nextBtn" href="quiz.html">🎓 Начать</a>
-      <a class="btn ghost" href="konspekt.html">📖 Теория</a>
+      <a class="btn" id="nextBtn" href="quiz.html"><span class="emi" data-icon="graduation-cap"></span> Начать</a>
+      <a class="btn ghost" href="konspekt.html"><span class="emi" data-icon="book-open"></span> Теория</a>
     </div>
   </div>
 
@@ -80,7 +81,7 @@
       </div>
       <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
         <div style="font-size:11px; color:var(--hint)">Серия</div>
-        <div style="font-weight:800; font-size:18px" id="streakVal">0 🔥</div>
+        <div style="font-weight:800; font-size:18px" id="streakVal">0 <span class="emi" data-icon="flame"></span></div>
       </div>
       <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
         <div style="font-size:11px; color:var(--hint)">Рекорд</div>
@@ -195,11 +196,12 @@ function render(){
   if (due > 0 && st.started > 0){
     // есть что повторять — делаем это главным действием
     document.getElementById("nextLabel").textContent = "Пора повторить";
-    document.getElementById("nextTitle").textContent = `🔁 ${due} вопрос(ов) к повторению`;
+    const ic = window.Icons ? Icons.svg("refresh-cw") : "";
+    document.getElementById("nextTitle").innerHTML = `${ic} ${due} вопрос(ов) к повторению`;
     document.getElementById("nextHint").textContent =
       `Интервальное повторение · закреплено ${st.learned} из ${total}`;
     const b = document.getElementById("nextBtn");
-    b.textContent = "🔁 Повторить";
+    b.innerHTML = `${ic} Повторить`;
     b.href = "quiz.html";   // на странице тестов кнопка «Повторить сегодня» уже первая
   } else if (st.started > 0){
     document.getElementById("nextLabel").textContent = "Так держать";
@@ -224,7 +226,8 @@ function render(){
       r.percent>=80 ? "var(--ok)" : r.percent>=50 ? "var(--warn)" : "var(--bad)");
     document.getElementById("readyVerdict").textContent = r.verdict;
     document.getElementById("goalToday").textContent = `${todayN}/${goal}`;
-    document.getElementById("streakVal").textContent = `${streak.streak} 🔥`;
+    document.getElementById("streakVal").innerHTML =
+      `${streak.streak} ${window.Icons ? Icons.svg("flame") : ""}`;
     document.getElementById("bestVal").textContent = `${streak.best}`;
     // настройка дневной цели: тап по «Сегодня» → выбор значения
     document.getElementById("goalBox").onclick = ()=>{

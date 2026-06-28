@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="icons.js"></script>
 <style>
   :root{
     --bg: var(--tg-theme-bg-color, #17212b);
@@ -49,10 +50,11 @@
   .row a.open{background:var(--accent); color:var(--accent-text)}
   .row a.dl{background:transparent; color:var(--text); border:1px solid var(--border)}
   .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px; line-height:1.5}
+  .emi{display:inline-flex; vertical-align:-2px} .emi svg{width:1em;height:1em}
 </style>
 </head>
 <body>
-  <h1>📚 Библиотека</h1>
+  <h1><span class="emi" data-icon="library"></span> Библиотека</h1>
   <p class="sub">Учебники и пособия по яхтингу</p>
 
   <div id="list"></div>
@@ -70,21 +72,21 @@ if (tg){ tg.ready(); tg.expand(); }
 // Чтобы добавить книгу — положи PDF и допиши элемент сюда (file: имя.pdf).
 const BOOKS = [
   {
-    ic: "📕",
+    ic: "book",
     title: "Шкипер прибрежного плавания",
     author: "Учебник курсанта ISSA",
     desc: "Навигация, метео, управление яхтой, МППСС, приборы, первая помощь.",
     file: "book.pdf",
   },
   {
-    ic: "📗",
+    ic: "book-marked",
     title: "Шкипер прибрежного плавания",
     author: "Рабочая тетрадь курсанта (StudBook)",
     desc: "Задания и упражнения к курсу: прокладка, расчёты, контрольные.",
     file: "studbook.pdf",
   },
   {
-    ic: "📘",
+    ic: "book-open",
     title: "Yachting",
     author: "Jeff Toghill",
     desc: "Классическое пособие по парусному яхтингу (на английском).",
@@ -102,7 +104,7 @@ const openPdf = (book) => {
 const box = document.getElementById("list");
 box.innerHTML = BOOKS.map((b, i) => `
   <div class="book">
-    <div class="ic">${b.ic}</div>
+    <div class="ic">${window.Icons ? Icons.svg(b.ic) : "📚"}</div>
     <div class="info">
       <div class="t">${esc(b.title)}</div>
       <div class="a">${esc(b.author)}</div>
@@ -116,6 +118,8 @@ box.innerHTML = BOOKS.map((b, i) => `
 
 box.querySelectorAll("a.open").forEach(a =>
   a.addEventListener("click", e => { e.preventDefault(); openPdf(BOOKS[+a.dataset.i]); }));
+
+if (window.Icons) Icons.hydrate();
 </script>
 </body>
 </html>
