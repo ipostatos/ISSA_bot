@@ -133,6 +133,29 @@
       clearTimeout(Sync._timer);
       Sync._timer = setTimeout(function () { Sync.push(); }, POST_DEBOUNCE_MS);
     },
+
+    // Добавить запись в историю прохождений (по завершении теста).
+    // a = {ts, mode, total, correct, pct, secs}. Возвращает Promise<массив|false>.
+    pushAttempt: function (a) {
+      if (!Sync.enabled) return Promise.resolve(false);
+      return global.fetch("/api/attempts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Init-Data": initData },
+        body: JSON.stringify(a),
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { return (j && j.attempts) || false; })
+        .catch(function () { return false; });
+    },
+
+    // Получить историю прохождений.
+    getAttempts: function () {
+      if (!Sync.enabled) return Promise.resolve([]);
+      return global.fetch("/api/attempts", { headers: { "X-Init-Data": initData } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { return (j && j.attempts) || []; })
+        .catch(function () { return []; });
+    },
   };
 
   // отправить накопленное при сворачивании/закрытии Mini App

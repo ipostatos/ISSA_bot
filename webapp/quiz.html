@@ -611,7 +611,11 @@ function finish(){
   document.getElementById("sentNote").textContent = "";
   haptic(S.isExam ? "warning" : "success");
   maybeBadgeToast();                 // бейджи за экзамен/готовность
-  if (window.Sync) Sync.schedulePush();
+  if (window.Sync){
+    Sync.schedulePush();
+    // запись в историю прохождений (экзамен и тренировки)
+    Sync.pushAttempt({ ts: Date.now(), mode: S.mode, total, correct, pct, secs });
+  }
 }
 
 // отправка компактного результата в бота

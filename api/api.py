@@ -63,7 +63,60 @@ def db() -> sqlite3.Connection:
              updated_at     INTEGER NOT NULL
            )"""
     )
+    # История прохождений (append-only). Отдельно от state — не мёрджится.
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS attempts(
+             id       INTEGER PRIMARY KEY AUTOINCREMENT,
+             user_id  INTEGER NOT NULL,
+             ts       INTEGER NOT NULL,   -- когда пройдено (мс или сек, как прислал клиент)
+             mode     TEXT NOT NULL,      -- exam | random | review | topic:<...>
+             total    INTEGER NOT NULL,
+             correct  INTEGER NOT NULL,
+             pct      INTEGER NOT NULL,
+             secs     INTEGER NOT NULL DEFAULT 0
+           )"""
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_attempts_user ON attempts(user_id, ts DESC)")
     return conn
+
+
+HISTORY_LIMIT = 100      # сколько последних попыток храним/отдаём на пользователя
+
+
+def add_attempt(user_id: int, a: dict) -> None:
+    now = int(time.time())
+    with db() as conn:
+        conn.execute(
+            """INSERT INTO attempts(user_id, ts, mode, total, correct, pct, secs)
+               VALUES(?,?,?,?,?,?,?)""",
+            (user_id,
+             int(a.get("ts") or now),
+             str(a.get("mode", "?"))[:40],
+             int(a.get("total", 0)),
+             int(a.get("correct", 0)),
+             int(a.get("pct", 0)),
+             int(a.get("secs", 0))),
+        )
+        # держим только последние HISTORY_LIMIT записей пользователя
+        conn.execute(
+            """DELETE FROM attempts WHERE user_id=? AND id NOT IN (
+                 SELECT id FROM attempts WHERE user_id=? ORDER BY ts DESC LIMIT ?
+               )""",
+            (user_id, user_id, HISTORY_LIMIT),
+        )
+
+
+def list_attempts(user_id: int, limit: int = HISTORY_LIMIT) -> list:
+    with db() as conn:
+        rows = conn.execute(
+            """SELECT ts, mode, total, correct, pct, secs FROM attempts
+               WHERE user_id=? ORDER BY ts DESC LIMIT ?""",
+            (user_id, limit),
+        ).fetchall()
+    return [
+        {"ts": r[0], "mode": r[1], "total": r[2], "correct": r[3], "pct": r[4], "secs": r[5]}
+        for r in rows
+    ]
 
 
 def load_state(user_id: int) -> dict:
@@ -142,6 +195,32 @@ async def post_state(
     merged = merge_state(server, {"srs": incoming.get("srs"), "progress": incoming.get("progress")})
     save_state(user_id, merged)
     return {"ok": True, "state": merged}
+
+
+# ── история прохождений (append-only, отдельно от state) ──
+@app.get("/api/attempts")
+def get_attempts(x_init_data: str | None = Header(default=None, alias="X-Init-Data")):
+    user_id = _auth(x_init_data)
+    return {"ok": True, "attempts": list_attempts(user_id)}
+
+
+@app.post("/api/attempts")
+async def post_attempt(
+    request: Request,
+    x_init_data: str | None = Header(default=None, alias="X-Init-Data"),
+):
+    user_id = _auth(x_init_data)
+    raw = await request.body()
+    if len(raw) > MAX_BODY:
+        raise HTTPException(413, "payload too large")
+    try:
+        a = json.loads(raw or b"{}")
+    except json.JSONDecodeError:
+        raise HTTPException(400, "bad json")
+    if not isinstance(a, dict) or not a.get("total"):
+        raise HTTPException(400, "expected attempt object with total")
+    add_attempt(user_id, a)
+    return {"ok": True, "attempts": list_attempts(user_id)}
 
 
 # CORS: разрешаем только домен Mini App (и пусто — same-origin за Caddy не требует CORS,

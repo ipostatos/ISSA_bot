@@ -38,6 +38,7 @@ cp -f "$SRC/cheatsheet.html" "$DST/cheatsheet.html"
 cp -f "$SRC/book.html"       "$DST/book.html"
 cp -f "$SRC/about.html"      "$DST/about.html"    # экран «О банке» (прозрачность)
 cp -f "$SRC/profile.html"    "$DST/profile.html"  # профиль и достижения
+cp -f "$SRC/history.html"    "$DST/history.html"  # история прохождений
 cp -f "$SRC/reader.html"     "$DST/reader.html"   # встроенный PDF-просмотрщик
 cp -f "$SRC/nav.js"          "$DST/nav.js"        # общая навигация (BackButton)
 cp -f "$SRC/lightbox.js"     "$DST/lightbox.js"   # зум картинок

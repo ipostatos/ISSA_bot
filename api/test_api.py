@@ -136,11 +136,48 @@ def test_endpoints():
     check("слишком большое тело → 413", big.status_code == 413)
 
 
+def test_attempts():
+    try:
+        from fastapi.testclient import TestClient
+    except Exception:
+        return
+    tmp = tempfile.mkdtemp()
+    os.environ["ISSA_API_DB"] = str(Path(tmp) / "a.db")
+    os.environ["BOT_TOKEN"] = TOKEN
+    import importlib, api as apimod
+    importlib.reload(apimod)
+    client = TestClient(apimod.app)
+    init = build_init_data(TOKEN, {"id": 99, "first_name": "H"})
+    h = {"X-Init-Data": init}
+
+    check("attempts без initData → 401", client.get("/api/attempts").status_code == 401)
+    check("история сначала пуста", client.get("/api/attempts", headers=h).json()["attempts"] == [])
+
+    # добавить экзамен
+    ex = {"ts": 1000, "mode": "exam", "total": 100, "correct": 80, "pct": 80, "secs": 1200}
+    r = client.post("/api/attempts", headers=h, content=json.dumps(ex)).json()
+    check("attempt добавлен, в ответе история", len(r["attempts"]) == 1 and r["attempts"][0]["pct"] == 80)
+
+    # добавить тренировку позже — она первой (сортировка по ts DESC)
+    tr = {"ts": 2000, "mode": "random", "total": 20, "correct": 15, "pct": 75, "secs": 200}
+    r = client.post("/api/attempts", headers=h, content=json.dumps(tr)).json()
+    check("2 записи, свежая первой", len(r["attempts"]) == 2 and r["attempts"][0]["mode"] == "random")
+
+    # пустой total → 400
+    bad = client.post("/api/attempts", headers=h, content=json.dumps({"mode": "x"}))
+    check("attempt без total → 400", bad.status_code == 400)
+
+    # чужой пользователь не видит историю
+    h2 = {"X-Init-Data": build_init_data(TOKEN, {"id": 1234, "first_name": "Z"})}
+    check("чужая история пуста (изоляция по user_id)", client.get("/api/attempts", headers=h2).json()["attempts"] == [])
+
+
 if __name__ == "__main__":
     test_auth()
     test_merge_srs()
     test_merge_progress()
     test_endpoints()
+    test_attempts()
     if fails:
         print(f"\nAPI TESTS: {fails} провал(ов)")
         sys.exit(1)

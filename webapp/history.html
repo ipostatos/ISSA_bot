@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>История</title>
+<link rel="stylesheet" href="theme.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="nav.js"></script>
+<script src="sync.js"></script>
+<style>
+  .sum{ display:flex; gap:10px; margin-bottom:16px }
+  .sum .s{ flex:1; text-align:center; padding:12px 8px; background:var(--card);
+    border:1px solid var(--border); border-radius:14px }
+  .sum .n{ font-size:20px; font-weight:800 } .sum .c{ font-size:11px; color:var(--hint); margin-top:2px }
+  .row{ display:flex; align-items:center; gap:12px; padding:12px 14px; margin-bottom:8px;
+    background:var(--card); border:1px solid var(--border); border-radius:12px }
+  .row .ic{ width:34px;height:34px;flex:0 0 auto;border-radius:9px;display:flex;
+    align-items:center;justify-content:center;font-size:17px;
+    background:color-mix(in srgb,var(--accent) 16%,transparent) }
+  .row .b{ flex:1; min-width:0 } .row .t{ font-size:14px; font-weight:700 }
+  .row .m{ font-size:12px; color:var(--hint); margin-top:1px }
+  .row .pct{ font-size:18px; font-weight:800; flex:0 0 auto }
+  .row .pct.ok{ color:var(--ok) } .row .pct.bad{ color:var(--bad) } .row .pct.mid{ color:var(--warn) }
+</style>
+</head>
+<body>
+  <h1 class="h1" style="font-size:20px">📜 История прохождений</h1>
+  <p class="sub">Твои тесты и экзамены · последние 100</p>
+
+  <div class="sum" id="summary" style="display:none">
+    <div class="s"><div class="n" id="sCount">0</div><div class="c">всего</div></div>
+    <div class="s"><div class="n" id="sExam">—</div><div class="c">ср. экзамен</div></div>
+    <div class="s"><div class="n" id="sBest">—</div><div class="c">лучший</div></div>
+  </div>
+
+  <div id="list"><div class="state">Загрузка…</div></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+function modeInfo(mode){
+  if (mode === "exam")   return { ic:"📝", name:"Экзамен" };
+  if (mode === "review") return { ic:"🔁", name:"Повторение" };
+  if (mode === "random") return { ic:"🎯", name:"Тренировка" };
+  if (mode && mode.indexOf("topic:")===0) return { ic:"📚", name:"Тема: " + mode.slice(6) };
+  return { ic:"🎓", name:"Тренировка" };
+}
+function fmtDate(ts){
+  // ts может быть в мс (Date.now) — нормализуем
+  const ms = ts > 1e12 ? ts : ts*1000;
+  const d = new Date(ms);
+  const p = n => String(n).padStart(2,"0");
+  return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function pctClass(p){ return p>=75 ? "ok" : p>=50 ? "mid" : "bad"; }
+
+function render(items){
+  if (!items.length){
+    $("list").innerHTML = '<div class="state">Пока нет завершённых тестов.<br>'
+      + 'Пройди тренировку или экзамен — здесь появится история.</div>';
+    return;
+  }
+  // сводка
+  const exams = items.filter(a=>a.mode==="exam");
+  $("summary").style.display = "flex";
+  $("sCount").textContent = items.length;
+  if (exams.length){
+    const avg = Math.round(exams.reduce((s,a)=>s+a.pct,0)/exams.length);
+    const best = Math.max.apply(null, exams.map(a=>a.pct));
+    $("sExam").textContent = avg + "%";
+    $("sBest").textContent = best + "%";
+  }
+  // список
+  $("list").innerHTML = items.map(a=>{
+    const mi = modeInfo(a.mode);
+    const mins = a.secs ? ` · ${Math.floor(a.secs/60)}м ${a.secs%60}с` : "";
+    return `<div class="row">
+      <div class="ic">${mi.ic}</div>
+      <div class="b">
+        <div class="t">${esc(mi.name)}</div>
+        <div class="m">${fmtDate(a.ts)} · ${a.correct}/${a.total}${mins}</div>
+      </div>
+      <div class="pct ${pctClass(a.pct)}">${a.pct}%</div>
+    </div>`;
+  }).join("");
+}
+
+if (window.Sync && Sync.enabled){
+  Sync.getAttempts().then(render);
+} else {
+  $("list").innerHTML = '<div class="state">История доступна при открытии из Telegram '
+    + '(нужна авторизация для синхронизации).</div>';
+}
+</script>
+</body>
+</html>
