@@ -17,7 +17,7 @@ const check = (cond, msg) => { if (!cond){ console.log("FAIL:", msg); fail++; } 
 check(D && Array.isArray(D.questions), "QUIZ_DATA.questions есть");
 check(D.questions.length > 0, "вопросы не пустые");
 check(D.examSize === 100, "examSize=100");
-check(D.passPercent === 75, "passPercent=75");
+check(D.passPercent === 90, "passPercent=90");
 check(Array.isArray(D.topics) && D.topics.length > 0, "темы есть");
 
 // каждый вопрос валиден
