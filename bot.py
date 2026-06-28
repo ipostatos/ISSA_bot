@@ -68,18 +68,22 @@ DISCLAIMER = (
 
 EXAM_SIZE = 100           # вопросов в экзамене
 EXAM_PASS_PERCENT = 90    # проходной балл, %
-# URL мини-приложения (Mini App) калькулятора TVMDC. Если задан (HTTPS),
-# в меню калькулятора появляется кнопка «Открыть приложение». Без него
-# калькулятор работает как обычный диалог.
-WEBAPP_URL = os.environ.get("WEBAPP_URL", "").strip()
-# URL Mini App «Тесты» (quiz.html). Если задан (HTTPS) — в меню и на reply-
-# клавиатуре появляется кнопка запуска приложения тестов. Результат теста
+# Боевой адрес Mini App (раздаётся Caddy на VPS). Используется как дефолт для
+# URL-ов ниже, чтобы лаунчер-меню работало без правки systemd/.env. Переопределяется
+# переменными окружения, если нужен другой хост.
+DEFAULT_WEBAPP_BASE = "https://issa-46-224-220-94.sslip.io"
+# URL мини-приложения (Mini App) калькулятора TVMDC. По умолчанию — боевой адрес,
+# в меню калькулятора есть кнопка «Открыть приложение».
+WEBAPP_URL = os.environ.get("WEBAPP_URL", DEFAULT_WEBAPP_BASE + "/calc.html").strip()
+# URL Mini App «Тесты» (quiz.html). По умолчанию — боевой адрес: на reply-
+# клавиатуре есть кнопка запуска приложения тестов. Результат теста
 # возвращается в бота через WebApp.sendData и пишется в прогресс.
-WEBAPP_QUIZ_URL = os.environ.get("WEBAPP_QUIZ_URL", "").strip()
-# URL стартового экрана Mini App (home.html на корне). Если задан — в главном
-# меню показываем кнопку «Открыть приложение», а контентные пункты (конспект,
-# шпаргалки, словарь, калькулятор, задачи) прячем как дубли приложения.
-WEBAPP_HOME_URL = os.environ.get("WEBAPP_HOME_URL", "").strip()
+WEBAPP_QUIZ_URL = os.environ.get("WEBAPP_QUIZ_URL", DEFAULT_WEBAPP_BASE + "/quiz.html").strip()
+# URL стартового экрана Mini App (home.html на корне). По умолчанию — боевой
+# адрес: меню работает как лаунчер (большая кнопка «Открыть приложение» +
+# быстрый доступ), контентные пункты живут внутри приложения. Переопределяется
+# переменной WEBAPP_HOME_URL.
+WEBAPP_HOME_URL = os.environ.get("WEBAPP_HOME_URL", DEFAULT_WEBAPP_BASE + "/").strip()
 TG_MSG_LIMIT = 4096       # ограничение Telegram на длину сообщения
 POLL_OPTION_LIMIT = 100   # ограничение Telegram на длину варианта ответа
 POLL_QUESTION_LIMIT = 300 # ограничение Telegram на длину текста вопроса/пояснения
@@ -287,15 +291,17 @@ def main_menu_kb() -> InlineKeyboardMarkup:
     # разделы (есть в приложении) в чат-меню не дублируем. В чате остаётся то,
     # что завязано на прогресс/quiz-поллы. Без URL — полное меню (как было).
     if WEBAPP_HOME_URL:
+        # Лаунчер-режим: приложение — основной интерфейс, в чате только
+        # большая кнопка запуска + быстрый доступ к самому ходовому (без
+        # дублирования всего: конспект/шпаргалки/словарь/калькулятор — внутри Mini App).
         rows = [
             [InlineKeyboardButton(text="🚀 Открыть приложение",
                                   web_app=WebAppInfo(url=WEBAPP_HOME_URL))],
-            [InlineKeyboardButton(text="🎯 Случайный вопрос", callback_data="mode:random")],
-            [InlineKeyboardButton(text="📚 Тренировка по темам", callback_data="mode:topics")],
-            [InlineKeyboardButton(text=f"📝 Экзамен ({EXAM_SIZE} вопросов)", callback_data="mode:exam")],
-            [InlineKeyboardButton(text="🔁 Работа над ошибками", callback_data="mode:mistakes")],
-            [InlineKeyboardButton(text="📊 Моя статистика", callback_data="mode:stats")],
-            [InlineKeyboardButton(text="♻️ Сбросить прогресс", callback_data="mode:reset")],
+            [InlineKeyboardButton(text="Случайный вопрос", callback_data="mode:random")],
+            [InlineKeyboardButton(text=f"Экзамен ({EXAM_SIZE} вопросов)", callback_data="mode:exam")],
+            [InlineKeyboardButton(text="Работа над ошибками", callback_data="mode:mistakes")],
+            [InlineKeyboardButton(text="Моя статистика", callback_data="mode:stats")],
+            [InlineKeyboardButton(text="Сбросить прогресс", callback_data="mode:reset")],
         ]
         return InlineKeyboardMarkup(inline_keyboard=rows)
     return InlineKeyboardMarkup(
