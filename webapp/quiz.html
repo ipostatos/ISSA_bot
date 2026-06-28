@@ -112,7 +112,7 @@
   /* лента номеров: пусть растёт и скроллит всю страницу (вложенный скролл
      обрезал номера на мобильном). Сетка с авто-заполнением — ровные ряды. */
   .strip{display:grid; grid-template-columns:repeat(auto-fill, minmax(34px, 1fr));
-    gap:6px; margin:10px 0 0}
+    gap:6px; margin:10px 0 14px}                 /* отступ снизу — чтобы номера не липли к кнопке */
   .strip.collapsed{display:none}
   .cell{height:34px; border-radius:8px; border:1px solid var(--border);
     background:var(--bg); color:var(--hint); font-size:13px; cursor:pointer;
@@ -175,7 +175,7 @@
 
   <!-- баннер продолжения незавершённого теста (показывается, если есть сессия) -->
   <div class="card hidden" id="resumeCard" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
-    <div style="flex:1 1 100%; font-size:14px">⏸ Есть незавершённый тест: <b><span id="resumeInfo"></span></b></div>
+    <div style="flex:1 1 100%; font-size:14px"><span class="emi" data-icon="pause"></span> Есть незавершённый тест: <b><span id="resumeInfo"></span></b></div>
     <button class="next" id="resumeBtn" style="flex:1; min-width:130px"><span class="emi" style="color:var(--warn)" data-icon="play"></span> Продолжить</button>
     <button class="next ghost" id="resumeDrop" style="flex:1; min-width:130px; margin:0"><span class="emi" data-icon="refresh-cw"></span> Начать заново</button>
   </div>

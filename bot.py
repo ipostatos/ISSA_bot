@@ -36,6 +36,7 @@ from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     KeyboardButton,
+    MenuButtonWebApp,
     Message,
     PollAnswer,
     ReplyKeyboardMarkup,
@@ -422,6 +423,29 @@ async def group_cb_redirect(cb: CallbackQuery) -> None:
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message) -> None:
+    # Если развёрнут Mini App — делаем его ГЛАВНЫМ входом: крупная кнопка-приложение
+    # первым сообщением. Весь тренажёр (тесты с разбором, конспект, калькуляторы,
+    # повторение, прогресс) удобнее в приложении; чат-режимы — как быстрый доступ.
+    if WEBAPP_HOME_URL:
+        kb = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="🚀 Открыть тренажёр",
+                                 web_app=WebAppInfo(url=WEBAPP_HOME_URL))
+        ]])
+        await message.answer(
+            "⚓ <b>ISSA Trainer</b> — подготовка к экзамену Inshore Skipper + SRC\n\n"
+            f"<b>{len(QUESTIONS)} вопросов</b> с разбором и источниками, конспект по "
+            "учебнику, морские калькуляторы, интервальное повторение, пробный экзамен "
+            "и отслеживание готовности.\n\n"
+            "👉 <b>Всё это — в приложении.</b> Нажми «Открыть тренажёр»:",
+            reply_markup=kb,
+        )
+        await message.answer(
+            "Или быстрые режимы прямо в чате:",
+            reply_markup=main_menu_kb(),
+        )
+        return
+
+    # Fallback без Mini App — как было: всё в чате.
     await message.answer(
         "⚓ <b>Тренажёр ISSA Inshore Skipper + SRC</b>\n\n"
         f"В банке <b>{len(QUESTIONS)}</b> вопросов по темам: "
@@ -1694,6 +1718,17 @@ async def main() -> None:
     bot = Bot(token=token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     me = await bot.get_me()
     log.info("Бот запущен: @%s | вопросов в банке: %d | тем: %d", me.username, len(QUESTIONS), len(TOPICS))
+    # Кнопка-меню слева от поля ввода → открывает Mini App (главный вход в продукт).
+    # Так пользователь сразу видит, что «вкусное» — в приложении, а не в чат-диалоге.
+    if WEBAPP_HOME_URL:
+        try:
+            await bot.set_chat_menu_button(
+                menu_button=MenuButtonWebApp(text="Открыть тренажёр",
+                                             web_app=WebAppInfo(url=WEBAPP_HOME_URL))
+            )
+            log.info("Menu button → Mini App: %s", WEBAPP_HOME_URL)
+        except Exception as e:
+            log.warning("Не удалось установить menu button: %s", e)
     await dp.start_polling(bot)
 
 

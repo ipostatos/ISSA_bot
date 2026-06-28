@@ -106,7 +106,7 @@ function fail(msg){
   $("status").classList.remove("hidden");
   $("pages").classList.add("hidden");
   $("status").innerHTML =
-    `<div style="font-size:30px">📄</div><div>${msg}</div>` +
+    `<div style="font-size:30px">${window.Icons?Icons.svg("file-text"):"📄"}</div><div>${msg}</div>` +
     `<a id="ext">Открыть во внешнем просмотрщике</a>`;
   $("ext").onclick = () => {
     const url = new URL(file, location.href).href;
