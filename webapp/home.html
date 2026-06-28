@@ -12,6 +12,7 @@
 <script src="progress.js"></script>
 <script src="heatmap.js"></script>
 <script src="badges.js"></script>
+<script src="icons.js"></script>
 <script src="sync.js"></script>
 <style>
   /* — дашборд: специфика главного экрана — */
@@ -99,22 +100,22 @@
   <div class="section-title">Практика</div>
   <div class="grid">
     <a class="cell" href="quiz.html">
-      <div class="ic-tile blue">🎓</div>
+      <div class="ic-tile blue" data-icon="graduation-cap"></div>
       <div class="t">Тесты</div>
       <div class="d">Темы и экзамен, таймер, разбор</div>
     </a>
     <a class="cell" href="tasks.html">
-      <div class="ic-tile green">📝</div>
+      <div class="ic-tile green" data-icon="clipboard-list"></div>
       <div class="t">Задачки</div>
       <div class="d">Скорость·время·ETA, приливы</div>
     </a>
     <a class="cell" href="navtasks.html">
-      <div class="ic-tile cyan">🧭</div>
+      <div class="ic-tile cyan" data-icon="compass"></div>
       <div class="t">T-V-M-D-C</div>
       <div class="d">50 задач на поправки компаса</div>
     </a>
     <a class="cell" href="calc.html">
-      <div class="ic-tile violet">🧮</div>
+      <div class="ic-tile violet" data-icon="calculator"></div>
       <div class="t">Калькулятор</div>
       <div class="d">TVMDC и S·D·T·ETA</div>
     </a>
@@ -123,29 +124,29 @@
   <div class="section-title">Теория и справка</div>
   <div class="grid">
     <a class="cell" href="konspekt.html">
-      <div class="ic-tile amber">📖</div>
+      <div class="ic-tile amber" data-icon="book-open"></div>
       <div class="t">Конспект</div>
       <div class="d">16 тем по учебнику ISSA</div>
     </a>
     <a class="cell" href="cheatsheet.html">
-      <div class="ic-tile red">📌</div>
+      <div class="ic-tile red" data-icon="bookmark"></div>
       <div class="t">Шпаргалки</div>
       <div class="d">МППСС, огни, IALA, узлы…</div>
     </a>
     <a class="cell" href="glossary.html">
-      <div class="ic-tile blue">📚</div>
+      <div class="ic-tile blue" data-icon="book-marked"></div>
       <div class="t">Словарь</div>
       <div class="d">180+ терминов с поиском</div>
     </a>
     <a class="cell" href="book.html">
-      <div class="ic-tile green">📕</div>
+      <div class="ic-tile green" data-icon="library"></div>
       <div class="t">Библиотека</div>
       <div class="d">Учебники целиком (PDF)</div>
     </a>
   </div>
 
   <a class="cell wide" href="profile.html" style="margin-top:12px">
-    <div class="ic-tile gold">🎖️</div>
+    <div class="ic-tile gold" data-icon="trophy"></div>
     <div class="body">
       <div class="t">Профиль и достижения</div>
       <div class="d" id="profileSub">Звания, бейджи, прогресс</div>
@@ -154,7 +155,7 @@
   </a>
 
   <a class="cell wide" href="history.html" style="margin-top:10px">
-    <div class="ic-tile cyan">📜</div>
+    <div class="ic-tile cyan" data-icon="history"></div>
     <div class="body">
       <div class="t">История прохождений</div>
       <div class="d">Все тесты и экзамены, динамика результатов</div>
@@ -163,7 +164,7 @@
   </a>
 
   <a class="cell wide" href="about.html" style="margin-top:10px">
-    <div class="ic-tile">🛡️</div>
+    <div class="ic-tile" data-icon="book-marked"></div>
     <div class="body">
       <div class="t">О банке вопросов</div>
       <div class="d">Источники, проверка, состав — прозрачно</div>
@@ -176,6 +177,9 @@
 
 <script>
 "use strict";
+// заменить data-icon на SVG-иконки (Lucide) сразу при загрузке
+if (window.Icons) Icons.hydrate();
+
 // Оживляем блок «С чего начать»: если есть вопросы к повтору по SRS —
 // предлагаем повторение приоритетом, иначе обычный старт. Всё на устройстве.
 function render(){

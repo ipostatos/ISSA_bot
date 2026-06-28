@@ -102,17 +102,20 @@ body{
 .state{ color:var(--hint); font-size:var(--fs-body); text-align:center;
   padding:24px var(--sp-2); line-height:1.5 }
 
-/* ── цветные плашки для иконок-эмодзи (продуктовый вид) ──
-   Цвет — мягкая подложка из акцентных тонов, читается в тёмной и светлой теме. */
-.ic-tile{ display:inline-flex; align-items:center; justify-content:center;
+/* ── цветные плашки для иконок (SVG Lucide или эмодзи) ──
+   Подложка — мягкий акцент, сама иконка (SVG) красится в насыщенный тон через
+   currentColor. Читается в тёмной и светлой теме. */
+.ic-tile{ --tone: var(--accent); display:inline-flex; align-items:center; justify-content:center;
   width:40px; height:40px; border-radius:11px; font-size:20px; flex:0 0 auto;
-  background:color-mix(in srgb, var(--accent) 18%, transparent) }
-.ic-tile.blue  { background:color-mix(in srgb, #3390ec 20%, transparent) }
-.ic-tile.green { background:color-mix(in srgb, #4caf72 20%, transparent) }
-.ic-tile.amber { background:color-mix(in srgb, #e0a13a 22%, transparent) }
-.ic-tile.violet{ background:color-mix(in srgb, #8e7bef 22%, transparent) }
-.ic-tile.red   { background:color-mix(in srgb, #e5544b 20%, transparent) }
-.ic-tile.cyan  { background:color-mix(in srgb, #2bb6c4 22%, transparent) }
+  color:var(--tone); background:color-mix(in srgb, var(--tone) 16%, transparent) }
+.ic-tile svg{ width:22px; height:22px }
+.ic-tile.blue  { --tone:#3390ec }
+.ic-tile.green { --tone:#4caf72 }
+.ic-tile.amber { --tone:#e0a13a }
+.ic-tile.violet{ --tone:#8e7bef }
+.ic-tile.red   { --tone:#e5544b }
+.ic-tile.cyan  { --tone:#2bb6c4 }
+.ic-tile.gold  { --tone:#e3b341 }
 
 /* ── кольцо прогресса (готовность) — conic-gradient, без SVG ── */
 .ring{ --p:0; --ring-color:var(--accent); position:relative;

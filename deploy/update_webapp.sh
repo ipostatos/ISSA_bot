@@ -47,6 +47,7 @@ cp -f "$SRC/progress.js"     "$DST/progress.js"   # мотивация: гото
 cp -f "$SRC/sync.js"         "$DST/sync.js"       # синхрон прогресса через /api/state
 cp -f "$SRC/heatmap.js"      "$DST/heatmap.js"    # heatmap активности на дашборде
 cp -f "$SRC/badges.js"       "$DST/badges.js"     # достижения (бейджи)
+cp -f "$SRC/icons.js"        "$DST/icons.js"      # SVG-иконки (Lucide, ISC)
 cp -f "$SRC/theme.css"       "$DST/theme.css"     # единая дизайн-система
 cp -f "$SRC/quiz_data.js"     "$DST/quiz_data.js"
 cp -f "$SRC/konspekt_data.js" "$DST/konspekt_data.js"
