@@ -89,10 +89,16 @@ if (!FLAT.length){
 
 let CAT = "all", Q = "";
 
+// эмодзи категории → SVG (если есть в таблице), иначе сам эмодзи
+function catIcon(em){
+  const n = window.Icons && Icons.iconForEmoji(em);
+  return n ? `<span class="emi">${Icons.svg(n)}</span>` : esc(em);
+}
+
 function renderChips(){
   const mk = (key, label) => `<button data-c="${key}" class="${CAT===key?'active':''}">${label}</button>`;
   $("chips").innerHTML = mk("all", `Все (${DATA.total})`) +
-    CATS.map(c => mk(c.key, `${c.icon} ${c.title}`)).join("");
+    CATS.map(c => mk(c.key, `${catIcon(c.icon)} ${esc(c.title)}`)).join("");
   $("chips").querySelectorAll("button").forEach(b =>
     b.onclick = () => { CAT = b.dataset.c; renderChips(); render(); });
 }
@@ -121,7 +127,7 @@ function render(){
       ${(t.aliases&&t.aliases.length)?`<div class="al">${hl(t.aliases.join(", "), Q)}</div>`:""}
       <div class="def">${hl(t.definition, Q)}</div>
       ${t.example?`<div class="ex">${hl(t.example, Q)}</div>`:""}
-      <div class="cat">${t.icon} ${esc(t.catTitle)}</div>
+      <div class="cat">${catIcon(t.icon)} ${esc(t.catTitle)}</div>
     </div>`).join("");
 }
 

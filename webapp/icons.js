@@ -65,6 +65,27 @@
     "ship-wheel": '<circle cx="12" cy="12" r="8"/><path d="M12 2v7.5"/><path d="m19 5-5.23 5.23"/><path d="M22 12h-7.5"/><path d="m19 19-5.23-5.23"/><path d="M12 14.5V22"/><path d="M10.23 13.77 5 19"/><path d="M9.5 12H2"/><path d="M10.23 10.23 5 5"/><circle cx="12" cy="12" r="2.5"/>',
     "sailboat": '<path d="M22 18H2a4 4 0 0 0 4 4h12a4 4 0 0 0 4-4Z"/><path d="M21 14 10 2 3 14h18Z"/><path d="M10 2v16"/>',
     "life-buoy": '<circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/>',
+    // — темы конспекта/шпаргалок/словаря —
+    "alert-triangle": '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    "settings": '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+    "radio": '<path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/>',
+    "wind": '<path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/>',
+    "sprout": '<path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>',
+    "volume-2": '<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>',
+    "rotate-cw": '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
+    "navigation": '<polygon points="3 11 22 2 13 21 11 13 3 11"/>',
+    "flag-pl": '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="2"/>',
+  };
+
+  // Соответствие эмодзи → имя иконки (для эмодзи, зашитых в ДАННЫХ: темы
+  // конспекта/шпаргалок/словаря). Если эмодзи нет в таблице — оставляем как есть.
+  var EMOJI = {
+    "🧭": "compass", "🗺": "map", "🗺️": "map", "📍": "map-pin",
+    "🌊": "waves", "🚦": "life-buoy", "🌦": "wind", "🌬": "wind", "💨": "wind",
+    "⛵": "sailboat", "⚙️": "settings", "⚙": "settings", "⚓": "anchor",
+    "⚠️": "alert-triangle", "⚠": "alert-triangle", "🔴": "circle", "📟": "calculator",
+    "⛑": "life-buoy", "⛑️": "life-buoy", "🌱": "sprout", "🔊": "volume-2", "🔉": "volume-2",
+    "🪢": "anchor", "📻": "radio", "🔄": "rotate-cw", "🛟": "life-buoy", "🇵🇱": "flag-pl",
   };
 
   function svg(name, attrs) {
@@ -78,9 +99,33 @@
       + inner + "</svg>";
   }
 
+  // имя иконки по эмодзи (или null)
+  function iconForEmoji(em) { return EMOJI[em] || null; }
+
+  // Заменить ведущий эмодзи в строке-заголовке («🧭 Памятка») на SVG-иконку.
+  // Возвращает HTML. Если эмодзи неизвестен/отсутствует — возвращает esc-текст.
+  function withEmojiIcon(label) {
+    var s = String(label);
+    // ведущий «графемный» кластер: эмодзи может быть из нескольких кодовых точек
+    var m = s.match(/^(\S+)\s+([\s\S]+)$/);
+    if (m) {
+      var name = EMOJI[m[1]];
+      if (name) return '<span class="emi">' + svg(name) + "</span> " + escHtml(m[2]);
+    }
+    return escHtml(s);
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/[&<>]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c];
+    });
+  }
+
   var Icons = {
     has: function (name) { return !!P[name]; },
     svg: svg,
+    iconForEmoji: iconForEmoji,
+    withEmojiIcon: withEmojiIcon,
     set: function (el, name) { if (el) el.innerHTML = svg(name); },
     // заменить все [data-icon] на соответствующие SVG
     hydrate: function (root) {

@@ -169,7 +169,8 @@ function renderTiles(){
 function mkTile(t){
   const b = document.createElement("button");
   b.className = "tile";
-  b.textContent = t.title;
+  // эмодзи в начале названия темы → SVG-иконка (данные не меняем)
+  b.innerHTML = window.Icons ? Icons.withEmojiIcon(t.title) : t.title;
   b.onclick = () => openTopic(t.key);
   return b;
 }
@@ -183,7 +184,7 @@ function openTopic(key, scrollToTerm){
     html += t.images.map(f => `<img src="images/${f}" alt="" loading="lazy">`).join("");
   }
   $("rBody").innerHTML = html;
-  $("rTitle").textContent = t.title;
+  $("rTitle").innerHTML = window.Icons ? Icons.withEmojiIcon(t.title) : t.title;
   hide("list"); show("reader");
   window.scrollTo(0, 0);
   if (scrollToTerm){

@@ -112,7 +112,8 @@ if (!SHEETS.length){
 
 SHEETS.forEach(s => {
   const b = document.createElement("button");
-  b.className = "tile"; b.textContent = s.title;
+  b.className = "tile";
+  b.innerHTML = window.Icons ? Icons.withEmojiIcon(s.title) : s.title;  // эмодзи→SVG
   b.onclick = () => open(s.key);
   $("tiles").appendChild(b);
 });
@@ -135,7 +136,7 @@ function open(key){
       </div>`).join("");
   }
   $("rbody").innerHTML = html;
-  $("rtitle").textContent = s.title;
+  $("rtitle").innerHTML = window.Icons ? Icons.withEmojiIcon(s.title) : s.title;
   $("list").classList.add("hidden");
   $("reader").classList.remove("hidden");
   window.scrollTo(0,0);
