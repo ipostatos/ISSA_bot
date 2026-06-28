@@ -151,4 +151,8 @@ body{
 .badge-toast .em{ font-size:24px }
 .badge-toast .tt{ font-size:13px } .badge-toast .tt b{ display:block }
 
+/* инлайн-иконка перед текстом (заголовки, плитки, кнопки) — с отступом справа */
+.emi{ display:inline-flex; align-items:center; vertical-align:-2px; margin-right:7px }
+.emi svg{ width:1em; height:1em }
+
 .hidden{ display:none !important }
