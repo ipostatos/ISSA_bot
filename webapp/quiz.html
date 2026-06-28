@@ -11,6 +11,7 @@
 <script src="srs.js"></script>
 <script src="progress.js"></script>
 <script src="badges.js"></script>
+<script src="icons.js"></script>
 <script src="sync.js"></script>
 <style>
   :root{
@@ -45,6 +46,8 @@
   .big{width:100%; padding:16px; font-size:16px; font-weight:600; border:none; border-radius:12px;
     background:var(--accent); color:var(--accent-text); cursor:pointer; margin-bottom:10px; text-align:left}
   .big small{display:block; font-weight:400; font-size:12px; opacity:.85; margin-top:3px}
+  .big .bic{display:inline-flex; vertical-align:-3px; margin-right:8px}
+  .big .bic svg{width:18px; height:18px}
   .ghost{background:transparent; color:var(--text); border:1px solid var(--border)}
   .topics{display:flex; flex-wrap:wrap; gap:8px}
   .topics button{flex:1 1 46%; padding:11px 8px; font-size:13px; border:1px solid var(--border);
@@ -173,15 +176,15 @@
     <button class="next ghost" id="resumeDrop" style="flex:1; min-width:130px; margin:0">🗑 Начать заново</button>
   </div>
 
-  <button class="big" id="startReview">🔁 Повторить сегодня
+  <button class="big" id="startReview"><span class="bic" data-icon="refresh-cw"></span>Повторить сегодня
     <small id="reviewSub">вопросы к повторению по расписанию</small></button>
-  <button class="big ghost" id="startPath">🗺 Путь обучения
+  <button class="big ghost" id="startPath"><span class="bic" data-icon="map"></span>Путь обучения
     <small>Темы по порядку, от основ к экзамену</small></button>
-  <button class="big ghost" id="startRandom">🎯 Тренировка — случайные
+  <button class="big ghost" id="startRandom"><span class="bic" data-icon="target"></span>Тренировка — случайные
     <small>Вопросы вперемешку, с пояснениями</small></button>
-  <button class="big ghost" id="startTopic">📚 Все темы списком
+  <button class="big ghost" id="startTopic"><span class="bic" data-icon="list"></span>Все темы списком
     <small>Выбрать любую тему</small></button>
-  <button class="big ghost" id="startExam">📝 Экзамен
+  <button class="big ghost" id="startExam"><span class="bic" data-icon="file-check"></span>Экзамен
     <small id="examSub">100 вопросов · таймер · проходной балл</small></button>
 
   <div class="card hidden" id="topicCard">
@@ -843,6 +846,9 @@ document.getElementById("resumeDrop").onclick = () => {
   clearSession();
   document.getElementById("resumeCard").classList.add("hidden");
 };
+
+// заменить data-icon на SVG-иконки в кнопках меню
+if (window.Icons) Icons.hydrate();
 
 // при открытии страницы — предложить продолжить, если есть сессия
 renderResumeBanner();
