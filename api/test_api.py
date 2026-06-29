@@ -90,6 +90,19 @@ def test_merge_progress():
     # пустые/None не падают
     check("progress: None-входы → дефолт", merge_progress(None, None)["streak"] == 0)
 
+    # heatmap: храним до 365 дней (раньше резалось на 120 — ломало карту >4 мес)
+    from merge import MAX_HEATMAP_DAYS
+    check("heatmap лимит = 365", MAX_HEATMAP_DAYS == 365)
+    many = {f"2025-{(i // 28) + 1:02d}-{(i % 28) + 1:02d}": 1 for i in range(300)}
+    m200 = merge_progress({"days": many}, {})
+    check("heatmap: 300 дней (<365) хранятся целиком", len(m200["days"]) == 300)
+    over = {f"day-{i:04d}": 1 for i in range(500)}    # 500 «дней» → обрезка до 365
+    mover = merge_progress({"days": over}, {})
+    check("heatmap: 500 дней обрезаются до 365", len(mover["days"]) == MAX_HEATMAP_DAYS)
+    # и остаются именно ПОСЛЕДНИЕ (по сортировке) — старейшие удалены
+    check("heatmap: остаются последние (старейшие удалены)",
+          "day-0000" not in mover["days"] and "day-0499" in mover["days"])
+
 
 # ── эндпоинты (если есть fastapi) ──
 def test_endpoints():

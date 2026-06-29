@@ -27,6 +27,9 @@
   var PROG_KEY = "issa_progress_v1";
   var API = "/api/state";                 // тот же домен, путь /api/* за Caddy
   var POST_DEBOUNCE_MS = 4000;
+  // Лимит дней heatmap. ОБЯЗАН совпадать с MAX_HEATMAP_DAYS в api/merge.py
+  // (_sync_check.mjs сверяет, что JS-merge даёт тот же результат, что Python).
+  var MAX_HEATMAP_DAYS = 365;
 
   var tg = global.Telegram && global.Telegram.WebApp;
   var initData = (tg && tg.initData) || "";
@@ -70,7 +73,7 @@
       });
     });
     var ks = Object.keys(days).sort();
-    while (ks.length > 120) { delete days[ks.shift()]; }
+    while (ks.length > MAX_HEATMAP_DAYS) { delete days[ks.shift()]; }
     var num = function (o, k) { var n = parseInt(o[k], 10); return isNaN(n) ? 0 : n; };
     var streak = Math.max(num(a, "streak"), num(b, "streak"));
     var best = Math.max(num(a, "best"), num(b, "best"), streak);

@@ -14,6 +14,11 @@
 """
 from __future__ import annotations
 
+# Сколько дней активности храним для тепловой карты (heatmap). 365 ≈ год —
+# покрывает длительную подготовку, не ломая карту. ВАЖНО: должно совпадать с
+# лимитом в webapp/sync.js (JS-merge сверяется с Python через _sync_check.mjs).
+MAX_HEATMAP_DAYS = 365
+
 
 def merge_srs(server: dict | None, incoming: dict | None) -> dict:
     """Для каждого вопроса берём более «выученное» состояние.
@@ -61,9 +66,9 @@ def merge_progress(server: dict | None, incoming: dict | None) -> dict:
             except (TypeError, ValueError):
                 continue
             days[day] = max(days.get(day, 0), n)
-    # держим компактно — последние ~120 дней
-    if len(days) > 120:
-        for day in sorted(days)[:-120]:
+    # держим компактно — последние MAX_HEATMAP_DAYS дней
+    if len(days) > MAX_HEATMAP_DAYS:
+        for day in sorted(days)[:-MAX_HEATMAP_DAYS]:
             del days[day]
 
     def num(d, key, default=0):
