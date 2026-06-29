@@ -67,31 +67,31 @@
   /* ── интерактивный компас-песочница ── */
   .cmono{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace }
   .stage{ display:grid; place-items:center; padding:6px 0 2px }
-  /* запас по краям cwrap (~13%) — поле СНАРУЖИ круга под цифры градусов */
-  .cwrap{ position:relative; width:min(82vw,330px); aspect-ratio:1;
+  /* компас крупный — цифры идут ВДОЛЬ окружности (узкое кольцо), места не съедают */
+  .cwrap{ position:relative; width:min(80vw,320px); aspect-ratio:1;
     display:grid; place-items:center; touch-action:none; user-select:none }
-  /* круг (диск с засечками) занимает центральные ~74% — вокруг остаётся кольцо для цифр */
-  .cring{ position:absolute; inset:13%; border-radius:50%; background:var(--bg); border:1px solid var(--border) }
-  .clubber{ position:absolute; top:calc(13% - 14px); left:50%; transform:translateX(-50%);
+  .cring{ position:absolute; inset:0; border-radius:50%; background:var(--bg); border:1px solid var(--border) }
+  .clubber{ position:absolute; top:-2px; left:50%; transform:translateX(-50%);
     width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent;
     border-top:13px solid var(--bad); z-index:5 }
-  /* засечки рисуются SVG (надёжно, без conic-масок) — внутри круга */
-  .cface{ position:absolute; inset:13%; border-radius:50%; border:1px solid var(--border); z-index:2 }
+  /* засечки рисуются SVG (надёжно, без conic-масок) */
+  .cface{ position:absolute; inset:5%; border-radius:50%; border:1px solid var(--border); z-index:2 }
   .cface svg{ position:absolute; inset:0; width:100%; height:100% }
   /* слой подписей */
-  .clabels{ position:absolute; inset:0; border-radius:50%; pointer-events:none; z-index:4 }
-  /* буквы N/E/S/W — крупные, ВНУТРИ круга (как на эталоне) */
+  .clabels{ position:absolute; inset:5%; border-radius:50%; pointer-events:none; z-index:4 }
+  /* буквы N/E/S/W — крупные, горизонтальные (читаются ровно), внутри круга */
   .ccard4{ position:absolute; left:50%; top:50%; width:38px; height:22px; margin:-11px 0 0 -19px;
     text-align:center; font:800 17px/22px ui-monospace,Menlo,Consolas,monospace; color:var(--text);
-    transform:rotate(var(--a)) translateY(calc(-1 * min(25vw,100px))) rotate(calc(-1 * var(--a))) }
+    transform:rotate(var(--a)) translateY(calc(-1 * min(26vw,104px))) rotate(calc(-1 * var(--a))) }
   .ccard4.n{ color:var(--bad) }
-  /* градусы — СНАРУЖИ круга засечек (в кольце-запасе cwrap), не мешают стрелкам */
-  .cdeg{ position:absolute; left:50%; top:50%; width:32px; height:15px; margin:-7px 0 0 -16px;
-    text-align:center; color:var(--hint); font:600 10px/15px ui-monospace,Menlo,Consolas,monospace;
-    transform:rotate(var(--a)) translateY(calc(-1 * min(38vw,152px))) rotate(calc(-1 * var(--a))) }
-  /* векторы-СТРЕЛКИ: длинные (почти до засечек), цифры снаружи — не мешают */
-  .cvec{ position:absolute; width:3px; height:31%; left:calc(50% - 1.5px); top:19%;
-    transform-origin:50% 100%; border-radius:2px 2px 0 0; z-index:1; transition:transform .1s ease-out }
+  /* градусы — ВДОЛЬ окружности (повёрнуты по касательной, БЕЗ обратного rotate),
+     у внутреннего края засечек: узкое кольцо, компас остаётся крупным */
+  .cdeg{ position:absolute; left:50%; top:50%; width:30px; height:13px; margin:-6.5px 0 0 -15px;
+    text-align:center; color:var(--hint); font:600 10px/13px ui-monospace,Menlo,Consolas,monospace;
+    transform:rotate(var(--a)) translateY(calc(-1 * min(29vw,116px))) }
+  /* векторы-СТРЕЛКИ: верхний слой (поверх засечек), длинные */
+  .cvec{ position:absolute; width:3px; height:34%; left:calc(50% - 1.5px); top:16%;
+    transform-origin:50% 100%; border-radius:2px 2px 0 0; z-index:3; transition:transform .1s ease-out }
   .cvec::before{ content:""; position:absolute; top:-8px; left:50%; transform:translateX(-50%);
     width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; }
   .cvec.t{ background:var(--c-true) } .cvec.t::before{ border-bottom:9px solid var(--c-true) }
