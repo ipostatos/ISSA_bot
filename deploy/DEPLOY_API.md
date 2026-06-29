@@ -87,7 +87,29 @@ sudo systemctl restart issa-api
 
 ## Бэкап
 
-В резервную копию добавить `/opt/issa-bot/api/state.db` (прогресс пользователей).
+Скрипт делает онлайн-снимок БД (корректно с WAL, не мешает живому API) и
+ротирует копии (хранит последние 14):
+
+```bash
+sudo bash /opt/issa-bot/deploy/backup_db.sh          # разово
+# по расписанию — добавить в crontab пользователя issa:
+#   0 4 * * *  bash /opt/issa-bot/deploy/backup_db.sh
+```
+
+Копии складываются в `/opt/issa-bot/api/backups/state-<timestamp>.db`.
+
+## Smoke-проверка (после деплоя)
+
+Быстрая проверка, что API и статика живы (health, 401 без initData, отдача
+страниц). Запускать после `restart`/`git pull`:
+
+```bash
+bash /opt/issa-bot/deploy/smoke.sh                    # локально (127.0.0.1:4100 + домен)
+# или против другого домена:
+BASE=https://issa-46-224-220-94.sslip.io bash /opt/issa-bot/deploy/smoke.sh
+```
+
+Код выхода ≠0, если хоть одна проверка упала. Токены/initData не печатаются.
 
 ## Диагностика
 
