@@ -17,14 +17,17 @@ ISSA Trainer — API синхронизации прогресса между у
 """
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import sqlite3
 import time
+from collections.abc import Iterator
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, ValidationError
 
 from auth import InitDataError, verify_init_data
 from merge import merge_state
@@ -50,52 +53,93 @@ def _bot_token() -> str:
 BOT_TOKEN = _bot_token()
 
 
-def db() -> sqlite3.Connection:
+def init_db() -> None:
+    """Создать схему один раз (при старте приложения, см. lifespan).
+
+    Раньше DDL выполнялся в db() на КАЖДЫЙ запрос — лишняя дисковая нагрузка и
+    TTFB. Теперь — единожды.
+    """
+    with contextlib.closing(sqlite3.connect(DB_PATH)) as conn:
+        conn.execute("PRAGMA journal_mode=WAL")      # устойчивее к параллельным запросам
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS state(
+                 user_id        INTEGER PRIMARY KEY,
+                 srs            TEXT NOT NULL DEFAULT '{}',
+                 progress       TEXT NOT NULL DEFAULT '{}',
+                 schema_version INTEGER NOT NULL DEFAULT 1,
+                 created_at     INTEGER NOT NULL,
+                 updated_at     INTEGER NOT NULL
+               )"""
+        )
+        # История прохождений (append-only). Отдельно от state — не мёрджится.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS attempts(
+                 id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                 user_id  INTEGER NOT NULL,
+                 ts       INTEGER NOT NULL,   -- когда пройдено (мс или сек, как прислал клиент)
+                 mode     TEXT NOT NULL,      -- exam | random | review | topic:<...>
+                 total    INTEGER NOT NULL,
+                 correct  INTEGER NOT NULL,
+                 pct      INTEGER NOT NULL,
+                 secs     INTEGER NOT NULL DEFAULT 0
+               )"""
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_attempts_user ON attempts(user_id, ts DESC)")
+        conn.commit()
+
+
+@contextlib.contextmanager
+def get_db() -> Iterator[sqlite3.Connection]:
+    """Соединение с БД на время запроса с ГАРАНТИРОВАННЫМ закрытием.
+
+    Раньше использовался `with sqlite3.connect(...) as conn` — он коммитит, но
+    НЕ закрывает соединение (оно висит до сборки мусора → при нагрузке
+    «database is locked» / «too many open files»). Здесь try/finally закрывает
+    всегда; commit — при успешном выходе, rollback — при исключении.
+    """
     conn = sqlite3.connect(DB_PATH)
-    conn.execute("PRAGMA journal_mode=WAL")          # устойчивее к параллельным запросам
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS state(
-             user_id        INTEGER PRIMARY KEY,
-             srs            TEXT NOT NULL DEFAULT '{}',
-             progress       TEXT NOT NULL DEFAULT '{}',
-             schema_version INTEGER NOT NULL DEFAULT 1,
-             created_at     INTEGER NOT NULL,
-             updated_at     INTEGER NOT NULL
-           )"""
-    )
-    # История прохождений (append-only). Отдельно от state — не мёрджится.
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS attempts(
-             id       INTEGER PRIMARY KEY AUTOINCREMENT,
-             user_id  INTEGER NOT NULL,
-             ts       INTEGER NOT NULL,   -- когда пройдено (мс или сек, как прислал клиент)
-             mode     TEXT NOT NULL,      -- exam | random | review | topic:<...>
-             total    INTEGER NOT NULL,
-             correct  INTEGER NOT NULL,
-             pct      INTEGER NOT NULL,
-             secs     INTEGER NOT NULL DEFAULT 0
-           )"""
-    )
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_attempts_user ON attempts(user_id, ts DESC)")
-    return conn
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 HISTORY_LIMIT = 100      # сколько последних попыток храним/отдаём на пользователя
 
 
-def add_attempt(user_id: int, a: dict) -> None:
+class AttemptIn(BaseModel):
+    """Тело POST /api/attempts. Строгая валидация типов и границ.
+
+    Раньше поля приводились через int(...) вручную — мусорный тип ("abc")
+    ронял запрос 500-й. Теперь Pydantic отвергает невалидный ввод как 422.
+    """
+    model_config = {"extra": "ignore"}            # лишние поля игнорируем, не падаем
+
+    total:   int = Field(ge=1, le=1000)           # вопросов в попытке (обязателен, ≥1)
+    correct: int = Field(default=0, ge=0, le=1000)
+    pct:     int = Field(default=0, ge=0, le=100)
+    secs:    int = Field(default=0, ge=0, le=24 * 3600)   # ≤ сутки
+    ts:      int = Field(default=0, ge=0)         # 0 → проставим now на сервере
+    mode:    str = Field(default="?", max_length=40)
+
+
+def add_attempt(user_id: int, a: AttemptIn) -> None:
     now = int(time.time())
-    with db() as conn:
+    with get_db() as conn:
         conn.execute(
             """INSERT INTO attempts(user_id, ts, mode, total, correct, pct, secs)
                VALUES(?,?,?,?,?,?,?)""",
             (user_id,
-             int(a.get("ts") or now),
-             str(a.get("mode", "?"))[:40],
-             int(a.get("total", 0)),
-             int(a.get("correct", 0)),
-             int(a.get("pct", 0)),
-             int(a.get("secs", 0))),
+             a.ts or now,
+             a.mode[:40],
+             a.total,
+             a.correct,
+             a.pct,
+             a.secs),
         )
         # держим только последние HISTORY_LIMIT записей пользователя
         conn.execute(
@@ -107,7 +151,7 @@ def add_attempt(user_id: int, a: dict) -> None:
 
 
 def list_attempts(user_id: int, limit: int = HISTORY_LIMIT) -> list:
-    with db() as conn:
+    with get_db() as conn:
         rows = conn.execute(
             """SELECT ts, mode, total, correct, pct, secs FROM attempts
                WHERE user_id=? ORDER BY ts DESC LIMIT ?""",
@@ -120,7 +164,7 @@ def list_attempts(user_id: int, limit: int = HISTORY_LIMIT) -> list:
 
 
 def load_state(user_id: int) -> dict:
-    with db() as conn:
+    with get_db() as conn:
         row = conn.execute(
             "SELECT srs, progress FROM state WHERE user_id=?", (user_id,)
         ).fetchone()
@@ -136,7 +180,7 @@ def save_state(user_id: int, state: dict) -> None:
     now = int(time.time())
     srs = json.dumps(state.get("srs", {}), ensure_ascii=False)
     prog = json.dumps(state.get("progress", {}), ensure_ascii=False)
-    with db() as conn:
+    with get_db() as conn:
         conn.execute(
             """INSERT INTO state(user_id, srs, progress, schema_version, created_at, updated_at)
                VALUES(?,?,?,?,?,?)
@@ -147,7 +191,14 @@ def save_state(user_id: int, state: dict) -> None:
         )
 
 
-app = FastAPI(title="ISSA Trainer Sync API", docs_url=None, redoc_url=None)
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()          # схема создаётся один раз при старте, а не на каждый запрос
+    yield
+
+
+app = FastAPI(title="ISSA Trainer Sync API", docs_url=None, redoc_url=None,
+              lifespan=lifespan)
 
 
 def _auth(init_data: str | None) -> int:
@@ -217,9 +268,13 @@ async def post_attempt(
         a = json.loads(raw or b"{}")
     except json.JSONDecodeError:
         raise HTTPException(400, "bad json")
-    if not isinstance(a, dict) or not a.get("total"):
-        raise HTTPException(400, "expected attempt object with total")
-    add_attempt(user_id, a)
+    if not isinstance(a, dict):
+        raise HTTPException(422, "expected object")
+    try:
+        attempt = AttemptIn.model_validate(a)
+    except ValidationError as e:
+        raise HTTPException(422, f"invalid attempt: {e.errors()[0]['msg']}")
+    add_attempt(user_id, attempt)
     return {"ok": True, "attempts": list_attempts(user_id)}
 
 

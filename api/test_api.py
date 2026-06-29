@@ -106,34 +106,34 @@ def test_endpoints():
     import importlib
     import api as apimod
     importlib.reload(apimod)
-    client = TestClient(apimod.app)
+    # with-контекст обязателен: иначе lifespan (init_db) не отработает
+    with TestClient(apimod.app) as client:
+        init = build_init_data(TOKEN, {"id": 42, "first_name": "T"})
+        h = {"X-Init-Data": init}
 
-    init = build_init_data(TOKEN, {"id": 42, "first_name": "T"})
-    h = {"X-Init-Data": init}
+        check("health 200", client.get("/api/health").status_code == 200)
+        check("state без initData → 401", client.get("/api/state").status_code == 401)
 
-    check("health 200", client.get("/api/health").status_code == 200)
-    check("state без initData → 401", client.get("/api/state").status_code == 401)
+        # пустое состояние
+        r = client.get("/api/state", headers=h).json()
+        check("новое состояние пустое", r["state"]["srs"] == {} and r["state"]["progress"] == {})
 
-    # пустое состояние
-    r = client.get("/api/state", headers=h).json()
-    check("новое состояние пустое", r["state"]["srs"] == {} and r["state"]["progress"] == {})
+        # POST мёрджит и возвращает merged
+        body = {"srs": {"q1": {"box": 2, "due": 500}}, "progress": {"streak": 4, "best": 4, "days": {"2026-06-25": 6}, "lastDay": "2026-06-25"}}
+        r = client.post("/api/state", headers=h, content=json.dumps(body)).json()
+        check("POST вернул merged srs", r["state"]["srs"]["q1"]["box"] == 2)
 
-    # POST мёрджит и возвращает merged
-    body = {"srs": {"q1": {"box": 2, "due": 500}}, "progress": {"streak": 4, "best": 4, "days": {"2026-06-25": 6}, "lastDay": "2026-06-25"}}
-    r = client.post("/api/state", headers=h, content=json.dumps(body)).json()
-    check("POST вернул merged srs", r["state"]["srs"]["q1"]["box"] == 2)
+        # второй POST с другого «устройства» — мёрдж, не перезапись
+        body2 = {"srs": {"q1": {"box": 1, "due": 9999}, "q2": {"box": 0, "due": 1}}, "progress": {"streak": 2, "best": 2, "days": {"2026-06-26": 3}, "lastDay": "2026-06-26"}}
+        r = client.post("/api/state", headers=h, content=json.dumps(body2)).json()
+        check("merge: q1 сохранил box=2 (не затёрт)", r["state"]["srs"]["q1"]["box"] == 2)
+        check("merge: q2 добавлен", r["state"]["srs"]["q2"]["box"] == 0)
+        check("merge: streak=max(4,2)=4", r["state"]["progress"]["streak"] == 4)
+        check("merge: days объединены", set(r["state"]["progress"]["days"]) == {"2026-06-25", "2026-06-26"})
 
-    # второй POST с другого «устройства» — мёрдж, не перезапись
-    body2 = {"srs": {"q1": {"box": 1, "due": 9999}, "q2": {"box": 0, "due": 1}}, "progress": {"streak": 2, "best": 2, "days": {"2026-06-26": 3}, "lastDay": "2026-06-26"}}
-    r = client.post("/api/state", headers=h, content=json.dumps(body2)).json()
-    check("merge: q1 сохранил box=2 (не затёрт)", r["state"]["srs"]["q1"]["box"] == 2)
-    check("merge: q2 добавлен", r["state"]["srs"]["q2"]["box"] == 0)
-    check("merge: streak=max(4,2)=4", r["state"]["progress"]["streak"] == 4)
-    check("merge: days объединены", set(r["state"]["progress"]["days"]) == {"2026-06-25", "2026-06-26"})
-
-    # лимит тела
-    big = client.post("/api/state", headers=h, content=b"x" * (300 * 1024))
-    check("слишком большое тело → 413", big.status_code == 413)
+        # лимит тела
+        big = client.post("/api/state", headers=h, content=b"x" * (300 * 1024))
+        check("слишком большое тело → 413", big.status_code == 413)
 
 
 def test_attempts():
@@ -146,30 +146,34 @@ def test_attempts():
     os.environ["BOT_TOKEN"] = TOKEN
     import importlib, api as apimod
     importlib.reload(apimod)
-    client = TestClient(apimod.app)
-    init = build_init_data(TOKEN, {"id": 99, "first_name": "H"})
-    h = {"X-Init-Data": init}
+    with TestClient(apimod.app) as client:
+        init = build_init_data(TOKEN, {"id": 99, "first_name": "H"})
+        h = {"X-Init-Data": init}
 
-    check("attempts без initData → 401", client.get("/api/attempts").status_code == 401)
-    check("история сначала пуста", client.get("/api/attempts", headers=h).json()["attempts"] == [])
+        check("attempts без initData → 401", client.get("/api/attempts").status_code == 401)
+        check("история сначала пуста", client.get("/api/attempts", headers=h).json()["attempts"] == [])
 
-    # добавить экзамен
-    ex = {"ts": 1000, "mode": "exam", "total": 100, "correct": 80, "pct": 80, "secs": 1200}
-    r = client.post("/api/attempts", headers=h, content=json.dumps(ex)).json()
-    check("attempt добавлен, в ответе история", len(r["attempts"]) == 1 and r["attempts"][0]["pct"] == 80)
+        # добавить экзамен
+        ex = {"ts": 1000, "mode": "exam", "total": 100, "correct": 80, "pct": 80, "secs": 1200}
+        r = client.post("/api/attempts", headers=h, content=json.dumps(ex)).json()
+        check("attempt добавлен, в ответе история", len(r["attempts"]) == 1 and r["attempts"][0]["pct"] == 80)
 
-    # добавить тренировку позже — она первой (сортировка по ts DESC)
-    tr = {"ts": 2000, "mode": "random", "total": 20, "correct": 15, "pct": 75, "secs": 200}
-    r = client.post("/api/attempts", headers=h, content=json.dumps(tr)).json()
-    check("2 записи, свежая первой", len(r["attempts"]) == 2 and r["attempts"][0]["mode"] == "random")
+        # добавить тренировку позже — она первой (сортировка по ts DESC)
+        tr = {"ts": 2000, "mode": "random", "total": 20, "correct": 15, "pct": 75, "secs": 200}
+        r = client.post("/api/attempts", headers=h, content=json.dumps(tr)).json()
+        check("2 записи, свежая первой", len(r["attempts"]) == 2 and r["attempts"][0]["mode"] == "random")
 
-    # пустой total → 400
-    bad = client.post("/api/attempts", headers=h, content=json.dumps({"mode": "x"}))
-    check("attempt без total → 400", bad.status_code == 400)
+        # пустой total → 422 (Pydantic-валидация: total обязателен и ≥ 1)
+        bad = client.post("/api/attempts", headers=h, content=json.dumps({"mode": "x"}))
+        check("attempt без total → 422", bad.status_code == 422)
 
-    # чужой пользователь не видит историю
-    h2 = {"X-Init-Data": build_init_data(TOKEN, {"id": 1234, "first_name": "Z"})}
-    check("чужая история пуста (изоляция по user_id)", client.get("/api/attempts", headers=h2).json()["attempts"] == [])
+        # мусорный тип total → 422 (раньше падало 500 на int('abc'))
+        badtype = client.post("/api/attempts", headers=h, content=json.dumps({"total": "abc"}))
+        check("attempt total='abc' → 422 (не 500)", badtype.status_code == 422)
+
+        # чужой пользователь не видит историю
+        h2 = {"X-Init-Data": build_init_data(TOKEN, {"id": 1234, "first_name": "Z"})}
+        check("чужая история пуста (изоляция по user_id)", client.get("/api/attempts", headers=h2).json()["attempts"] == [])
 
 
 if __name__ == "__main__":
