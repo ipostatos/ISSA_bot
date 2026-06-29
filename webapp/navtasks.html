@@ -19,7 +19,8 @@
     --accent-text: var(--tg-theme-button-text-color, #fff);
     --border: rgba(255,255,255,.10);
     --ok:#4caf72; --bad:#e5544b;
-    --c-true:#3aa0ff; --c-mag:#e0a13a; --c-comp:#6ec1ff;
+    /* три ЯВНО разных цвета векторов: True синий, Magnetic жёлтый, Compass зелёный */
+    --c-true:#3aa0ff; --c-mag:#f0c030; --c-comp:#46d27a;
   }
   /* Светлый системный режим: если Telegram НЕ передал тему (--tg-theme-*),
      берём светлый fallback, а не тёмный (иначе белый текст на белом фоне). */
@@ -72,9 +73,20 @@
   .clubber{ position:absolute; top:-2px; left:50%; transform:translateX(-50%);
     width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent;
     border-top:13px solid var(--bad); z-index:5 }
-  .cface{ position:absolute; inset:5%; border-radius:50%;
-    background:repeating-conic-gradient(from 0deg, color-mix(in srgb,var(--text) 24%,transparent) 0deg .6deg, transparent .6deg 5deg);
-    border:1px solid var(--border) }
+  /* МЕЛКИЕ засечки по краю каждые 6° — тонкие, в узком кольце у обода (центр чист) */
+  .cface{ position:absolute; inset:5%; border-radius:50%; border:1px solid var(--border);
+    background:repeating-conic-gradient(from 3deg,
+      color-mix(in srgb,var(--text) 60%,transparent) 0deg 1deg, transparent 1deg 6deg);
+    -webkit-mask:radial-gradient(circle, transparent 0 88%, #000 90%);
+            mask:radial-gradient(circle, transparent 0 88%, #000 90%); }
+  /* КРУПНЫЕ засечки каждые 30° — ярче и ДЛИННЕЕ (кольцо глубже внутрь) */
+  .cticks{ position:absolute; inset:5%; border-radius:50%; pointer-events:none; z-index:1;
+    background:repeating-conic-gradient(from 0deg,
+      var(--text) 0deg 1.8deg, transparent 1.8deg 30deg);
+    -webkit-mask:radial-gradient(circle, transparent 0 80%, #000 82%);
+            mask:radial-gradient(circle, transparent 0 80%, #000 82%); }
+  /* слой подписей (буквы/градусы) — поверх рисок, БЕЗ маски */
+  .clabels{ position:absolute; inset:5%; border-radius:50%; pointer-events:none; z-index:4 }
   .ccard4{ position:absolute; left:50%; top:50%; width:38px; height:22px; margin:-11px 0 0 -19px;
     text-align:center; font:800 17px/22px ui-monospace,Menlo,Consolas,monospace; color:var(--text);
     transform:rotate(var(--a)) translateY(calc(-1 * min(29vw,112px))) rotate(calc(-1 * var(--a))) }
@@ -82,18 +94,22 @@
   .cdeg{ position:absolute; left:50%; top:50%; width:32px; height:15px; margin:-7px 0 0 -16px;
     text-align:center; color:var(--hint); font:600 10px/15px ui-monospace,Menlo,Consolas,monospace;
     transform:rotate(var(--a)) translateY(calc(-1 * min(29vw,104px))) rotate(calc(-1 * var(--a))) }
-  .cvec{ position:absolute; width:3px; height:34%; left:calc(50% - 1.5px); top:16%;
-    transform-origin:50% 100%; border-radius:2px; z-index:2; transition:transform .1s ease-out }
-  .cvec::before{ content:""; position:absolute; top:-3px; left:50%; transform:translateX(-50%);
-    width:9px; height:9px; border-radius:50% }
-  .cvec.t{ background:var(--c-true) } .cvec.t::before{ background:var(--c-true) }
-  .cvec.m{ background:var(--c-mag) }  .cvec.m::before{ background:var(--c-mag) }
-  .cvec.c{ background:var(--c-comp) } .cvec.c::before{ background:var(--c-comp) }
-  .ccenter{ position:absolute; width:42%; aspect-ratio:1; border-radius:50%;
-    background:var(--card); border:1px solid var(--border); display:grid; place-items:center;
-    text-align:center; z-index:3 }
-  .ccenter strong{ display:block; font:800 clamp(24px,7vw,32px)/1 ui-monospace,Menlo,Consolas,monospace }
-  .ccenter span{ color:var(--hint); font:700 10px/1.3 ui-monospace,Menlo,Consolas,monospace }
+  /* векторы-СТРЕЛКИ: длинные (почти до кольца засечек, но не перекрывают буквы),
+     с треугольным наконечником вместо булавы */
+  .cvec{ position:absolute; width:3px; height:36%; left:calc(50% - 1.5px); top:14%;
+    transform-origin:50% 100%; border-radius:2px 2px 0 0; z-index:2; transition:transform .1s ease-out }
+  .cvec::before{ content:""; position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; }
+  .cvec.t{ background:var(--c-true) } .cvec.t::before{ border-bottom:9px solid var(--c-true) }
+  .cvec.m{ background:var(--c-mag) }  .cvec.m::before{ border-bottom:9px solid var(--c-mag) }
+  .cvec.c{ background:var(--c-comp) } .cvec.c::before{ border-bottom:9px solid var(--c-comp) }
+  /* центральный диск со значением CC — строго по центру круга */
+  .ccenter{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:42%; aspect-ratio:1; border-radius:50%;
+    background:var(--card); border:1px solid var(--border); display:flex;
+    flex-direction:column; align-items:center; justify-content:center; gap:1px; z-index:3 }
+  .ccenter strong{ font:800 clamp(24px,7vw,32px)/1 ui-monospace,Menlo,Consolas,monospace; color:var(--c-comp) }
+  .ccenter span{ color:var(--hint); font:700 10px/1 ui-monospace,Menlo,Consolas,monospace; letter-spacing:.04em }
   .cvals{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:14px }
   .cval{ background:var(--bg); border:1px solid var(--border); border-radius:11px; padding:9px 4px; text-align:center }
   .cval .k{ color:var(--hint); font-size:11px } .cval .v{ font:800 15px/1.4 ui-monospace,Menlo,Consolas,monospace }
@@ -156,10 +172,12 @@
         <div class="cwrap" id="cwrap">
           <div class="cring"></div>
           <div class="clubber"></div>
+          <div class="cticks"></div>
           <div class="cvec t" id="cvT"></div>
           <div class="cvec m" id="cvM"></div>
           <div class="cvec c" id="cvC"></div>
-          <div class="cface" id="cface">
+          <div class="cface"></div><!-- только риски (маскируется по краю) -->
+          <div class="clabels"><!-- буквы и градусы — отдельным слоем, без маски -->
             <div class="ccard4 n" style="--a:0deg">N</div>
             <div class="ccard4" style="--a:90deg">E</div>
             <div class="ccard4" style="--a:180deg">S</div>
@@ -173,9 +191,9 @@
             <div class="cdeg" style="--a:300deg">300</div>
             <div class="cdeg" style="--a:330deg">330</div>
           </div>
-          <div class="ccenter"><div>
+          <div class="ccenter">
             <strong id="ccCC">000°</strong><span>CC</span>
-          </div></div>
+          </div>
         </div>
       </div>
 
@@ -299,6 +317,15 @@ window.tvmdcCompass = function (trueCourse, varSigned, devSigned) {
   var ew = function (v){ return v === 0 ? "0°" : (Math.abs(v) + "°" + (v > 0 ? "W" : "E")); };
   var trueCourse = 50;
 
+  // Накопленные (НЕнормализованные) углы поворота стрелок — чтобы при переходе
+  // через север (359°→0°) стрелка шла по короткой дуге (+1°), а не прокручивалась
+  // назад через весь круг. shortStep догоняет цель по кратчайшему пути ±180°.
+  var rotT = 50, rotM = 50, rotC = 50;
+  function shortStep(current, targetNorm){
+    var diff = ((targetNorm - current) % 360 + 540) % 360 - 180;  // в (-180,180]
+    return current + diff;
+  }
+
   function angleFromPointer(e){
     var r = cwrap.getBoundingClientRect();
     var cx = r.left + r.width/2, cy = r.top + r.height/2;
@@ -308,10 +335,13 @@ window.tvmdcCompass = function (trueCourse, varSigned, devSigned) {
   function renderCompass(){
     var v = Number($("cVar").value), d = Number($("cDev").value);
     var r = window.tvmdcCompass(trueCourse, v, d);
-    // диск статичен (учебный режим) — крутятся только векторы
-    $("cvT").style.transform = "rotate(" + trueCourse + "deg)";
-    $("cvM").style.transform = "rotate(" + r.magnetic + "deg)";
-    $("cvC").style.transform = "rotate(" + r.compass + "deg)";
+    // диск статичен (учебный режим) — крутятся только векторы, по короткой дуге
+    rotT = shortStep(rotT, trueCourse);
+    rotM = shortStep(rotM, r.magnetic);
+    rotC = shortStep(rotC, r.compass);
+    $("cvT").style.transform = "rotate(" + rotT + "deg)";
+    $("cvM").style.transform = "rotate(" + rotM + "deg)";
+    $("cvC").style.transform = "rotate(" + rotC + "deg)";
 
     $("ccCC").textContent = pad(r.compass) + "°";
     $("ccCC2").textContent = pad(r.compass) + "°";
