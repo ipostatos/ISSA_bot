@@ -142,7 +142,7 @@
     <div class="card">
       <div class="q" id="q">…</div>
       <div class="ans">
-        <input id="inp" type="text" inputmode="decimal" placeholder="ответ в градусах, напр. 046" autocomplete="off">
+        <input id="inp" type="text" inputmode="decimal" placeholder="напр. 046°" autocomplete="off">
         <button class="btn" id="check">OK</button>
       </div>
       <div class="fb" id="fb"></div>
@@ -329,8 +329,8 @@ window.tvmdcCompass = function (trueCourse, varSigned, devSigned) {
     for (var a = 0; a < 360; a += 5){
       var major = (a % 30 === 0);
       var len = major ? 9 : 5;           // крупные чуть длиннее, но короткие (не лезут на цифры)
-      var w   = major ? 2.2 : 1;         // крупные толще
-      var op  = major ? .85 : .4;
+      var w   = major ? 1.6 : .8;        // тоньше и изящнее (как iOS)
+      var op  = major ? .75 : .32;       // приглушённее, не «кричат»
       var rad = (a - 90) * Math.PI / 180; // 0° наверху
       var x1 = cx + (R - len) * Math.cos(rad), y1 = cy + (R - len) * Math.sin(rad);
       var x2 = cx + R * Math.cos(rad),         y2 = cy + R * Math.sin(rad);
