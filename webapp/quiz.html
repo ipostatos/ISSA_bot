@@ -1037,10 +1037,28 @@ if (window.Icons) Icons.hydrate();
 renderResumeBanner();
 updateReviewLabel();   // показать, сколько вопросов к повтору
 
+// ?topic=<Тема> — глубокая ссылка из «Прогресс и история»: сразу тренировка
+// по этой теме (если тема есть в банке). Иначе игнорируем и показываем меню.
+function deepLinkTopic(){
+  const t = new URLSearchParams(location.search).get("topic");
+  if (!t) return false;
+  const exists = ALL.some(q => q.topic === t);
+  if (!exists) return false;
+  trainTopic(t);
+  return true;
+}
+
 // синхрон с сервером: подтянуть прогресс с других устройств, затем обновить
 // счётчик повтора. Если sync недоступен (нет initData/сети) — тихо пропускаем.
+// Глубокую ссылку на тему запускаем ПОСЛЕ синхрона, чтобы приоритет слабых/
+// просроченных вопросов считался по актуальному SRS.
 if (window.Sync && Sync.enabled){
-  Sync.pull().then(function(changed){ if (changed) updateReviewLabel(); });
+  Sync.pull().then(function(changed){
+    if (changed) updateReviewLabel();
+    deepLinkTopic();
+  }).catch(deepLinkTopic);
+} else {
+  deepLinkTopic();
 }
 </script>
 </body>

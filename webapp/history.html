@@ -8,6 +8,8 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
 <script src="icons.js"></script>
+<script src="quiz_data.js"></script>
+<script src="srs.js"></script>
 <script src="sync.js"></script>
 <style>
   .sum{ display:flex; gap:10px; margin-bottom:16px }
@@ -24,11 +26,45 @@
   .row .pct{ font-size:18px; font-weight:800; flex:0 0 auto }
   .row .pct.ok{ color:var(--ok) } .row .pct.bad{ color:var(--bad) } .row .pct.mid{ color:var(--warn) }
   .emi{ display:inline-flex; vertical-align:-2px } .emi svg{ width:1em; height:1em }
+
+  /* баннер «Учить сегодня» */
+  .rec{ display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    padding:14px; margin-bottom:16px; border-radius:16px; cursor:pointer;
+    border:1px solid var(--accent); background:color-mix(in srgb,var(--accent) 12%,var(--card)) }
+  .rec:active{ transform:scale(.995) }
+  .rec.done{ border-color:var(--ok); background:color-mix(in srgb,var(--ok) 12%,var(--card)); cursor:default }
+  .rec .rl{ flex:0 0 auto; width:40px; height:40px; border-radius:12px; display:flex;
+    align-items:center; justify-content:center; background:var(--accent); color:var(--accent-text) }
+  .rec.done .rl{ background:var(--ok) }
+  .rec .rl .emi svg{ width:22px; height:22px }
+  .rec .rb{ flex:1; min-width:0 } .rec .rt{ font-size:15px; font-weight:800 }
+  .rec .rs{ font-size:12px; color:var(--hint); margin-top:1px }
+  .rec .rg{ flex:0 0 auto; color:var(--accent); display:flex } .rec .rg svg{ width:20px; height:20px }
+
+  /* секции аналитики */
+  .blk{ margin-bottom:18px }
+  .blk-h{ font-size:13px; font-weight:700; color:var(--hint); margin:0 0 8px;
+    text-transform:uppercase; letter-spacing:.02em }
+  /* график динамики */
+  .chart{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px }
+  .chart svg{ display:block; width:100%; height:90px }
+  .chart .cap{ display:flex; justify-content:space-between; font-size:11px; color:var(--hint); margin-top:6px }
+  /* слабые темы */
+  .weak{ display:flex; flex-direction:column; gap:8px }
+  .weak .w{ display:flex; align-items:center; gap:10px; padding:11px 13px; cursor:pointer;
+    background:var(--card); border:1px solid var(--border); border-radius:12px; color:var(--text) }
+  .weak .w:active{ transform:scale(.995) }
+  .weak .w .wn{ flex:1; min-width:0; font-size:14px; font-weight:600 }
+  .weak .w .wbar{ flex:0 0 70px; height:6px; background:var(--border); border-radius:4px; overflow:hidden }
+  .weak .w .wbar>i{ display:block; height:100%; background:var(--warn); border-radius:4px }
+  .weak .w .wp{ flex:0 0 auto; font-size:12px; color:var(--hint); font-variant-numeric:tabular-nums; min-width:32px; text-align:right }
 </style>
 </head>
 <body>
-  <h1 class="h1" style="font-size:20px"><span class="emi" data-icon="history"></span> История прохождений</h1>
-  <p class="sub">Твои тесты и экзамены · последние 100</p>
+  <h1 class="h1" style="font-size:20px"><span class="emi" data-icon="bar-chart"></span> Прогресс и история</h1>
+  <p class="sub">Динамика, слабые темы и все прохождения</p>
+
+  <div id="rec" class="rec hidden"></div>
 
   <div class="sum" id="summary" style="display:none">
     <div class="s"><div class="n" id="sCount">0</div><div class="c">всего</div></div>
@@ -36,7 +72,21 @@
     <div class="s"><div class="n" id="sBest">—</div><div class="c">лучший</div></div>
   </div>
 
-  <div id="list"><div class="state">Загрузка…</div></div>
+  <div class="blk hidden" id="chartBlk">
+    <div class="blk-h">Динамика результатов</div>
+    <div class="chart"><svg id="chart" viewBox="0 0 300 90" preserveAspectRatio="none"></svg>
+      <div class="cap"><span id="chartFrom">—</span><span id="chartTo">—</span></div></div>
+  </div>
+
+  <div class="blk hidden" id="weakBlk">
+    <div class="blk-h">Слабые темы — стоит повторить</div>
+    <div class="weak" id="weak"></div>
+  </div>
+
+  <div class="blk">
+    <div class="blk-h" id="listH" style="display:none">Все прохождения</div>
+    <div id="list"><div class="state">Загрузка…</div></div>
+  </div>
 
 <script>
 "use strict";
@@ -60,12 +110,126 @@ function fmtDate(ts){
 }
 function pctClass(p){ return p>=75 ? "ok" : p>=50 ? "mid" : "bad"; }
 
+// ── данные банка для слабых тем (готовность по SRS) ──
+const ALL = (window.QUIZ_DATA && window.QUIZ_DATA.questions) || [];
+const boxOf = id => { const s = window.SRS && SRS.state(id); return s ? s.box : 0; };
+
+// готовность темы 0..1 (как в пути обучения)
+function topicReadiness(){
+  const by = {};
+  ALL.forEach(q => {
+    const t = by[q.topic] || (by[q.topic] = { sum:0, n:0 });
+    t.sum += Math.min(boxOf(q.id), 5) / 5; t.n += 1;
+  });
+  return Object.keys(by).map(name => ({
+    topic: name, pct: Math.round(by[name].sum / by[name].n * 100), n: by[name].n
+  })).sort((a,b) => a.pct - b.pct);   // слабые первыми
+}
+
+// открыть тренировку по теме в quiz.html
+function trainTopic(topic){
+  location.href = "quiz.html?topic=" + encodeURIComponent(topic);
+}
+
+// ── баннер «Учить сегодня» ──
+function renderRec(){
+  const banner = $("rec");
+  const dueCount = window.SRS ? SRS.pickDue(ALL.map(q=>q.id), 9999).length : 0;
+  let rec;
+  if (dueCount > 0){
+    rec = { kind:"review", icon:"refresh-cw", title:"Повторить сегодня",
+            sub: dueCount + " " + plural(dueCount,"вопрос","вопроса","вопросов") + " ждут повторения" };
+  } else {
+    const weak = topicReadiness().filter(t => t.pct < 80)[0];
+    if (weak) rec = { kind:"topic", topic:weak.topic, icon:"play",
+                      title:"Подтянуть: " + weak.topic, sub:"Готовность темы " + weak.pct + "%" };
+  }
+  if (!rec){
+    banner.className = "rec done";
+    banner.innerHTML = '<div class="rl"><span class="emi" data-icon="trophy"></span></div>'
+      + '<div class="rb"><div class="rt">Всё в форме!</div><div class="rs">Слабых тем нет — так держать</div></div>';
+    banner.onclick = null; banner.classList.remove("hidden"); return;
+  }
+  banner.className = "rec";
+  banner.innerHTML = `<div class="rl"><span class="emi" data-icon="${rec.icon}"></span></div>`
+    + `<div class="rb"><div class="rt">${esc(rec.title)}</div><div class="rs">${esc(rec.sub)}</div></div>`
+    + `<div class="rg">${ic("chevron-right")}</div>`;
+  banner.onclick = () => {
+    if (rec.kind === "review") location.href = "quiz.html";   // путь/повтор в quiz
+    else trainTopic(rec.topic);
+  };
+  banner.classList.remove("hidden");
+}
+
+function plural(n, one, few, many){
+  const a = n % 10, b = n % 100;
+  if (a === 1 && b !== 11) return one;
+  if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return few;
+  return many;
+}
+
+// ── слабые темы (топ-5 ниже 80%) ──
+function renderWeak(){
+  if (!ALL.length) return;
+  const weak = topicReadiness().filter(t => t.pct < 80).slice(0, 5);
+  if (!weak.length) return;
+  $("weakBlk").classList.remove("hidden");
+  $("weak").innerHTML = weak.map(t =>
+    `<button class="w" data-topic="${esc(t.topic)}">
+       <span class="wn">${esc(t.topic)}</span>
+       <span class="wbar"><i style="width:${t.pct}%"></i></span>
+       <span class="wp">${t.pct}%</span>
+     </button>`).join("");
+  $("weak").querySelectorAll(".w").forEach(b =>
+    b.onclick = () => trainTopic(b.dataset.topic));
+}
+
+// ── график динамики: линия % последних N попыток (старые → новые слева направо) ──
+function renderChart(items){
+  // items приходят свежими первыми → берём последние 20 и разворачиваем хронологически
+  const pts = items.slice(0, 20).slice().reverse().map(a => a.pct);
+  if (pts.length < 2) return;   // график осмыслен от 2 точек
+  $("chartBlk").classList.remove("hidden");
+  const W = 300, H = 90, pad = 6;
+  const n = pts.length;
+  const x = i => pad + (W - 2*pad) * (n === 1 ? 0.5 : i / (n - 1));
+  const y = p => H - pad - (H - 2*pad) * (p / 100);
+  const line = pts.map((p,i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(p).toFixed(1)).join(" ");
+  const area = "M" + x(0).toFixed(1) + " " + (H-pad) + " " + line.replace(/^M/,"L")
+             + " L" + x(n-1).toFixed(1) + " " + (H-pad) + " Z";
+  const dots = pts.map((p,i) =>
+    `<circle cx="${x(i).toFixed(1)}" cy="${y(p).toFixed(1)}" r="2.5"
+       fill="${p>=75?'var(--ok)':p>=50?'var(--warn)':'var(--bad)'}"/>`).join("");
+  // линия проходного балла 90%
+  const passY = y(DATA_PASS).toFixed(1);
+  $("chart").innerHTML =
+    `<path d="${area}" fill="color-mix(in srgb,var(--accent) 14%,transparent)"/>`
+    + `<line x1="${pad}" y1="${passY}" x2="${W-pad}" y2="${passY}" stroke="var(--ok)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>`
+    + `<path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`
+    + dots;
+  const oldest = items.slice(0, 20).slice(-1)[0], newest = items[0];
+  $("chartFrom").textContent = shortDate(oldest.ts);
+  $("chartTo").textContent = shortDate(newest.ts);
+}
+const DATA_PASS = (window.QUIZ_DATA && window.QUIZ_DATA.passPercent) || 90;
+function shortDate(ts){
+  const ms = ts > 1e12 ? ts : ts*1000; const d = new Date(ms);
+  return String(d.getDate()).padStart(2,"0") + "." + String(d.getMonth()+1).padStart(2,"0");
+}
+
 function render(items){
+  // аналитика по локальному SRS не зависит от истории — показываем всегда
+  renderRec();
+  renderWeak();
+
   if (!items.length){
     $("list").innerHTML = '<div class="state">Пока нет завершённых тестов.<br>'
       + 'Пройди тренировку или экзамен — здесь появится история.</div>';
     return;
   }
+  $("listH").style.display = "";
+  renderChart(items);
+
   // сводка
   const exams = items.filter(a=>a.mode==="exam");
   $("summary").style.display = "flex";
@@ -89,15 +253,20 @@ function render(items){
       <div class="pct ${pctClass(a.pct)}">${a.pct}%</div>
     </div>`;
   }).join("");
+
+  if (window.Icons) Icons.hydrate();
 }
 
 if (window.Icons) Icons.hydrate();
 
+// аналитика (слабые темы/рекомендация) работает на локальном SRS даже без сети.
+// История попыток — из API (если доступен).
 if (window.Sync && Sync.enabled){
-  Sync.getAttempts().then(render);
+  Sync.getAttempts().then(render).catch(()=>render([]));
 } else {
-  $("list").innerHTML = '<div class="state">История доступна при открытии из Telegram '
-    + '(нужна авторизация для синхронизации).</div>';
+  render([]);   // покажем рекомендацию/слабые темы; список — заглушка ниже
+  $("list").innerHTML = '<div class="state">История прохождений синхронизируется '
+    + 'при открытии из Telegram. Слабые темы и рекомендации доступны и так.</div>';
 }
 </script>
 </body>
