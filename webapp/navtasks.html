@@ -19,6 +19,7 @@
     --accent-text: var(--tg-theme-button-text-color, #fff);
     --border: rgba(255,255,255,.10);
     --ok:#4caf72; --bad:#e5544b;
+    --c-true:#3aa0ff; --c-mag:#e0a13a; --c-comp:#6ec1ff;
   }
   /* Светлый системный режим: если Telegram НЕ передал тему (--tg-theme-*),
      берём светлый fallback, а не тёмный (иначе белый текст на белом фоне). */
@@ -60,6 +61,51 @@
     white-space:pre-wrap; color:var(--hint); display:none}
   .sol.show{display:block}
   .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px}
+  .hidden{display:none !important}
+
+  /* ── интерактивный компас-песочница ── */
+  .cmono{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace }
+  .stage{ display:grid; place-items:center; padding:6px 0 2px }
+  .cwrap{ position:relative; width:min(76vw,300px); aspect-ratio:1;
+    display:grid; place-items:center; touch-action:none; user-select:none }
+  .cring{ position:absolute; inset:0; border-radius:50%; background:var(--bg); border:1px solid var(--border) }
+  .clubber{ position:absolute; top:-2px; left:50%; transform:translateX(-50%);
+    width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent;
+    border-top:13px solid var(--bad); z-index:5 }
+  .cface{ position:absolute; inset:5%; border-radius:50%;
+    background:repeating-conic-gradient(from 0deg, color-mix(in srgb,var(--text) 24%,transparent) 0deg .6deg, transparent .6deg 5deg);
+    border:1px solid var(--border) }
+  .ccard4{ position:absolute; left:50%; top:50%; width:38px; height:22px; margin:-11px 0 0 -19px;
+    text-align:center; font:800 17px/22px ui-monospace,Menlo,Consolas,monospace; color:var(--text);
+    transform:rotate(var(--a)) translateY(calc(-1 * min(29vw,112px))) rotate(calc(-1 * var(--a))) }
+  .ccard4.n{ color:var(--bad) }
+  .cdeg{ position:absolute; left:50%; top:50%; width:32px; height:15px; margin:-7px 0 0 -16px;
+    text-align:center; color:var(--hint); font:600 10px/15px ui-monospace,Menlo,Consolas,monospace;
+    transform:rotate(var(--a)) translateY(calc(-1 * min(29vw,104px))) rotate(calc(-1 * var(--a))) }
+  .cvec{ position:absolute; width:3px; height:34%; left:calc(50% - 1.5px); top:16%;
+    transform-origin:50% 100%; border-radius:2px; z-index:2; transition:transform .1s ease-out }
+  .cvec::before{ content:""; position:absolute; top:-3px; left:50%; transform:translateX(-50%);
+    width:9px; height:9px; border-radius:50% }
+  .cvec.t{ background:var(--c-true) } .cvec.t::before{ background:var(--c-true) }
+  .cvec.m{ background:var(--c-mag) }  .cvec.m::before{ background:var(--c-mag) }
+  .cvec.c{ background:var(--c-comp) } .cvec.c::before{ background:var(--c-comp) }
+  .ccenter{ position:absolute; width:42%; aspect-ratio:1; border-radius:50%;
+    background:var(--card); border:1px solid var(--border); display:grid; place-items:center;
+    text-align:center; z-index:3 }
+  .ccenter strong{ display:block; font:800 clamp(24px,7vw,32px)/1 ui-monospace,Menlo,Consolas,monospace }
+  .ccenter span{ color:var(--hint); font:700 10px/1.3 ui-monospace,Menlo,Consolas,monospace }
+  .cvals{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:14px }
+  .cval{ background:var(--bg); border:1px solid var(--border); border-radius:11px; padding:9px 4px; text-align:center }
+  .cval .k{ color:var(--hint); font-size:11px } .cval .v{ font:800 15px/1.4 ui-monospace,Menlo,Consolas,monospace }
+  .cval .v.t{ color:var(--c-true) } .cval .v.c{ color:var(--c-comp) }
+  .cctl{ margin-top:14px }
+  .cctl label{ display:flex; justify-content:space-between; font-size:13px; color:var(--hint); margin-bottom:6px }
+  .cctl output{ color:var(--text); font-family:ui-monospace,Menlo,Consolas,monospace; font-weight:800 }
+  .cctl input[type=range]{ width:100%; accent-color:var(--accent) }
+  .cfrow{ display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border);
+    color:var(--hint); font-size:13px; font-family:ui-monospace,Menlo,Consolas,monospace }
+  .cfrow:last-child{ border-bottom:0; color:var(--text); font-weight:800 }
+  .cfrow .op{ color:var(--accent); font-weight:800 }
 </style>
 </head>
 <body>
@@ -69,26 +115,100 @@
     <span id="streak"><span class="emi" data-icon="flame"></span> серия: 0</span>
   </div>
 
-  <div class="seg" id="modes">
-    <button data-m="all" class="active">Все</button>
-    <button data-m="star"><span class="emi" data-icon="star"></span> С подвохом (&gt;360°)</button>
+  <!-- главные табы: Задачи (ввод ответа) / Компас (интерактивная песочница) -->
+  <div class="seg" id="tabs">
+    <button data-t="tasks" class="active">Задачи</button>
+    <button data-t="compass"><span class="emi" data-icon="compass"></span> Компас</button>
   </div>
 
-  <div class="card">
-    <div class="q" id="q">…</div>
-    <div class="ans">
-      <input id="inp" type="text" inputmode="decimal" placeholder="ответ в градусах, напр. 046" autocomplete="off">
-      <button class="btn" id="check">OK</button>
+  <!-- ── ЗАДАЧИ ── -->
+  <section id="tasksPanel">
+    <div class="seg" id="modes">
+      <button data-m="all" class="active">Все</button>
+      <button data-m="star"><span class="emi" data-icon="star"></span> С подвохом (&gt;360°)</button>
     </div>
-    <div class="fb" id="fb"></div>
-    <div class="sol" id="sol"></div>
-    <div class="row">
-      <button class="btn ghost" id="solveBtn"><span class="emi" data-icon="lightbulb"></span> Решение</button>
-      <button class="btn" id="next">Новая →</button>
-    </div>
-  </div>
 
-  <p class="foot">Допуск ±1°. Правило (вниз): East −, West +. Не является официальным материалом ISSA.</p>
+    <div class="card">
+      <div class="q" id="q">…</div>
+      <div class="ans">
+        <input id="inp" type="text" inputmode="decimal" placeholder="ответ в градусах, напр. 046" autocomplete="off">
+        <button class="btn" id="check">OK</button>
+      </div>
+      <div class="fb" id="fb"></div>
+      <div class="sol" id="sol"></div>
+      <div class="row">
+        <button class="btn ghost" id="solveBtn"><span class="emi" data-icon="lightbulb"></span> Решение</button>
+        <button class="btn" id="next">Новая →</button>
+      </div>
+    </div>
+    <p class="foot">Допуск ±1°. Правило (вниз): East −, West +. Не является официальным материалом ISSA.</p>
+  </section>
+
+  <!-- ── КОМПАС-ПЕСОЧНИЦА ── -->
+  <section id="compassPanel" class="hidden">
+    <div class="card">
+      <div class="q" style="margin-bottom:6px">Крути диск пальцем</div>
+      <p class="sub" style="color:var(--hint); font-size:13px; margin:0 0 6px">
+        True задаёшь диском, Variation и Deviation — ползунками. MC и CC считаются вживую.
+      </p>
+
+      <div class="stage">
+        <div class="cwrap" id="cwrap">
+          <div class="cring"></div>
+          <div class="clubber"></div>
+          <div class="cvec t" id="cvT"></div>
+          <div class="cvec m" id="cvM"></div>
+          <div class="cvec c" id="cvC"></div>
+          <div class="cface" id="cface">
+            <div class="ccard4 n" style="--a:0deg">N</div>
+            <div class="ccard4" style="--a:90deg">E</div>
+            <div class="ccard4" style="--a:180deg">S</div>
+            <div class="ccard4" style="--a:270deg">W</div>
+            <div class="cdeg" style="--a:30deg">030</div>
+            <div class="cdeg" style="--a:60deg">060</div>
+            <div class="cdeg" style="--a:120deg">120</div>
+            <div class="cdeg" style="--a:150deg">150</div>
+            <div class="cdeg" style="--a:210deg">210</div>
+            <div class="cdeg" style="--a:240deg">240</div>
+            <div class="cdeg" style="--a:300deg">300</div>
+            <div class="cdeg" style="--a:330deg">330</div>
+          </div>
+          <div class="ccenter"><div>
+            <strong id="ccCC">000°</strong><span>CC</span>
+          </div></div>
+        </div>
+      </div>
+
+      <div class="cvals">
+        <div class="cval"><div class="k">TC</div><div class="v t" id="ccTC">000°</div></div>
+        <div class="cval"><div class="k">Var</div><div class="v" id="ccVar">3°W</div></div>
+        <div class="cval"><div class="k">Dev</div><div class="v" id="ccDev">5°W</div></div>
+        <div class="cval"><div class="k">CC</div><div class="v c" id="ccCC2">000°</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="q" style="margin-bottom:8px">Как считается</div>
+      <div class="cfrow"><span>True</span><strong id="cfT">000°</strong></div>
+      <div class="cfrow"><span>Variation <span class="op" id="cfVarOp">+</span></span><strong id="cfVar">0°W</strong></div>
+      <div class="cfrow"><span>Magnetic</span><strong id="cfM">000°</strong></div>
+      <div class="cfrow"><span>Deviation <span class="op" id="cfDevOp">+</span></span><strong id="cfDev">0°W</strong></div>
+      <div class="cfrow"><span>Compass</span><strong id="cfC">000°</strong></div>
+
+      <div class="cctl">
+        <label><span>Variation (склонение)</span><output id="cVarOut">3°W</output></label>
+        <input id="cVar" type="range" min="-20" max="20" value="3" step="1">
+      </div>
+      <div class="cctl">
+        <label><span>Deviation (девиация)</span><output id="cDevOut">5°W</output></label>
+        <input id="cDev" type="range" min="-20" max="20" value="5" step="1">
+      </div>
+      <p class="foot" style="margin-top:14px; text-align:left">
+        Вниз по цепочке (T→C): <b>West прибавляем, East вычитаем</b>
+        («Error East — Compass least; Error West — Compass best»).
+      </p>
+    </div>
+  </section>
 
 <script>
 "use strict";
@@ -155,6 +275,77 @@ $("modes").addEventListener("click", e => {
   const b=e.target.closest("button"); if(!b) return;
   [...e.currentTarget.children].forEach(x=>x.classList.remove("active"));
   b.classList.add("active"); MODE=b.dataset.m; pick();
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// КОМПАС-ПЕСОЧНИЦА: статичный диск, крутятся векторы True/Mag/Compass.
+// Формула совпадает с боевыми задачами (nav_tasks.py): вниз T→C West +, East −.
+// Слайдеры: значение>0 = West (+), значение<0 = East (−) → просто прибавляем.
+// Вынесено в window для unit-чека (_nav_check.mjs).
+// ─────────────────────────────────────────────────────────────────────────
+window.tvmdcNorm = function (v) { return ((Math.round(v) % 360) + 360) % 360; };
+window.tvmdcCompass = function (trueCourse, varSigned, devSigned) {
+  // varSigned/devSigned: West положительное, East отрицательное (как слайдер)
+  var mag = window.tvmdcNorm(trueCourse + varSigned);
+  var cc  = window.tvmdcNorm(mag + devSigned);
+  return { magnetic: mag, compass: cc };
+};
+
+(function initCompass(){
+  var cwrap = $("cwrap");
+  if (!cwrap) return;
+  var norm = window.tvmdcNorm;
+  var pad = function (v){ return String(norm(v)).padStart(3, "0"); };
+  var ew = function (v){ return v === 0 ? "0°" : (Math.abs(v) + "°" + (v > 0 ? "W" : "E")); };
+  var trueCourse = 50;
+
+  function angleFromPointer(e){
+    var r = cwrap.getBoundingClientRect();
+    var cx = r.left + r.width/2, cy = r.top + r.height/2;
+    return norm(Math.atan2(e.clientX - cx, -(e.clientY - cy)) * 180 / Math.PI);
+  }
+
+  function renderCompass(){
+    var v = Number($("cVar").value), d = Number($("cDev").value);
+    var r = window.tvmdcCompass(trueCourse, v, d);
+    // диск статичен (учебный режим) — крутятся только векторы
+    $("cvT").style.transform = "rotate(" + trueCourse + "deg)";
+    $("cvM").style.transform = "rotate(" + r.magnetic + "deg)";
+    $("cvC").style.transform = "rotate(" + r.compass + "deg)";
+
+    $("ccCC").textContent = pad(r.compass) + "°";
+    $("ccCC2").textContent = pad(r.compass) + "°";
+    $("ccTC").textContent = pad(trueCourse) + "°";
+    $("ccVar").textContent = ew(v);
+    $("ccDev").textContent = ew(d);
+
+    $("cVarOut").textContent = ew(v);
+    $("cDevOut").textContent = ew(d);
+    $("cfT").textContent = pad(trueCourse) + "°";
+    $("cfVar").textContent = ew(v); $("cfVarOp").textContent = v >= 0 ? "+" : "−";
+    $("cfM").textContent = pad(r.magnetic) + "°";
+    $("cfDev").textContent = ew(d); $("cfDevOp").textContent = d >= 0 ? "+" : "−";
+    $("cfC").textContent = pad(r.compass) + "°";
+  }
+
+  var dragging = false;
+  cwrap.addEventListener("pointerdown", function(e){ dragging = true; cwrap.setPointerCapture(e.pointerId); trueCourse = angleFromPointer(e); renderCompass(); });
+  cwrap.addEventListener("pointermove", function(e){ if (dragging){ trueCourse = angleFromPointer(e); renderCompass(); } });
+  cwrap.addEventListener("pointerup", function(){ dragging = false; });
+  cwrap.addEventListener("pointercancel", function(){ dragging = false; });
+  $("cVar").addEventListener("input", renderCompass);
+  $("cDev").addEventListener("input", renderCompass);
+  renderCompass();
+})();
+
+// переключение главных табов: Задачи / Компас
+$("tabs").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if (!b) return;
+  [].forEach.call(e.currentTarget.children, function(x){ x.classList.remove("active"); });
+  b.classList.add("active");
+  var t = b.dataset.t;
+  $("tasksPanel").classList.toggle("hidden", t !== "tasks");
+  $("compassPanel").classList.toggle("hidden", t !== "compass");
 });
 
 pick();

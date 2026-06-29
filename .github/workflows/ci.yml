@@ -102,6 +102,7 @@ jobs:
       - name: Mini App JS checks (math + quiz + konspekt + tides + tasks)
         run: |
           node webapp/_solver_check.mjs
+          node webapp/_navcompass_check.mjs
           node webapp/_marine_check.mjs
           node webapp/_tide_check.mjs
           node webapp/_quiz_check.mjs
