@@ -69,6 +69,11 @@ for f in book.pdf studbook.pdf toghill.pdf; do
   fi
 done
 
+echo "→ копируем pdf.js (локальный просмотрщик, без CDN)"
+mkdir -p "$DST/vendor/pdfjs"
+cp -f "$SRC/vendor/pdfjs/pdf.min.js"        "$DST/vendor/pdfjs/" 2>/dev/null && echo "  pdf.min.js"
+cp -f "$SRC/vendor/pdfjs/pdf.worker.min.js" "$DST/vendor/pdfjs/" 2>/dev/null && echo "  pdf.worker.min.js"
+
 echo "→ копируем картинки (схемы конспекта)"
 mkdir -p "$DST/images"
 cp -f "$APP_DIR/images/"*.png "$APP_DIR/images/"*.jpg "$DST/images/" 2>/dev/null || true

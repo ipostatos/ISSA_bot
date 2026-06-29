@@ -83,7 +83,8 @@
   <button id="dl" title="Скачать"><span class="emi" data-icon="download"></span></button>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- pdf.js локально (без CDN): работает офлайн и под строгим CSP -->
+<script src="vendor/pdfjs/pdf.min.js"></script>
 <script>
 "use strict";
 const tg = window.Telegram?.WebApp;
@@ -114,10 +115,9 @@ function fail(msg){
 }
 
 if (!file){ fail("Файл не указан."); }
-else if (!window.pdfjsLib){ fail("Не удалось загрузить просмотрщик. Проверьте интернет."); }
+else if (!window.pdfjsLib){ fail("Не удалось загрузить просмотрщик PDF."); }
 else {
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdfjs/pdf.worker.min.js";
   startReader();
 }
 
