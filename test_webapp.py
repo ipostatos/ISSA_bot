@@ -18,6 +18,52 @@ def _load_bot():
     return mod
 
 
+def _test_batch_equiv(bot, ids):
+    """record_results_batch == поштучный record_answer()+mark_seen().
+
+    Гарантирует, что пакетная запись результатов теста (без I/O-флуда) даёт
+    тот же прогресс, что старая поштучная логика. Ловит регрессию, если кто-то
+    изменит одну ветку, забыв про другую.
+    """
+    import tempfile
+    from pathlib import Path
+
+    assert len(ids) >= 30, "нужно больше вопросов для теста эквивалентности"
+    bot.PROGRESS_DIR = Path(tempfile.mkdtemp())
+
+    def per_item(uid, ok, wrong):
+        for qid in ok:
+            bot.record_answer(uid, qid, True)
+            bot.mark_seen(uid, qid)
+        for qid in wrong:
+            bot.record_answer(uid, qid, False)
+            bot.mark_seen(uid, qid)
+
+    scenarios = [
+        ("экзамен", ids[:20], ids[20:30]),
+        ("все верные", ids[:15], []),
+        ("все ошибки", [], ids[:15]),
+        ("повтор id", ids[:5] + ids[:5], ids[5:8]),
+        ("мусорные id", ids[:8] + ["zzz-9", "FAKE"], ids[8:12] + ["bad"]),
+        ("пересечение ok/wrong", ids[:10], ids[5:15]),
+    ]
+    for name, ok, wrong in scenarios:
+        # поверх непустого прогресса — проверяем накопление и исправление ошибок
+        seed_ok, seed_wrong = ids[25:28], ids[28:31] if len(ids) >= 31 else []
+        for u in ("A", "B"):
+            p = bot._progress_path(u)
+            if p.exists():
+                p.unlink()
+        per_item("A", seed_ok, seed_wrong)
+        per_item("A", ok, wrong)
+        bot.record_results_batch("B", seed_ok, seed_wrong)
+        bot.record_results_batch("B", ok, wrong)
+        a, b = bot.load_progress("A"), bot.load_progress("B")
+        assert a["stats"] == b["stats"], f"{name}: stats {a['stats']} != {b['stats']}"
+        assert set(a["seen"]) == set(b["seen"]), f"{name}: seen расходится"
+        assert set(a["wrong"]) == set(b["wrong"]), f"{name}: wrong расходится"
+
+
 def main():
     bot = _load_bot()
     p = bot.parse_webapp_quiz
@@ -64,6 +110,8 @@ def main():
     # битый secs не валит
     out = p({"t": "quiz", "mode": "exam", "results": [[ids[0], 1]], "secs": "abc"})
     assert out and out["secs"] == 0
+
+    _test_batch_equiv(bot, ids)
 
     msg = "OK: webapp tests passed"
     sys.stdout.buffer.write((msg + "\n").encode(sys.stdout.encoding or "utf-8", "replace"))

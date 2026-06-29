@@ -220,14 +220,52 @@ def record_answer(user_id: int, qid: str, correct: bool) -> None:
         return
     with _lock_for(user_id):
         prog = load_progress(user_id)
-        prog["stats"]["answered"] += 1
-        if correct:
-            prog["stats"]["correct"] += 1
-            if qid in prog["wrong"]:
-                prog["wrong"].remove(qid)  # исправился — убираем из работы над ошибками
-        else:
-            if qid not in prog["wrong"]:
-                prog["wrong"].append(qid)
+        _apply_answer(prog, qid, correct)
+        save_progress(user_id, prog)
+
+
+def _apply_answer(prog: dict, qid: str, correct: bool) -> None:
+    """Применить один ответ к загруженному прогрессу (в памяти, без I/O).
+
+    Та же логика, что в record_answer: ведёт статистику и список «работы над
+    ошибками». Вынесено, чтобы пакетная запись (record_results_batch) не плодила
+    чтение/запись файла на каждый вопрос.
+    """
+    prog["stats"]["answered"] += 1
+    if correct:
+        prog["stats"]["correct"] += 1
+        if qid in prog["wrong"]:
+            prog["wrong"].remove(qid)  # исправился — убираем из работы над ошибками
+    else:
+        if qid not in prog["wrong"]:
+            prog["wrong"].append(qid)
+
+
+def record_results_batch(
+    user_id: int, ok_ids: list[str], wrong_ids: list[str]
+) -> None:
+    """Записать целый набор ответов теста за ОДНО чтение и ОДНУ запись файла.
+
+    Поведение идентично последовательным record_answer()+mark_seen() по каждому
+    вопросу, но без I/O-флуда: при экзамене на 100 вопросов раньше было ~400
+    обращений к диску под локом, теперь — одно load + одно save.
+    Несуществующие id отбрасываются (как в record_answer/mark_seen).
+    """
+    seen_set = {*ok_ids, *wrong_ids} & QUESTIONS_BY_ID.keys()
+    with _lock_for(user_id):
+        prog = load_progress(user_id)
+        for qid in ok_ids:
+            if qid in QUESTIONS_BY_ID:
+                _apply_answer(prog, qid, True)
+        for qid in wrong_ids:
+            if qid in QUESTIONS_BY_ID:
+                _apply_answer(prog, qid, False)
+        # «увиденные» — добавляем недостающие (как mark_seen, но разом)
+        already = set(prog["seen"])
+        for qid in seen_set:
+            if qid not in already:
+                prog["seen"].append(qid)
+                already.add(qid)
         save_progress(user_id, prog)
 
 
@@ -1523,14 +1561,10 @@ async def on_webapp_data(message: Message) -> None:
 
     is_exam = parsed["is_exam"]
     mode = parsed["mode"]
-    # Записываем каждый ответ в прогресс (статистика, работа над ошибками,
-    # «увиденные» вопросы) — той же логикой, что и чат-режимы.
-    for qid in parsed["ok_ids"]:
-        record_answer(user_id, qid, True)
-        mark_seen(user_id, qid)
-    for qid in parsed["wrong_ids"]:
-        record_answer(user_id, qid, False)
-        mark_seen(user_id, qid)
+    # Записываем все ответы теста в прогресс (статистика, работа над ошибками,
+    # «увиденные») одним пакетом — одно чтение и одна запись файла, а не ~400
+    # обращений к диску под локом, как при поштучном record_answer()/mark_seen().
+    record_results_batch(user_id, parsed["ok_ids"], parsed["wrong_ids"])
 
     counted = len(parsed["ok_ids"]) + len(parsed["wrong_ids"])
     correct = len(parsed["ok_ids"])
