@@ -68,22 +68,26 @@ DISCLAIMER = (
 
 EXAM_SIZE = 100           # вопросов в экзамене
 EXAM_PASS_PERCENT = 90    # проходной балл, %
-# Боевой адрес Mini App (раздаётся Caddy на VPS). Используется как дефолт для
-# URL-ов ниже, чтобы лаунчер-меню работало без правки systemd/.env. Переопределяется
-# переменными окружения, если нужен другой хост.
-DEFAULT_WEBAPP_BASE = "https://issa-46-224-220-94.sslip.io"
-# URL мини-приложения (Mini App) калькулятора TVMDC. По умолчанию — боевой адрес,
-# в меню калькулятора есть кнопка «Открыть приложение».
-WEBAPP_URL = os.environ.get("WEBAPP_URL", DEFAULT_WEBAPP_BASE + "/calc.html").strip()
-# URL Mini App «Тесты» (quiz.html). По умолчанию — боевой адрес: на reply-
-# клавиатуре есть кнопка запуска приложения тестов. Результат теста
-# возвращается в бота через WebApp.sendData и пишется в прогресс.
-WEBAPP_QUIZ_URL = os.environ.get("WEBAPP_QUIZ_URL", DEFAULT_WEBAPP_BASE + "/quiz.html").strip()
-# URL стартового экрана Mini App (home.html на корне). По умолчанию — боевой
-# адрес: меню работает как лаунчер (большая кнопка «Открыть приложение» +
-# быстрый доступ), контентные пункты живут внутри приложения. Переопределяется
-# переменной WEBAPP_HOME_URL.
-WEBAPP_HOME_URL = os.environ.get("WEBAPP_HOME_URL", DEFAULT_WEBAPP_BASE + "/").strip()
+# Базовый адрес Mini App (раздаётся Caddy на VPS) — из окружения, не хардкодим
+# хост в исходниках. Задаётся в .env как WEBAPP_BASE (см. .env.example). Если не
+# задан — кнопки «Открыть приложение» в чате просто не показываются (бот работает
+# как обычный диалог); это безопасный дефолт без привязки к конкретному серверу.
+DEFAULT_WEBAPP_BASE = os.environ.get("WEBAPP_BASE", "").strip().rstrip("/")
+def _webapp_url(env_name: str, path: str) -> str:
+    """URL страницы Mini App: явный env override, иначе из WEBAPP_BASE + path.
+    Если базовый адрес не задан — пустая строка (кнопки приложения не покажутся)."""
+    explicit = os.environ.get(env_name, "").strip()
+    if explicit:
+        return explicit
+    return (DEFAULT_WEBAPP_BASE + path) if DEFAULT_WEBAPP_BASE else ""
+
+
+# URL мини-приложения (Mini App) калькулятора TVMDC — кнопка «Открыть приложение».
+WEBAPP_URL = _webapp_url("WEBAPP_URL", "/calc.html")
+# URL Mini App «Тесты» (quiz.html) — кнопка запуска тестов на reply-клавиатуре.
+WEBAPP_QUIZ_URL = _webapp_url("WEBAPP_QUIZ_URL", "/quiz.html")
+# URL стартового экрана (home.html) — лаунчер-меню (кнопка «Открыть приложение»).
+WEBAPP_HOME_URL = _webapp_url("WEBAPP_HOME_URL", "/")
 TG_MSG_LIMIT = 4096       # ограничение Telegram на длину сообщения
 POLL_OPTION_LIMIT = 100   # ограничение Telegram на длину варианта ответа
 POLL_QUESTION_LIMIT = 300 # ограничение Telegram на длину текста вопроса/пояснения

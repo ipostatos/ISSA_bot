@@ -278,9 +278,10 @@ async def post_attempt(
     return {"ok": True, "attempts": list_attempts(user_id)}
 
 
-# CORS: разрешаем только домен Mini App (и пусто — same-origin за Caddy не требует CORS,
-# но на случай прямых запросов оставляем явный заголовок через middleware).
-ALLOWED_ORIGIN = os.environ.get("ISSA_API_ORIGIN", "https://issa-46-224-220-94.sslip.io")
+# CORS: домен Mini App берётся из окружения (ISSA_API_ORIGIN), хост не хардкодим.
+# За Caddy запросы same-origin и CORS не нужен — поэтому если переменная не задана,
+# заголовки CORS просто не добавляются (безопасный дефолт без привязки к серверу).
+ALLOWED_ORIGIN = os.environ.get("ISSA_API_ORIGIN", "").strip()
 
 
 @app.middleware("http")
@@ -294,6 +295,8 @@ async def cors_and_guard(request: Request, call_next):
 
 
 def _cors_headers() -> dict:
+    if not ALLOWED_ORIGIN:
+        return {}      # same-origin за Caddy — CORS-заголовки не требуются
     return {
         "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
         "Access-Control-Allow-Headers": "Content-Type, X-Init-Data",

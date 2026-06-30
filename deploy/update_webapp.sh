@@ -81,4 +81,4 @@ cp -f "$APP_DIR/images/"*.png "$APP_DIR/images/"*.jpg "$DST/images/" 2>/dev/null
 echo "✅ опубликовано:"
 ls -1 "$DST"
 echo
-echo "Открой https://issa-46-224-220-94.sslip.io — должен быть стартовый экран."
+echo "Открой https://<ваш-домен> — должен быть стартовый экран."

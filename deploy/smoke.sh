@@ -10,14 +10,17 @@
 # Запуск на сервере (локально, без внешнего трафика):
 #   bash /opt/issa-bot/deploy/smoke.sh
 # Или против боевого домена:
-#   BASE=https://issa-46-224-220-94.sslip.io bash deploy/smoke.sh
+#   BASE=https://<ваш-домен> bash deploy/smoke.sh
 #
 # Не печатает BOT_TOKEN / initData. Код выхода ≠0, если хоть одна проверка упала.
 set -uo pipefail
 
 # По умолчанию бьёмся в локальный uvicorn (за Caddy) + статику на том же хосте.
+# Адреса берём из окружения (хост не хардкодим). API локальный по умолчанию;
+# WEB_BASE для проверки статики задаётся через BASE=… (см. шапку). Если не задан —
+# статику пропускаем, проверяем только API.
 API_BASE="${API_BASE:-http://127.0.0.1:4100}"
-WEB_BASE="${BASE:-https://issa-46-224-220-94.sslip.io}"
+WEB_BASE="${BASE:-}"
 
 fails=0
 check() {  # check "имя" ожидаемый_код URL
@@ -37,9 +40,13 @@ check "health 200"              200 "$API_BASE/api/health"
 check "state без initData 401"  401 "$API_BASE/api/state"
 check "attempts без initData 401" 401 "$API_BASE/api/attempts"
 
-echo "== Статика ($WEB_BASE) =="
-check "home 200"               200 "$WEB_BASE/"
-check "quiz 200"               200 "$WEB_BASE/quiz.html"
+if [ -n "$WEB_BASE" ]; then
+  echo "== Статика ($WEB_BASE) =="
+  check "home 200"               200 "$WEB_BASE/"
+  check "quiz 200"               200 "$WEB_BASE/quiz.html"
+else
+  echo "== Статика — пропущена (задай BASE=https://… для проверки) =="
+fi
 
 # health должен содержать ok:true (контентная проверка, без секретов)
 body="$(curl -s --max-time 10 "$API_BASE/api/health" 2>/dev/null || true)"
