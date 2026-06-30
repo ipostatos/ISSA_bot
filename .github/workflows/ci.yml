@@ -110,6 +110,17 @@ jobs:
           fi
           echo "OK: content_data.js актуален"
 
+      - name: License data is up to date (Żeglarz / Sternik)
+        run: |
+          python webapp/build_zeglarz_data.py
+          python webapp/build_sternik_data.py
+          if ! git diff --quiet -- webapp/zeglarz_data.js webapp/sternik_data.js; then
+            echo "::error::zeglarz_data.js / sternik_data.js устарели — перегенерируй build_zeglarz_data.py / build_sternik_data.py"
+            git --no-pager diff --stat -- webapp/zeglarz_data.js webapp/sternik_data.js
+            exit 1
+          fi
+          echo "OK: польские банки актуальны"
+
       - name: Pre-release audit (questions, images, limits)
         run: python run_audit.py
 
@@ -131,6 +142,7 @@ jobs:
           node webapp/_tasks_check.mjs
           node webapp/_glossary_check.mjs
           node webapp/_content_check.mjs
+          node webapp/_licenses_check.mjs
 
   secret-scan:
     runs-on: ubuntu-latest
