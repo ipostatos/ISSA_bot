@@ -88,6 +88,8 @@ WEBAPP_URL = _webapp_url("WEBAPP_URL", "/calc.html")
 WEBAPP_QUIZ_URL = _webapp_url("WEBAPP_QUIZ_URL", "/quiz.html")
 # URL стартового экрана (home.html) — лаунчер-меню (кнопка «Открыть приложение»).
 WEBAPP_HOME_URL = _webapp_url("WEBAPP_HOME_URL", "/")
+# URL экрана польских лицензий (exam_pl.html) — экзамены Żeglarz/Sternik (PL/RU).
+WEBAPP_LICENSES_URL = _webapp_url("WEBAPP_LICENSES_URL", "/exam_pl.html")
 TG_MSG_LIMIT = 4096       # ограничение Telegram на длину сообщения
 POLL_OPTION_LIMIT = 100   # ограничение Telegram на длину варианта ответа
 POLL_QUESTION_LIMIT = 300 # ограничение Telegram на длину текста вопроса/пояснения
@@ -344,6 +346,11 @@ def main_menu_kb() -> InlineKeyboardMarkup:
         rows = [
             [InlineKeyboardButton(text="🚀 Открыть приложение",
                                   web_app=WebAppInfo(url=WEBAPP_HOME_URL))],
+        ]
+        if WEBAPP_LICENSES_URL:
+            rows.append([InlineKeyboardButton(text="🇵🇱 Польские лицензии (Żeglarz / Sternik)",
+                                              web_app=WebAppInfo(url=WEBAPP_LICENSES_URL))])
+        rows += [
             [InlineKeyboardButton(text="Случайный вопрос", callback_data="mode:random")],
             [InlineKeyboardButton(text=f"Экзамен ({EXAM_SIZE} вопросов)", callback_data="mode:exam")],
             [InlineKeyboardButton(text="Работа над ошибками", callback_data="mode:mistakes")],
