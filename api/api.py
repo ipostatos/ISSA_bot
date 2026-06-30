@@ -19,11 +19,15 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import os
 import sqlite3
 import time
 from collections.abc import Iterator
 from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+log = logging.getLogger("issa-api")
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -224,6 +228,8 @@ def _check_rate(user_id: int) -> None:
     hits[:] = [t for t in hits if t > cutoff]
     if len(hits) >= RATE_MAX:
         retry = max(1, int(hits[0] + RATE_WINDOW - now))
+        log.warning("rate limit hit: user=%s (%d/%ds), retry-after=%ds",
+                    user_id, RATE_MAX, RATE_WINDOW, retry)
         raise HTTPException(429, "rate limit exceeded",
                             headers={"Retry-After": str(retry)})
     hits.append(now)
@@ -235,12 +241,15 @@ def _check_rate(user_id: int) -> None:
 
 def _auth(init_data: str | None) -> int:
     if not BOT_TOKEN:
+        log.error("auth failed: BOT_TOKEN not configured")
         raise HTTPException(500, "server misconfigured: no BOT_TOKEN")
     if not init_data:
+        log.info("auth 401: missing initData")        # сам initData НЕ логируем
         raise HTTPException(401, "missing initData")
     try:
         info = verify_init_data(init_data, BOT_TOKEN)
     except InitDataError as e:
+        log.info("auth 401: %s", e)                   # причина без секретов
         raise HTTPException(401, f"invalid initData: {e}")
     user_id = info["user_id"]
     _check_rate(user_id)        # лимит после успешной auth (per-user)

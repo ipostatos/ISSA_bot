@@ -43,6 +43,23 @@ jobs:
           pip install -r api/requirements.txt
           python api/test_api.py
 
+      - name: Smoke — реально поднимаем API и прогоняем deploy/smoke.sh
+        run: |
+          export BOT_TOKEN="123456:CI-SMOKE-TOKEN"
+          export ISSA_API_DB="$(mktemp -u).db"
+          ( cd api && python -m uvicorn api:app --host 127.0.0.1 --port 4100 ) &
+          UV=$!
+          # ждём, пока поднимется health
+          for i in $(seq 1 20); do
+            curl -sf http://127.0.0.1:4100/api/health >/dev/null && break
+            sleep 0.5
+          done
+          # BASE не задаём → smoke проверит только API (health 200, 401 без initData)
+          bash deploy/smoke.sh
+          RC=$?
+          kill $UV 2>/dev/null || true
+          exit $RC
+
       - name: Quiz data is up to date with questions.json
         run: |
           python webapp/build_quiz_data.py
