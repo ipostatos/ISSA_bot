@@ -189,12 +189,43 @@ def test_attempts():
         check("чужая история пуста (изоляция по user_id)", client.get("/api/attempts", headers=h2).json()["attempts"] == [])
 
 
+def test_rate_limit():
+    try:
+        from fastapi.testclient import TestClient
+    except Exception:
+        return
+    tmp = tempfile.mkdtemp()
+    os.environ["ISSA_API_DB"] = str(Path(tmp) / "r.db")
+    os.environ["BOT_TOKEN"] = TOKEN
+    os.environ["ISSA_RATE_MAX"] = "5"        # маленький лимит для теста
+    os.environ["ISSA_RATE_WINDOW"] = "60"
+    import importlib, api as apimod
+    importlib.reload(apimod)
+    with TestClient(apimod.app) as client:
+        h = {"X-Init-Data": build_init_data(TOKEN, {"id": 555})}
+        codes = [client.get("/api/state", headers=h).status_code for _ in range(7)]
+        check("первые 5 запросов в пределах лимита → 200",
+              codes[:5] == [200] * 5)
+        check("6-й и далее → 429 (rate limit)", codes[5] == 429 and codes[6] == 429)
+        # health не лимитируется (без auth)
+        hc = [client.get("/api/health").status_code for _ in range(10)]
+        check("health не лимитируется", all(c == 200 for c in hc))
+        # другой пользователь не затронут чужим лимитом
+        h2 = {"X-Init-Data": build_init_data(TOKEN, {"id": 777})}
+        check("другой пользователь — свой лимит (200)",
+              client.get("/api/state", headers=h2).status_code == 200)
+    # сбросим env, чтобы не влиять на другие прогоны
+    os.environ.pop("ISSA_RATE_MAX", None)
+    os.environ.pop("ISSA_RATE_WINDOW", None)
+
+
 if __name__ == "__main__":
     test_auth()
     test_merge_srs()
     test_merge_progress()
     test_endpoints()
     test_attempts()
+    test_rate_limit()
     if fails:
         print(f"\nAPI TESTS: {fails} провал(ов)")
         sys.exit(1)

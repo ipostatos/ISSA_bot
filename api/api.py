@@ -201,6 +201,38 @@ app = FastAPI(title="ISSA Trainer Sync API", docs_url=None, redoc_url=None,
               lifespan=lifespan)
 
 
+# ── простой rate-limiter в памяти (без внешних зависимостей) ──
+# Скользящее окно на пользователя. Настраивается через env:
+#   ISSA_RATE_MAX   — запросов в окне (по умолчанию 60)
+#   ISSA_RATE_WINDOW — длина окна в секундах (по умолчанию 60)
+# 0 в любом из них отключает лимит. Состояние per-process (одного uvicorn-воркера
+# хватает для пилота; для масштаба — вынести в Redis).
+RATE_MAX = int(os.environ.get("ISSA_RATE_MAX", "60"))
+RATE_WINDOW = int(os.environ.get("ISSA_RATE_WINDOW", "60"))
+_rate_hits: dict[int, list[float]] = {}
+
+
+def _check_rate(user_id: int) -> None:
+    if RATE_MAX <= 0 or RATE_WINDOW <= 0:
+        return                                  # лимит отключён
+    now = time.time()
+    hits = _rate_hits.get(user_id)
+    if hits is None:
+        hits = _rate_hits[user_id] = []
+    cutoff = now - RATE_WINDOW
+    # выкидываем устаревшие отметки, считаем оставшиеся в окне
+    hits[:] = [t for t in hits if t > cutoff]
+    if len(hits) >= RATE_MAX:
+        retry = max(1, int(hits[0] + RATE_WINDOW - now))
+        raise HTTPException(429, "rate limit exceeded",
+                            headers={"Retry-After": str(retry)})
+    hits.append(now)
+    # лёгкая защита от роста словаря: периодически чистим пустые записи
+    if len(_rate_hits) > 5000:
+        for uid in [u for u, h in _rate_hits.items() if not h or h[-1] < cutoff]:
+            _rate_hits.pop(uid, None)
+
+
 def _auth(init_data: str | None) -> int:
     if not BOT_TOKEN:
         raise HTTPException(500, "server misconfigured: no BOT_TOKEN")
@@ -210,7 +242,9 @@ def _auth(init_data: str | None) -> int:
         info = verify_init_data(init_data, BOT_TOKEN)
     except InitDataError as e:
         raise HTTPException(401, f"invalid initData: {e}")
-    return info["user_id"]
+    user_id = info["user_id"]
+    _check_rate(user_id)        # лимит после успешной auth (per-user)
+    return user_id
 
 
 @app.get("/api/health")
