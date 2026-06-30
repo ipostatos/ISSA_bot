@@ -62,8 +62,18 @@
   .hidden{display:none !important}
 
   /* чтение темы */
-  #reader article{font-size:15px; text-align:left; overflow-wrap:break-word; word-break:break-word}
+  #reader article{font-size:15px; text-align:left; overflow-wrap:break-word; word-break:break-word;
+    line-height:1.6}
   #reader b{color:var(--text)}
+  /* структурное оформление (формирует formatKonspekt): абзацы, заголовки, списки */
+  #reader .k-h{display:block; margin:18px 0 8px; padding-top:14px; border-top:1px solid var(--border);
+    font-size:16px; font-weight:800; color:var(--accent); line-height:1.35}
+  #reader .k-h:first-child{margin-top:0; padding-top:0; border-top:0}
+  #reader .k-p{margin:0 0 10px}
+  #reader ul.k-list{margin:0 0 12px; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px}
+  #reader ul.k-list > li{position:relative; padding-left:18px}
+  #reader ul.k-list > li::before{content:""; position:absolute; left:4px; top:.62em;
+    width:5px; height:5px; border-radius:50%; background:var(--accent)}
   #reader code{background:var(--card); padding:1px 5px; border-radius:5px; font-size:13px;
     font-family:ui-monospace,Menlo,Consolas,monospace; overflow-wrap:anywhere}
   /* блоки <pre> переносим по словам, чтобы не было горизонтального скролла */
@@ -174,10 +184,48 @@ function mkTile(t){
   return b;
 }
 
+// ── структурное форматирование текста темы (не меняем данные, только вид) ──
+// Источник — HTML с переносами строк, маркерами «•» и <b>…</b>-заголовками.
+// Превращаем в: заголовки (.k-h), списки (ul.k-list) и абзацы (.k-p).
+function formatKonspekt(html){
+  // <pre>…</pre> сохраняем целиком (таблицы/схемы) — вынимаем перед построчной обработкой.
+  const pres = [];
+  html = html.replace(/<pre[\s\S]*?<\/pre>/g, m => { pres.push(m); return ` PRE${pres.length-1} `; });
+
+  const lines = html.split("\n");
+  let out = "", list = [];
+  const flushList = () => {
+    if (list.length){ out += `<ul class="k-list">${list.map(li=>`<li>${li}</li>`).join("")}</ul>`; list = []; }
+  };
+  for (let raw of lines){
+    const line = raw.trim();
+    if (!line){ flushList(); continue; }
+    // плейсхолдер <pre> — отдельным блоком, как есть
+    const pm = line.match(/^ PRE(\d+) $/);
+    if (pm){ flushList(); out += pres[+pm[1]]; continue; }
+    // строка-пункт списка: начинается с «•» (или «– »)
+    if (/^[•‣–-]\s+/.test(line)){
+      list.push(line.replace(/^[•‣–-]\s+/, ""));
+      continue;
+    }
+    flushList();
+    // строка-заголовок: вся строка — это <b>…</b>
+    if (line.startsWith("<b>") && line.endsWith("</b>")){
+      out += `<div class="k-h">${line}</div>`;
+    } else {
+      out += `<p class="k-p">${line}</p>`;
+    }
+  }
+  flushList();
+  // вернуть оставшиеся плейсхолдеры (если pre был внутри абзаца)
+  out = out.replace(/ PRE(\d+) /g, (_,i)=>pres[+i]);
+  return out;
+}
+
 // ── чтение темы ──
 function openTopic(key, scrollToTerm){
   const t = byKey[key]; if (!t) return;
-  let html = t.html;
+  let html = formatKonspekt(t.html);
   // картинки темы — после текста
   if (t.images && t.images.length){
     html += t.images.map(f => `<img src="images/${f}" alt="" loading="lazy">`).join("");

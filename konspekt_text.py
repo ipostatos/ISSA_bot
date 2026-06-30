@@ -826,12 +826,14 @@ KONSPEKT_ORDER = [
 
 # Картинки к темам (файлы в bot/images/) — только уже имеющиеся.
 KONSPEKT_IMAGES = {
-    "skipper": ["yacht.jpg", "yacht_parts_1.jpg", "yacht_parts_2.jpg", "yacht_parts_3.jpg"],
+    # yacht_parts_1.jpg убран — это дубликат yacht.jpg (одинаковый md5).
+    "skipper": ["yacht.jpg", "yacht_parts_2.jpg", "yacht_parts_3.jpg"],
     "nav": ["deviation_2.png", "tmc.png", "course.png"],
     "iala": ["iala_signs.jpg", "lighthouses.png", "iala_regions.png"],
     "beaufort": ["beaufort.png"],
-    "sail": ["points_of_sail_1.png", "points_of_sail_2.png",
-             "points_of_sail_3.png", "points_of_sail_4.png"],
+    # points_of_sail_1/2 убраны — ошибочно содержали навигационные схемы
+    # (course.png / tmc.png), а не курсы под парусом. Оставлены 3 и 4 — реальные.
+    "sail": ["points_of_sail_3.png", "points_of_sail_4.png"],
     "colreg": ["dayshapes.png"],
     "lights": ["dayshapes.png", "sound_signals.png"],
 }
