@@ -9,6 +9,7 @@
 <script src="nav.js"></script>
 <script src="icons.js"></script>
 <script src="zeglarz_data.js"></script>
+<script src="sternik_data.js"></script>
 <style>
   :root{
     --bg: var(--tg-theme-bg-color, #17212b);
@@ -79,8 +80,23 @@
 </style>
 </head>
 <body>
+  <!-- ── ВЫБОР ЛИЦЕНЗИИ ── -->
+  <section id="pick">
+    <h1>Польские лицензии</h1>
+    <p class="sub">Вопросы PL/RU как на экзаменационном листе. Выбери лицензию.</p>
+    <button class="big" data-lic="zeglarz">
+      <span class="bic" data-icon="anchor"></span>
+      <span>Żeglarz jachtowy<small>парусная · 150 вопросов</small></span>
+    </button>
+    <button class="big" data-lic="sternik">
+      <span class="bic" data-icon="compass"></span>
+      <span>Sternik motorowodny<small>моторная · 460 вопросов</small></span>
+    </button>
+    <p class="foot">Не является официальным материалом.</p>
+  </section>
+
   <!-- ── МЕНЮ ── -->
-  <section id="menu">
+  <section id="menu" class="hidden">
     <h1 id="mTitle">Польские лицензии</h1>
     <p class="sub" id="mSub">Гибридные вопросы PL/RU как на экзаменационном листе.</p>
     <button class="big accent" id="startExam">
@@ -91,6 +107,7 @@
       <span class="bic" data-icon="target"></span>
       <span>Тренировка<small>все вопросы подряд · сразу видно правильный</small></span>
     </button>
+    <button class="btn ghost" id="changeLic" style="width:100%; margin-top:4px">← Сменить лицензию</button>
     <p class="foot" id="bankInfo"></p>
   </section>
 
@@ -129,14 +146,27 @@ const tg = window.Telegram?.WebApp;
 if (tg){ tg.ready(); tg.expand(); }
 const $ = id => document.getElementById(id);
 
-const D = window.ZEGLARZ_DATA || {questions:[], examSize:75, examPass:65, examMinutes:90, title:"Żeglarz jachtowy"};
-const ALL = D.questions || [];
+const BANKS = {
+  zeglarz: window.ZEGLARZ_DATA,
+  sternik: window.STERNIK_DATA,
+};
+let D = null, ALL = [];   // выбранная лицензия
 
-$("mTitle").textContent = D.title || "Польские лицензии";
-$("examSub").textContent =
-  ` ${Math.min(D.examSize, ALL.length)} вопросов · ${D.examMinutes} мин · сдать ${D.examPass}`;
-$("bankInfo").textContent =
-  `Банк: ${ALL.length} вопросов (${D.meta?.withImage||0} со знаками). Не является официальным материалом.`;
+function pickLicense(lic){
+  D = BANKS[lic] || {questions:[], examSize:75, examPass:65, examMinutes:90, title:"—"};
+  ALL = D.questions || [];
+  $("pick").classList.add("hidden");
+  $("menu").classList.remove("hidden");
+  $("mTitle").textContent = D.title || "Польские лицензии";
+  $("examSub").textContent =
+    ` ${Math.min(D.examSize, ALL.length)} вопросов · ${D.examMinutes} мин · сдать ${D.examPass}`;
+  $("bankInfo").textContent =
+    `Банк: ${ALL.length} вопросов (${D.meta?.withImage||0} со знаками). Не является официальным материалом.`;
+}
+$("pick").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-lic]"); if(!b) return;
+  pickLicense(b.dataset.lic);
+});
 
 // ── состояние сессии ──
 let S = null;     // {mode, queue, idx, answers, timerEnd, tick}
@@ -255,6 +285,7 @@ function toMenu(){
 
 $("startExam").onclick = startExam;
 $("startTrain").onclick = startTrain;
+$("changeLic").onclick = ()=>{ $("menu").classList.add("hidden"); $("pick").classList.remove("hidden"); };
 $("quit").onclick = ()=>{ if(confirm("Выйти? Прогресс не сохранится.")) toMenu(); };
 $("rMenu").onclick = toMenu;
 $("rAgain").onclick = ()=> S?.mode==="train" ? startTrain() : startExam();
