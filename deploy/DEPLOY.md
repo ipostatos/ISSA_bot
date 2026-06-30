@@ -78,6 +78,14 @@ journalctl -u issa-bot -f      # живой лог (Ctrl+C для выхода)
 
 Теперь бот работает 24/7 и сам перезапускается при сбое/перезагрузке сервера.
 
+> **Sandbox-ограничения.** Unit-файлы захардены (`ProtectSystem=strict`,
+> `ReadWritePaths`, `SystemCallFilter=@system-service` и т.д.). Бот пишет только
+> в `progress/`, API — только в `api/`. Если меняли пути/`WorkingDirectory` —
+> поправьте `ReadWritePaths` в `.service`. После правки юнита:
+> `sudo cp deploy/issa-*.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl restart issa-bot issa-api`.
+> Если сервис не стартует — `journalctl -u issa-api -n 50` покажет, какой
+> системный вызов/путь заблокирован.
+
 ---
 
 ## Обновление бота (после изменений в коде)

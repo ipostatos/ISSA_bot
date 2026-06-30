@@ -12,6 +12,26 @@ EnvironmentFile=/opt/issa-bot/.env
 ExecStart=/opt/issa-bot/.venv/bin/uvicorn api:app --host 127.0.0.1 --port 4100
 Restart=on-failure
 RestartSec=3
+Group=issa
+
+# ── sandbox / hardening ──
+# Пишем ТОЛЬКО в каталог api (state.db + WAL + backups/).
+ProtectSystem=strict
+ReadWritePaths=/opt/issa-bot/api
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+# API слушает только localhost; наружу — Caddy. Нужны TCP/UNIX-сокеты:
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
 
 [Install]
 WantedBy=multi-user.target

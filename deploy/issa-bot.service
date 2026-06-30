@@ -15,9 +15,26 @@ Restart=always
 RestartSec=5
 User=issa
 Group=issa
-# Безопасность (мягкие ограничения):
-NoNewPrivileges=true
+
+# ── sandbox / hardening ──
+# Вся ФС только для чтения, пишем ТОЛЬКО в каталог прогресса.
+# Если меняли WorkingDirectory — поправьте путь в ReadWritePaths.
+ProtectSystem=strict
+ReadWritePaths=/opt/issa-bot/progress
+ProtectHome=true
 PrivateTmp=true
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+# Только нужные семейства сокетов (исходящие к Telegram API):
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
 
 [Install]
 WantedBy=multi-user.target
