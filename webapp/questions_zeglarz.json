@@ -1,0 +1,1823 @@
+[
+ {
+  "id": "zj-001",
+  "license": "zeglarz",
+  "q": "Co oznacza taki znak przed wejściem do kanału?\nЧто означает такой знак перед входом в канал?",
+  "options": [
+   "uwaga na fale wytwarzane przez motorówki,\nследите за волнами, создаваемыми моторными лодками,",
+   "zakaz wytwarzania fali,\nзапрет создания волн,",
+   "miejsce o niebezpiecznym zafalowaniu.\nместо с небезопасным волнением."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-001.png"
+ },
+ {
+  "id": "zj-002",
+  "license": "zeglarz",
+  "q": "Co musi zrobić sternik jachtu, kiedy na kursie zauważy poniższe znaki?\nЧто должен сделать рулевой яхты, когда заметит на курсе знаки ниже?",
+  "options": [
+   "przepuścić jednostki motorowe płynące z naprzeciwka,\nпропустить моторные судна, идущие с противоположной стороны,",
+   "nie przekraczać skrajni zaznaczonej białymi kolorami,\nне пересекать границы, отмеченные белым цветом,",
+   "przekraczać skrajnie zaznaczona czerwonymi kolorami.\nпересекать границы, отмеченные красным цветом."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-002.png"
+ },
+ {
+  "id": "zj-003",
+  "license": "zeglarz",
+  "q": "Na drodze wodnej pod mostem sternik zauważył poniższy znak. Co on oznacza?\nНа водном пути под мостом рулевой заметил знак ниже. Что означает этот знак?",
+  "options": [
+   "można płynąc tylko w jednym kierunku i od strony znaku,\nможно идти только одним направлением и со стороны знака,",
+   "utrudnienia na torze wodnym,\nсложный водный путь,",
+   "zalecane przejście w obydwu kierunkach.\nрекомендуется проход в обоих направлениях."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-003.png"
+ },
+ {
+  "id": "zj-004",
+  "license": "zeglarz",
+  "q": "Gdzie sternik musi zacumować jacht jeśli płynie w kierunku poniższego znaku?\nГде рулевой должен пришвартоваться, если идет в направлении знака ниже?",
+  "options": [
+   "w dowolnym miejscu, znak oznacza miejsce postojowe,\nв любом месте, знак означает место стоянки,",
+   "nie wolno parkować z prawej strony znaku,\nнельзя швартовать с правой стороны знака,",
+   "wolno parkować od znaku w kierunku prawej strony.\nможно швартоваться с правой стороны от знака."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-004.png"
+ },
+ {
+  "id": "zj-005",
+  "license": "zeglarz",
+  "q": "Od której strony należy omijać poniższy znak kardynalny?\nC какой стороны следует обойти кардинальный знак внизу?",
+  "options": [
+   "znak omijamy od północy\nзнак обойти с севера",
+   "informuje nas o niebezpieczeństwach znajdujących się od północnej strony, znak omijamy od południa,\nинформирует нас об опасности с севера, знак обойти c юга,",
+   "zawsze omijamy prawa burta.\nвсегда обходим правым бортом."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-005.png"
+ },
+ {
+  "id": "zj-006",
+  "license": "zeglarz",
+  "q": "Kto odpowiada za bezpieczeństwo jachtu i załogi?\nКто отвечает за безопасность яхты и команды?",
+  "options": [
+   "każdy odpowiada za siebie,\nкаждый отвечает за себя,",
+   "kierownik statku czyli osoba, która jest kapitanem na jachcie,\nуправляющий кораблём - человек, который является капитаном яхты,",
+   "tylko i wyłącznie właściciel jachtu, nawet jeśli nie jest kapitanem jachtu.\nтолько хозяин яхты, даже если он не является капитаном яхты."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-007",
+  "license": "zeglarz",
+  "q": "Jacht płynący pod żaglami i na silniku jest uważany za:\nЯхта, идущая под парусами и на моторе считается:",
+  "options": [
+   "statek żaglowy,\nсудном парусным,",
+   "statek mechaniczny,\nсудном моторным, с. судном моторным, но только когда двигатель работает на передаче.",
+   "statek mechaniczny tylko wtedy gdy silnik pracuje na biegu."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-008",
+  "license": "zeglarz",
+  "q": "Czy statek, który ciągnie za sobą kotwice jest statkiem w drodze?\nЯвляется ли судно, сорвавшее якорь, судном на ходу?",
+  "options": [
+   "tak,\nда,",
+   "nie,\nнет,",
+   "jeśli nie ma uruchomionego silnika lub postawionych żagli nie jest statkiem w drodze.\nесли нет включённого двигателя или поставленных парусов, судно не является судном на ходу."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-009",
+  "license": "zeglarz",
+  "q": "Liny olinowania stałego na jachcie typu slup, to:\nЭлементы стоячего такелажа на яхте типа шлюп, это:",
+  "options": [
+   "sztag, wanty, fały,\nштаг, ванты, фалы,",
+   "achtersztag, wanty, sztag,\nахтерштаг, ванты, штаг,",
+   "kontrafał, achtersztag, fal płatwy mieczowej.\nнирал, ахтерштаг, фал шверта."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-010",
+  "license": "zeglarz",
+  "q": "Na kursie bejdewind za mocno wybrany fok i poluzowany grot powoduje:\nНа курсе бейдевинд сильно выбранный передний парус и потравленный грот вызывают:",
+  "options": [
+   "wzrost nawietrzności jachtu,\nувеличение подветренноcти (яхта уваливается),",
+   "wzrost nawietrzności jachtu,\nувеличение наветренности (яхта приводится),",
+   "nie ma znaczenia na zawietrzność i nawietrzność jachtu.\nнет значения в подветренной и наветренной стороне яхты."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-011",
+  "license": "zeglarz",
+  "q": "Przy prawidłowo wybranych żaglach na jakim kursie występuje największa silą przechylająca?\nПри правильно поставленных парусах, на каком курсе возникает наибольшая сила крена?",
+  "options": [
+   "baksztag,\nбакштаг,",
+   "fordewind,\nфордевинд,",
+   "pełny bajdewind.\nбейдевинд."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-012",
+  "license": "zeglarz",
+  "q": "Który kurs jest ostrzejszy a który pełniejszy?\nКакой курс является острее, а какой полнее?",
+  "options": [
+   "półwiatr jest ostrzejszy a bejdewind pełniejszy,\nгалфвинд является острее, а бейдевинд полнее,",
+   "baksztag jest ostrzejszy a półwiatr pełniejszy,\nбакштаг является острее, а галфвинд полнее,",
+   "baksztag jest ostrzejszy a fordewind pełniejszy.\nбакштаг является острее, а фордевинд полнее."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-013",
+  "license": "zeglarz",
+  "q": "Kiedy jacht płynie prawym halsem?\nКогда яхта идёт правым галсом?",
+  "options": [
+   "wiatr wieje w lewą burtę,\nветер дует в левый борт,",
+   "wiatr wieje w prawą burtę,\nветер дует в правый борт,",
+   "grot pracuje na lewej burcie, a fok na prawej.\nгрот работает на левом борту, а передний парус на правом."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-014",
+  "license": "zeglarz",
+  "q": "Na kursie bejdewind, w trakcie silnego podmuchu wiatru , jacht nadmiernie się przechylił. Co musi zrobić sternik aby przeciwdziałać przechyłowy?\nНа курсе бейдевинд, при сильном порыве ветра яхту чрезмерно накренило. Что должен сделать рулевой, чтобы противодействовать крену?",
+  "options": [
+   "zluzować żagle, wyostrzyć, balastować na burcie nawietrznej,\nтравить паруса, привестись, откренять на наветренном борте,",
+   "odpaść do półwiatr i balastować,\nувалиться до галфинда, откренять,",
+   "nic nie robić i przeczekać podmuch wiatru.\nничего не делать и переждать порыв ветра."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-015",
+  "license": "zeglarz",
+  "q": "Refowanie żagli powoduje:\nРифление парусов вызывает:",
+  "options": [
+   "zwiększenie nawietrzności jachtu,\nувеличение обветренности яхты,",
+   "obniżenie środka i zmniejszenie powierzchni ożaglowania,\nзанижение центра тяжести и уменьшение площади паруса,",
+   "tylko zmniejszenie powierzchni ożaglowania.\nтолько уменьшение площади паруса."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-016",
+  "license": "zeglarz",
+  "q": "Wiatr pozorny osiąga największe i najmniejsze wartości na kursach:\nВымпельный ветер достигает наибольшего и наименьшего значения на курсах:",
+  "options": [
+   "największe – bajdewind, najmniejsze – fordewind,\nнаибольшее - бейдевинд, наименьшее - фордевинд,",
+   "największe – półwiatr, najmniejsze – baksztag,\nнаибольшее - галфвинд, наименьшее - бакштаг,",
+   "największe – bejdewind, najmniejsze – baksztag.\nнаибольшее - бейдевинд, наименьшее - бакштаг."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-017",
+  "license": "zeglarz",
+  "q": "Na poruszającym się jachcie wiatr pozorny wieje prostopadle do diametralnej jachtu. Czy w takim przypadku wiatr rzeczywisty w stosunku do wiatru pozornego wieje z kierunku zbliżonego do:\nНа движушейся яхте, вымпельный ветер дует перпендикуляно диаметральной плоскости яхты. В таком случае, ветер истинный относительно ветра вымпельного дует в направлении ближе к:",
+  "options": [
+   "bejdewindowego,\nбейдевинду,",
+   "baksztag owego,\nбакштагу,",
+   "nie zmienia kierunku.\nне меняет направления."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-018",
+  "license": "zeglarz",
+  "q": "Silą trzymania kotwicy zależy od:\nСила удержания якоря зависит от:",
+  "options": [
+   "rodzaju kotwicy, rodzaju dna, kata jaki tworzy opuszczony łańcuch kotwiczny z trzonem kotwicy,\nтипа якоря, типа дна, угла, сформированным уклоном якорной цепи,",
+   "głębokości akwenu, rodzaju kotwicy, zanurzenia jachtu,\nглубины водного пространства, типа якоря, дрейфа яхты,",
+   "od długości wydanego łańcucha kotwicznego, który powinien być nie krótszy niż miedzy 3 i nie dłuższy niż 5 głębokości w miejscu kotwiczenia.\nот длины отданной якорной цепи, которая должна быть не короче 3 и не больше 5 глубин акватории в месте якорной стоянки."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-019",
+  "license": "zeglarz",
+  "q": "Jacht płynący z morza do portu w Gdyni, zbliżył się do przedstawionego niżej znaku nawigacyjnego ustawionego przed wejściem do portu. Co musi zrobić sternik?\nЯхта, идущая с моря в порт Гдыни приблежается до представленного ниже навигационного знака, установленного перед входом в порт. Что должен сделать рулевой?",
+  "options": [
+   "minąć znak lewa burta,\nпройти знак левым бортом,",
+   "minąć znak prawa burta,\nпройти знак правым бортом,",
+   "trzymać się w bezpiecznej odległości od znaku.\nдержаться на безопасном расстоянии от знака."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-019.png"
+ },
+ {
+  "id": "zj-020",
+  "license": "zeglarz",
+  "q": "Jacht płynący z prądem rzeki zbliża się do przedstawionych niżej znaków nawigacyjnych ustawionych na brzegu. Co musi zrobić sternik?\nЯхта, идущая по течению реки, сближается с предоставленными ниже навигационными знаками, установленными на берегу. Что должен сделать рулевой?",
+  "options": [
+   "skierować się w stronę lewego brzegu,\nнаправить судно в сторону левого берега,",
+   "trzymać się w bezpiecznej odległości od znaku,\nдержаться в безопасном расстоянии от знака,",
+   "trzymać się prawego brzegu.\nдержаться правого берега."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-020.png"
+ },
+ {
+  "id": "zj-021",
+  "license": "zeglarz",
+  "q": "Nadmiernie wybrane żagle na kursie pełny baksztag powodują:\nИзлишне выбранные паруса на курсе полный бакштаг приведут к:",
+  "options": [
+   "wzrost prędkości jachtu i siły przechylającej,\nувеличению скорости яхты и опрокидывающей силы,",
+   "zmniejszenie prędkości jachtu,\nуменьшению скорости яхты,",
+   "wzrost prędkości jachtu.\nувеличению скорости яхты."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-022",
+  "license": "zeglarz",
+  "q": "Co robimy z żaglami przy odpadaniu i ostrzeniu aby zapewnić prawidłowa prace?\nЧто мы делаем с парусами при уваливании и приведении для обеспечения правильной работы?",
+  "options": [
+   "przy odpadaniu luzujemy, przy ostrzeniu wybieramy,\nпри уваривании травим, при приведении выбираем,",
+   "przy odpadaniu wybieramy, przy ostrzeniu luzujemy,\nпри уваливании выбираем, при приведении травим,",
+   "luzujemy i wybieramy tylko ze względu na się wiatru a nie przy ostrzeniu lub odpadaniu.\nтравим и выбираем только из-за силы ветра,а не при приведении или уваливании."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-023",
+  "license": "zeglarz",
+  "q": "Co oznacza ostrzenie i odpadanie jachtu?\nЧто означает \"привестись\" и \"увалиться\"?",
+  "options": [
+   "kiedy jacht ostrzy to zbliża się, a kiedy odpada to oddala się do kierunku wiejącego wiatru,\nкогда яхта приводится, она идёт в сторону ветра, когда уваливается, то отдаляется от дующего ветра,",
+   "kiedy jacht ostrzy to przechodzi na kursy pełne, a kiedy odpada wraca na kursy ostre,\nкогда яхта приводится, то идёт на полном курсе, а когда уваливается - возвращается на острый курс,",
+   "termin dotyczy tylko jachtów morskich.\nтермины касаются только морских яхт."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-024",
+  "license": "zeglarz",
+  "q": "Który z jachtów będzie miał pierwszeństwo drogi?\nКакая из яхт будет иметь право прохода?",
+  "options": [
+   "wyprzedzający,\nобгоняющая,",
+   "wypływający z portu,\nвыходящая с порта,",
+   "płynący lewym halsem.\nидущая левым галсом."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-025",
+  "license": "zeglarz",
+  "q": "Który Regionalny Zarząd Gospodarki Wodnej sprawuje nadzór na bezpieczeństwem żeglugi śródlądowej na akwenie Wielkich Jezior Mazurskich?\nКакое Региональное Управление Водного Хозяйства обеспечивает надзор за безопасностью судоходства на Мазурских озерах?",
+  "options": [
+   "w Białymstoku,\nв Белостоке,",
+   "w Giżycku,\nв Гижицко,",
+   "w Warszawie.\nв Варшаве."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-026",
+  "license": "zeglarz",
+  "q": "Który wiatr będzie wiał z największą prędkością?\nКакой ветер дует с наибольшей скоростью?",
+  "options": [
+   "10 m/s,\n10 м/с,",
+   "25 km/godz,\n25 км/ч,",
+   "14 węzłów.\n14 узлов."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-027",
+  "license": "zeglarz",
+  "q": "Czym się rożni szkwał od podmuchu wiatru?\nВ чем разница между шквалом и порывом ветра?",
+  "options": [
+   "szkwał oznacza nagły wzrost prędkości wiatru z możliwością zmiany kierunku  nawet o 180 О ,\nшквал означает внезапное увеличение скорости ветра с возможностью смены направления до 180 О ,",
+   "oznaczają to samo,\nозначает одно и то же,",
+   "pojęcie szkwał określa cyrkulacje wiatru nad woda a podmuch wiatru na ladzie\nтермин шквал определяет циркуляцию ветра над водой, а порыв ветра - на земле."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-028",
+  "license": "zeglarz",
+  "q": "Czym się rożni bryza dzienna od morskiej?\nВ чем разница между дневным бризом и морским?",
+  "options": [
+   "bryza dzienna wieje po południu a bryza morska w nocy,\nдневной бриз дует в полдень, а морской дует ночью,",
+   "bryza morska wieje po wschodzie słońca a bryza dzienna po południu,\nморской бриз дует при восходе солнца, а дневной дует в полдень,",
+   "bryza dzienna i morska oznacza to samo.\nдневной и морской бриз - одно и то же."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-029",
+  "license": "zeglarz",
+  "q": "Silnie rozbudowujące się w pionie chmury typu Cumulus mogą prognozować:\nСильно расширяющиеся вертикально облака типа Cumulus (кучевые облака) могут предсказать:",
+  "options": [
+   "wzrost siły wiatru lub pogorszenie pogody,\nувеличение силы ветра или ухудшение погоды,",
+   "zanik wiatru i poprawę pogody,\nисчезновение ветра и улучшение погоды,",
+   "opady ciągle.\nосадки."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-030",
+  "license": "zeglarz",
+  "q": "Gdzie możemy się spodziewać «efektu dyszy»:\nГде мы можем ожидать зону акселерации ветра?",
+  "options": [
+   "pomiędzy wyspami I innymi przewężeniami,\nмежду островами и другими объектами",
+   "przy przesunięciu się frontu chłodnego,\nпри движении холодного фронта,",
+   "w czasie silnych opadów deszczu.\nво время сильных дождевых осадков."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-031",
+  "license": "zeglarz",
+  "q": "Griby meteorologiczne to:\nМетеорологические GRIB’ы это:",
+  "options": [
+   "niewielkich rozmiarów pliki cyfrowe, wygenerowane przez systemy komputerowe, nie sprawdzone przez synoptyka, zwierające prognozę pogody opracowana w oparciu o informatyczny model pogody,\nнебольших размеров цифровые файлы, сгенерированные через компьютерные системы, непроверенные через синоптика, содержащие погодные прогнозы основанные на IT модели,",
+   "niewielkich rozmiarów pliki cyfrowe, wygenerowane i sprawdzone przez synoptyka,\nнебольших размеров цифровые файлы, сгенерированные и проверенные синоптиком,",
+   "niewielkich rozmiarów pliki cyfrowe, wygenerowane przez systemy komputerowe, sprawdzone przez synoptyka, zwierające prognozę pogody opracowana w oparciu o informatyczny model pogody.\nнебольших размеров цифровые файлы, сгенерированные через компьютерные системы, проверенные через cиноптика, содержащие погодные прогнозы основанные на IT модели."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-032",
+  "license": "zeglarz",
+  "q": "Szkwały oraz silne podmuchy wiatru mogą towarzyszyć chmurom:\nКакой тип облаков могут сопровождать шквалы и порывы ветра:",
+  "options": [
+   "Cirrostratus,\nCirrostratus (перисто-слоистые),",
+   "Cumulonimbus,\nCumulonimbus (кучево-дождевые),",
+   "Stratus.\nStratus (слоистые)."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-033",
+  "license": "zeglarz",
+  "q": "Gdzie w układzie niżowym występuje największe i najmniejsze ciśnienie atmosferyczne?\nГде в циклонной системе наблюдается самое высокое и самое низкое атмосферное давление?",
+  "options": [
+   "najmniejsze w środku a największe na zewnątrz,\nсамое низкое в центре,а самое высокое на периферии,",
+   "największe w środku a najmniejsze na zewnątrz,\nсамое высокое в центре, а самое низкое на периферии,",
+   "w środku i na zewnątrz najmniejsze.\nсамое низкое в центре и на периферии."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-034",
+  "license": "zeglarz",
+  "q": "Przy określaniu parametrów technicznych jachtu symbole Lc i KLW oznaczają:\nПри определении технических параметров яхты, символы Lc и KLW означают:",
+  "options": [
+   "Lс – zaniżenie maksymalne, KLW – konstrukcyjna długość linii wodnej,\nLc - максимальная осадка, KLW - конструкторская длина ватерлинии,",
+   "Lс – długość całkowita, KLW – konstrukcyjna szerokość linii wodnej,\nLc - целая длина, KLW - конструкторская ширина ватерлинии,",
+   "Lс – szerokość całkowita, KLW - konstrukcyjna szerokość maksymalna.\nLc - целая ширина, KLW - конструкторская максимальная ширина."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-035",
+  "license": "zeglarz",
+  "q": "Kategoria projektowa jachtu C określa jednostki zaprojektowane do rejsów po wodach przybrzeżnych, dużych zatokach, zalewach, jeziorach i rzekach, w warunkach wiatru o sile:\nПроектная категория яхт С определяет запроектированные единицы для рейсов в прибрежных водах, больших заливах, наводнениях, озерах и реках, при условии силы ветра:",
+  "options": [
+   "do 6 B i fali do 2 m,\nдо 6 баллов Бофорта и волн высотой до 2 метров,",
+   "do 8 B i fali do 2 m,\nдо 8 баллов Бофорта и волн высотой до 2 метров,",
+   "do 4 B i fali do 1 m.\nдо 4 баллов Бофорта и волн высотой до 1 метра."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-036",
+  "license": "zeglarz",
+  "q": "Po wodach morskich, w jakiej odległości od brzegu, żeglarz jachtowy nie może prowadzić jachtu o długości  do 12 m?\nВ морских водах, в какой дальности от берега żeglarz jachtowy не может управлять яхтой длиной до 12 метров?",
+  "options": [
+   "powyżej 4 mil,\nдальше 4 миль,",
+   "do 2 mil,\nдо 2 миль,",
+   "do 1 mil.\nдо одной мили."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-037",
+  "license": "zeglarz",
+  "q": "Czy po Wiśle, żeglarz jachtowy może prowadzić jacht żaglowy dwumasztowy o  długości 20 metrów?\nИдущий по Висле, может ли żeglarz jachtowy вести двухмачтовую яхту длиной 20 метров?",
+  "options": [
+   "nie może,\nне может,",
+   "może ale pod warunkiem posiadania silnika spalinowego,\nможет, при условии, что есть двигатель внутреннего сгорания,",
+   "мoże.\nможет."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-038",
+  "license": "zeglarz",
+  "q": "Jaki akt prawny określa zakres uprawnień do prowadzenia jachtów żaglowych po wodach śródlądowych?\nКакой правовой акт определяет объем полномочий на эксплуатацию парусных яхт во внутренних водах?",
+  "options": [
+   "Rozporządzenie MSiT z dnia 09 kwietnia 2013 roku w sprawie uprawiania turystyki wodnej,\nПостановление MSiT от 9 апреля 2013 года касательно туристической водной практики,",
+   "Ustawa z dnia 25.06.2010 roku o sporcie,\nАкт от 25.06.2010 о спорте,",
+   "Rozporządzenie Ministra Infrastruktury a dnia 28.04.2003 r. W sprawie przepisów żeglugowych na śródlądowych drogach wodnych.\nПостановление Министра Инфраструктуры от 28.04.2003 касательно судоходства во внутренних водах."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-039",
+  "license": "zeglarz",
+  "q": "Jakie są minimalne wymagania wiekowe aby przystąpić do egzaminu na stopień żeglarza jachtowego?\nКаковы минимальные возрастные требования, чтобы приступить к экзамену на ступень żeglarza jachtowego?",
+  "options": [
+   "ukończone 15 lat,\nполные 15 лет,",
+   "ukończone 14 lat,\nполные 14 лет,",
+   "ukończone 12 lat.\nполные 12 лет."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-040",
+  "license": "zeglarz",
+  "q": "Czego nie zaliczamy do osprzętu stałego?\nЧто не входит в стоячий такелаж?",
+  "options": [
+   "wanty,\nванты,",
+   "salingi,\nкраспицы,",
+   "bom.\nгик."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-041",
+  "license": "zeglarz",
+  "q": "Refsejzingi śluza do:\nРиф-шкентели служат для:",
+  "options": [
+   "obwiązywania zrefowanego żagla do bomu,\nобвязывания рифлёного паруса к гику,",
+   "kontrowania miecza,\nдержания шверта,",
+   "zabezpieczenia przed przetarciem cum i szpringów.\nзащиты швартовых концов от перетираний."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-042",
+  "license": "zeglarz",
+  "q": "Czy bez patentu można prowadzić jacht żaglowy o długości 7 metrów?\nМожно ли управлять яхтой 7 метров без сертификата?",
+  "options": [
+   "nie można,\nнельзя,",
+   "można ale tylko po oznakowanych torach wodnych,\nможно, но только по обозначенным водным путям,",
+   "można.\nможно."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-043",
+  "license": "zeglarz",
+  "q": "Ile KM ma silnik przyczepny Mercury 10kW?\nСколько лошадиных сил имеет навесной двигатель Mercury 10kW?",
+  "options": [
+   "15.4,\n15.4,",
+   "13.6,\n13.6,",
+   "10.\n10."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-044",
+  "license": "zeglarz",
+  "q": "Jak nazywają się podstawowe żagle na jachcie typu slup?\nКак называются базовые паруса на яхте типа шлюп?",
+  "options": [
+   "grot i fok,\nгрот и стаксель,",
+   "grot i genaker.\nгрот и генакер,",
+   "grot i kliwer.\nгрот и кливер."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-045",
+  "license": "zeglarz",
+  "q": "Jak nazywają się płaty materiału, z których uszyty jest żagiel?\nКак называется отдельный тканевый сегмент паруса?",
+  "options": [
+   "liki,\nлики,",
+   "broty,\nбороды,",
+   "bryty.\nбриты."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-046",
+  "license": "zeglarz",
+  "q": "Lazy Jack to:\nЛэйзи Джек это:",
+  "options": [
+   "pokrowiec na żagiel grot zamocowany do bomu I podwieszony do masztu,\nчехол для грота, прикрепленный к гику и подвешенный веревками к мачте,",
+   "urządzenie do rolowania foka,\nустройство для закрутки стакселя,",
+   "rozpinany daszek nad kokpitem.\nсъемный козырек над кокпитом."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-047",
+  "license": "zeglarz",
+  "q": "W trakcie plynęcia na silniku sternik zauważył brak chłodzenia silnika. Co powinen zrobić?\nВ пути на воде под двигателем рулевой заметил отсутствие работы системы охлаждения двигателя. Как он должен поступить?",
+  "options": [
+   "zmniejszyć obroty i płynąć dalej,\nуменьшить обороты и идти дальше,",
+   "wyłączyć silnik aby nie dopuścić do przegrzania,\nвыключить двигатель, чтобы не допустить перегрева,",
+   "polewać silnik wodą w celu zmniejszenia temperatury silnika\nоблить водой в целях снижения температуры двигателя."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-048",
+  "license": "zeglarz",
+  "q": "Podczas pracy silnika zmianę biegów wykonujemy:\nВо время работы двигателя, переключение передач производится:",
+  "options": [
+   "na niskich obrotach,\nна низких оборотах,",
+   "energicznie pociagając dżwignie biegów b bez zminay oborotow silnika,\nэнергично потянуть рычаг передач и без смены оборотов двигателя,",
+   "dodając więcej gazu.\nдобавить газу."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-049",
+  "license": "zeglarz",
+  "q": "Na kursie baksztag odczucie sily wiatry rzeczywistego jest słabsze czy silniejsze w stosunku do wiatru pozornego.\nНа курсе бакштаг чувство силы истинного ветра слабее или сильнее по отношению к вымпельному ветру?",
+  "options": [
+   "silniejsze,\nсильнее,",
+   "słabsze,\nслабее,",
+   "nie ma znaczenia.\nне имеет значения."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-050",
+  "license": "zeglarz",
+  "q": "Prawidłowo przeprowazona resuscytacja polaga na:\nПравильно проведённая реанимация заключается в:",
+  "options": [
+   "wykonywaniu 30 uciśnięć i 2 oddechów ratowniczyh\nвыполнении 30 компрессий и 2 искусственных вдохов,",
+   "wykonywaniu resuscytacji do momentu przyjazdu służb ratunkowych,\nвыполнении реанимации до момента приезда скорой помощи,",
+   "wszystkie odpowiedzi są prawidłowe .\nвсе ответы верны."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-051",
+  "license": "zeglarz",
+  "q": "Jaka temperatura wychłodzena wnętrza ciala może doprowadzić do hipotermii glebokej prowadzącej do śmeirci biologicznej?\nКакая температура охлаждения внутренних органов может привести к глубокому переохлаждению, ведущему к биологической смерти?",
+  "options": [
+   "35 0 C,\n35 0 C,",
+   "33 0 C,\n33 0 C,",
+   "22-27 0 C.\n22-27 0 C."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-052",
+  "license": "zeglarz",
+  "q": "Czy przy oparzeniach I stopnia nalezy ochodzić powierzchenie oparzoną polewąc ją wodą?\nДопускается ли при ожогах первой степени обожённый участок обливать водой?",
+  "options": [
+   "tak,\nда,",
+   "nie,\nнет,",
+   "tulko wodą z detergentem.\nда, но с очищающим средством."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-053",
+  "license": "zeglarz",
+  "q": "Czy do gaszenia plonącej benzyny wolno używać wody?\nМожно ли использовать воду для тушения горящего бензина?",
+  "options": [
+   "nie wolno,\nнельзя,",
+   "wolno,\nможно,",
+   "wolno uzywać pod warunkiem, że benzyna jest bez dodatku oleju.\nможно, но при условии что бензин без добавления масла."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-054",
+  "license": "zeglarz",
+  "q": "Ferholung to manewr:\nФерхолунг - это манёвр:",
+  "options": [
+   "obrócenia jachtu o 180 0 ,\nразворот яхты на 180 0 ,",
+   "przesunięcia jachtu wzdłuż nabrzeża przy pomocy lin i sil załogi.\nдвижения яхты вдоль набережной с помощью веревок и сил команды,",
+   "odejścia od nabrzeża na springu rufowym.\nотход от набережной на кормовом шпринге."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-055",
+  "license": "zeglarz",
+  "q": "Sternik zauważyl żeglarza, który czerwoną flagą zatacza kręgi. Co to może oznaczać?\nРулевой заметил матроса, который описывает красным флагом круги. Что это означает?",
+  "options": [
+   "sygnał wzywania pomocy,\nсигнал вызова помощи,",
+   "gest pozdrawiający innych żeglarzy,\nсигнал приветствия других матросов,",
+   "nic nie oznacza.\nничего не означает."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-056",
+  "license": "zeglarz",
+  "q": "Przed wpłynięciem do kanału sternik zauważyl poniższy znak. Co on oznacza?\nПеред выходом в канал, рулевой заметил знак ниже. Что он означает?",
+  "options": [
+   "nakaz zachowania szczególnej ostrożności,\nпредписание соблюдения особой осторожности,",
+   "nakaz zatrzymania statku,\nпредписание остановки судна,",
+   "nakaz nadawania sygnaly dżwiękowego.\nпредписание подачи звукового сигнала."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-056.png"
+ },
+ {
+  "id": "zj-057",
+  "license": "zeglarz",
+  "q": "Co oznacza znak zamieszczony poniżej?\nЧто означает знак ниже?",
+  "options": [
+   "linia napowietrzna nad drogą wodną w odległości 12 metrów od znaku,\nлиния напряжения над водным путём на расстоянии 12 метров от знака,",
+   "linia napowietrzna nad drogą wodną na wysokości 12 metrów nad poziomem najwyższej,\nлиния напряжения над водным путём на высоте 12 метров над уровнем наивысшей воды,",
+   "linia napowietrzna nad drogą wodną na wysokości 12 metrów nad poziomem najniższej wody.\nлиния напряжения над водным путём на высоте 12 метров над уровнем наименьшей воды."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-057.png"
+ },
+ {
+  "id": "zj-058",
+  "license": "zeglarz",
+  "q": "Dwa jachty płyną tym samym halsem i z taką samą prędkością. Pierwszy bajdewindem a drugi baksztagiem. Kierunki ich przemieszczania się mogą wskazywać na ryzyko zderzenia. Który jacht powinien ustąpić?\nДве яхты идут одинаковым галсом с одинаковой скоростью. Первый - бейдевиндом, второй - бакштагом.Их курсы могут создать риск столкновения. Кто должен уступить?",
+  "options": [
+   "płynącego bajdewindem,\nидущий бейдевиндом,",
+   "płynący baksztagiem,\nидущий бакштагом,",
+   "większy jacht ustępuje mniejszemu.\nбольшая яхта уступает меньшей."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-059",
+  "license": "zeglarz",
+  "q": "Osoba posiadająca patent żeglarza jachtowego może prowadzić:\nИмеющий сертификат яхтенного матроса может управлять:",
+  "options": [
+   "tylko jachty jednomasztowe.\nтолько одномачтовые яхты,",
+   "jedno i dwumasztowe,\nодно- и двухмачтовые,",
+   "ilość masztów nie ma znaczenia.\nколичество мачт не имеет значения."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-060",
+  "license": "zeglarz",
+  "q": "Czy można zacumować jacht w kanale łączącym dwa jeziora?\nМожно ли пришвартовать яхту в канале, соединяющем два озера?",
+  "options": [
+   "tak, ale tylko w miejscach do tego wyznaczonych,\nда, но только в обозначенных местах,",
+   "nie,\nнет,",
+   "można ale tylko w dzień.\nможно, но только днём."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-061",
+  "license": "zeglarz",
+  "q": "W trakcie żeglugi ze względów bezpieczeństwa, należy poruszać się po burcie:\nВо время рейса, с точки зрения безопасности, перемещение по палубе следует делать с:",
+  "options": [
+   "zawietrznej,\nподветренной стороны,",
+   "nawietrznej,\nнаветренной стороны,",
+   "nie ma to znaczenia.\nне имеет значения."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-062",
+  "license": "zeglarz",
+  "q": "W przypadku wypadnięcia za burtę gwałtowne poruszanie się człowieka w zimnej wodzie powoduje:\nВ случае падения за борт, резкие движения человека в холодной воде вызовут:",
+  "options": [
+   "skraca czas przeżycia,\nсокращение времени выживания,",
+   "dostarcza organizmowi więcej ciepła i wydłuża czas przeżycia,\nсохранение тепла и увеличение времени выживания,",
+   "łatwiejsze wyciągnięcie człowieka .\nоблегчение подъема человека из воды."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-063",
+  "license": "zeglarz",
+  "q": "Czym niższa temperatura wody tym szanse przeżycia człowieka po wypadnięciu na burtę:\nЧем ниже температура воды при выпадении человека за борт, шансы выживания будут:",
+  "options": [
+   "rosną,\nвыше,",
+   "maleją,\nниже,",
+   "nie ma znaczenia.\nне имеет значения."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-064",
+  "license": "zeglarz",
+  "q": "W celu poprawienia bezpieczeństwa żeglugi, przy podmuchach wiatry o sile 6 0 B:\nВ целях обеспечения безопасного судоходства, при порывах ветра с силой 6 по шкале Бофорта следует:",
+  "options": [
+   "refujemy żagle,\nпроизвести рифление,",
+   "płyniemy na pełnych żaglach i obserwujemy zachowanie jachtu,\nидти под полными парусами и наблюдать поведение яхты,",
+   "przechodzimy do pólwiatru.\nувалиться до галфвинда."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-065",
+  "license": "zeglarz",
+  "q": "Zworot przez rufę to:\nПоворот фордевинд это:",
+  "options": [
+   "przejście rufą linii wiatru od baksztagu jednego halsu do baksztagu drugiego halsu,\nпересечение кормой линии ветра от бакштага одного галса до бакштага другого галса,",
+   "przejście dziobem lub rufą linii wiatru aby po zworocie wiatr wial w przeciwleglą burte,\nпересечение носом или кормой линии ветра, чтобы при повороте ветер дул с противоположного борта,",
+   "przejście linii wiatru od baksztago do bejdewindu.\nпересечение линии ветра от бакштага до фордевинда."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-066",
+  "license": "zeglarz",
+  "q": "Na jacht zacumowany do nabrzeża działa wiatr:\nНа пришвартованную яхту к набережной дует ветер:",
+  "options": [
+   "wlasny,\nкурсовой,",
+   "pozorny,\nвымпельный,",
+   "rzeczywisty.\nистинный."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-067",
+  "license": "zeglarz",
+  "q": "Podniesienie miecza na kursach ostrych powoduje:\nПоднятие шверта на острых курсах приведёт к:",
+  "options": [
+   "wzrost prędkości jachtu,\nувеличению скорости яхты,",
+   "zwiększenie dryfu,\nувеличению дрейфа,",
+   "obniżenie srodka ciężkosci.\nснижению центра тяжести."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-068",
+  "license": "zeglarz",
+  "q": "Na kursie półwiatr, zwiększenie stateczności jachtu uzyskamy w wyniku:\nНа курсе галфвинд, увеличение стабильности яхты будет в случае:",
+  "options": [
+   "refowania i luzowania żagli, balastowania na burcie nawietrznej,\nрифления и травления парусов, откренивания на наветренном борту,",
+   "wybrania żagli,\nвыбирания парусов,",
+   "podniesienia płetwy sterowej i miecza.\nподнятие пера руля и шверта."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-069",
+  "license": "zeglarz",
+  "q": "W jakiej kolejności stawiamy żagle na jachcie typu slup?\nВ каком порядке поднимаются паруса на яхте типа шлюп?",
+  "options": [
+   "od żagli przednich,\nс передних парусов,",
+   "od żagli tylnych,\nс задних парусов,",
+   "nie ma znaczenia.\nне имеет значения."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-070",
+  "license": "zeglarz",
+  "q": "Forpik znajduje się w części jachtu:\nФорпик будет находится в следующей части яхты:",
+  "options": [
+   "w przedniej,\nв передней,",
+   "w tylnej,\nв задней,",
+   "w środkowej.\nв центре."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-071",
+  "license": "zeglarz",
+  "q": "Jak nazywa się lina lącząca jacht z nabrzeżem i biegnąca od dziobu w kierunku rufy?\nКак называется верёвка (швартов), которая соединяет яхту с набережной и идёт от носа к корме?",
+  "options": [
+   "brest,\nбрест,",
+   "cuma,\nшвартов,",
+   "szpring.\nшпринг."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-072",
+  "license": "zeglarz",
+  "q": "Jak nazywa się wierzcholek masztu?\nКак называется верх мачты?",
+  "options": [
+   "nok,\nнок,",
+   "stopa,\nстопа,",
+   "top.\nтоп."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-073",
+  "license": "zeglarz",
+  "q": "Co to jest dalba?\nЧто такое рейдовый пал?",
+  "options": [
+   "drewniany lub betonowy slup stojący na ladzie,\nдеревянный либо бетонный столб, стоящий на земле,",
+   "drewniany lub betonowy pal wbity w dno,\nдеревянная либо бетонная свая, вбитая в дно.",
+   "okrągła boja zakotowiczona do dna.\nкруглый буй, привязанный ко дну."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-074",
+  "license": "zeglarz",
+  "q": "Który z poniższych znaków stawiany jest wyjściu z kanalu?\nКакой из расположенных знаков ниже ставится при выходе с канала?",
+  "options": [
+   "tylko typu A,\nтолько тип А,",
+   "tylko typu B,\nтолько тип В,",
+   "A z prawej strony wyjścia, B z lewej strony wyjścia.\nА с правой стороны выхода, В с левой стороны выхода."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-074.png"
+ },
+ {
+  "id": "zj-075",
+  "license": "zeglarz",
+  "q": "Jaki jest numer telefonu alarmowego nad wodą Wodnego Ochotniczego Pogotowia Ratunkowego na szlaku Wielkich Jeziora Mazruskich i jeziorze Jeziorak.\nКакой аварийный номер телефона у Водной Добровольной Спасательной Службы на Мазурских озёрах и озера Езёрак?",
+  "options": [
+   "601 100 100 i 984 szlak WJM i j. Jeziorak,\n601 100 100,",
+   "600 100 100 i 985 szlak WJM i j. Jeziorak,\n600 100 100,",
+   "601 100 300 i 994 szlak WJM i j. Jeziorak.\n601 100 000."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-076",
+  "license": "zeglarz",
+  "q": "Jachty mieczowe, posiadające komory wypornościowe zaliczamy do grupy łodzi:\nШвертботы с камерами плавучести относятся к группе лодок:",
+  "options": [
+   "wywróconych, ale niezatapialnych,\nпереворачивающихся, но непотопляемых,",
+   "wywracalnych i zatapialnych,\nпереворачивающихся и затопляемых,",
+   "zatapialnych, ale niewywracalnych.\nзатопляемых, но не переворачивающихся."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-077",
+  "license": "zeglarz",
+  "q": "Trimaran jest jachtem, który zbudowany jest z:\nТримаран – это яхта, состоящая из:",
+  "options": [
+   "dwóch kadłubów,\nдвух корпусов,",
+   "trzech kadłubów,\nтрех корпусов,",
+   "jednego kadłuba.\nодного корпуса."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-078",
+  "license": "zeglarz",
+  "q": "Co to jest bakista?\nЧто такое бакиста?",
+  "options": [
+   "jest to miejsce w którym przechowujemy osprzęt,\nместо для хранения вещей,",
+   "jest to dziobowy przedział sypialny,\nспальный отсек в носу лодки,",
+   "jest to miejsce, w którym zbierana jest woda deszczowa,\nместо сбора дождевой воды."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-079",
+  "license": "zeglarz",
+  "q": "Zęza to:\nТрюм это:",
+  "options": [
+   "pomieszczenie dziobowe,\nносовая каюта,",
+   "podłoga na jachcie,\nпол на яхте,",
+   "przestrzeń, która znajduje się pod podłogą wewnątrz jachtu.\nпространство под полом на яхте."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-080",
+  "license": "zeglarz",
+  "q": "Stępka jest to:\nКиль это:",
+  "options": [
+   "część masztu,\nчасть мачты,",
+   "główny element konstrukcji wzdłużnej jachtu,\nглавный элемент продольной конструкции яхты,",
+   "trzecia licząc od dołu reja na fokmaszcie.\nтретья снизу по счёту рея на фок-мачте."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-081",
+  "license": "zeglarz",
+  "q": "Skrzynia mieczowa jest to:\nШвертовый колодец это:",
+  "options": [
+   "element łączący pokładnik ze wzdłużnikiem,\nэлемент, соединяющий балку с фермой,",
+   "zwyczajowe miejsce przechowywania broni białej,\nобычное место хранения оружия ближнего боя,",
+   "element konstrukcyjny, w którym pracuje miecz.\nструктурный элемент, в котором работает шверт."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-082",
+  "license": "zeglarz",
+  "q": "Głównym poprzecznym elementem konstrukcyjnym kadłuba jest:\nОсновным поперечным конструктивным элементом корпуса является:",
+  "options": [
+   "wręgi,\nшпангоут,",
+   "stewa,\nштевень,",
+   "pawęż.\nтранец."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-083",
+  "license": "zeglarz",
+  "q": "Końce bomu to:\nКрая гика это:",
+  "options": [
+   "pięta i top,\nпятка и топ,",
+   "nok i pięta,\nнок и пятка,",
+   "pik i garda.\nпик и гарда."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-084",
+  "license": "zeglarz",
+  "q": "Jaki rodzaj miecz obrazuje rysunek obok?\nКакой тип шверта показан на рисунке?",
+  "options": [
+   "balastowy,\nбалластный,",
+   "szybrowy,\nосевой,",
+   "obrotowy.\nвращающийся."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-084.png"
+ },
+ {
+  "id": "zj-085",
+  "license": "zeglarz",
+  "q": "Lina olinowania stałego, która biegnie od topu masztu do dziobu, to?\nЭлемент стоячего такелажа, который идёт от топа мачты до носа это:",
+  "options": [
+   "wanta,\nванта,",
+   "achtersztag,\nахтерштаг,",
+   "sztag.\nфорштаг."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-086",
+  "license": "zeglarz",
+  "q": "Lina wszyta w lik żagla, która zapobiega rozciąganiu się tkaniny i służy jako pomoc przy mocowaniu żagla, to:\nВерёвка, вшитая  в лик паруса, которая предотвращает растяжение ткани и служит вспомогательным средством при креплении паруса:",
+  "options": [
+   "reflina,\nриф-шкентель,",
+   "halslina,\nгалс-линь,",
+   "liklina.\nликтрос."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-087",
+  "license": "zeglarz",
+  "q": "Elementem olinowania stałego są?\nЭлементами стоячего такелажа являются:",
+  "options": [
+   "sztag i topenanta,\nштаг и топенант,",
+   "sztag i stenwanta,\nштаг и стень-ванта,",
+   "stenwanta i szot foka.\nстень-ванта и шкот стакселя."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-088",
+  "license": "zeglarz",
+  "q": "Sposobem mocowania żagla do masztu nie jest?\nСпособом крепления паруса не является:",
+  "options": [
+   "likszpara,\nлик-паз,",
+   "kluza,\nклюз,",
+   "pełzacz.\nслайдер."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-089",
+  "license": "zeglarz",
+  "q": "Jak nazywa się urządzenie do podnoszenia i opuszczania silnika zaburtowego?\nКак называется устройство для поднятия и опускания забортного двигателя?",
+  "options": [
+   "pantograf,\nпантограф,",
+   "podnośnik,\nподъемник,",
+   "marlinka.\nмарлинь."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-090",
+  "license": "zeglarz",
+  "q": "Elementem służącym do łączenia takielunku jest:\nЭлемент, использующийся для соединения такелажа это:",
+  "options": [
+   "kipa,\nклюз,",
+   "kausza,\nкоуш,",
+   "szekla.\nскоба."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-091",
+  "license": "zeglarz",
+  "q": "Jakiego rodzaju paliwo jest używane w czterosuwowych silnikach przyczepnych?\nКакое топливо используется в четырехтактных лодочных моторах?",
+  "options": [
+   "czysta benzyna,\nчистый бензин,",
+   "benzyna zmieszana z olejem silnikowym,\nбензин, смешанный с моторным маслом,",
+   "olej napędowy.\nдизельное топливо."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-092",
+  "license": "zeglarz",
+  "q": "Prawą stroną szlaku żeglownego na rzece jest:\nПравая сторона судоходного пути по реке это: а. та, которая находится справа от судна, идущего вниз по реке (от истока к устью),",
+  "options": [
+   "ta, która znajduje się na prawo od statku płynącego w dół rzeki (od źródła do ujścia),",
+   "ta, która znajduje się na prawo od statku płynącego w górę rzeki (od ujścia do źródła),\nта, которая находится справа от судна, идущего вверх по реке (от устья к истоку),",
+   "ta, która znajduje się północnym lub wschodnim brzegu.\nта, которая находится на северном или восточном берегу."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-093",
+  "license": "zeglarz",
+  "q": "Zielona boja w kształcie stożka na śródlądziu oznacza:\nЗелёный буй с конусом во внутренних водах означает:",
+  "options": [
+   "lewą granicę szlaku żeglownego,\nлевую границу фарватера,",
+   "prawą granicę szlaku żeglownego,\nправую границу фарватера,",
+   "rozgałęzienie toru żeglownego.\nразветвление фарватера."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-094",
+  "license": "zeglarz",
+  "q": "Czerwona boja w ksytalcie walca oznacza:\nКрасный буй в форме цилиндра означает:",
+  "options": [
+   "prawy brzeg,\nправый берег,",
+   "zakaz wejścia na szlak żeglowny,\nзапрет выхода на судоходный путь,",
+   "prawą granicę szlaku żeglownego.\nправая граница фарватера."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-095",
+  "license": "zeglarz",
+  "q": "Co to jest jaz?\nПлотина это:",
+  "options": [
+   "jest to budowla hydrotechniczna służąca do ochrony przed falami,\nэто гидротехническое сооружение, используемое для защиты от волн,",
+   "jest to budowla hydrotechniczna umożliwiająca jachtom uzupełnianie wody,\nэто гидротехническое сооружение, позволяющее яхтам пополнять запасы воды,",
+   "jest to budowla hydrotechniczna, umożliwiająca długotrwałe spiętrzenie wody.\nэто гидротехническое сооружение, обеспечивающее длительное накопление воды."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-096",
+  "license": "zeglarz",
+  "q": "Budowla hydrotechniczna umożliwiająca pokonanie różnicy poziomu wody między dwoma zbiornikami wody to:\nГидротехническим сооружением, позволяющим преодолевать перепад уровня воды между двумя водохранилищами, является:",
+  "options": [
+   "śluza,\nшлюз,",
+   "jaz ,\nплотина,",
+   "spad.\nспуск."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-097",
+  "license": "zeglarz",
+  "q": "Na rysunku przedstawiony jest znak:\nНа рисунке представлен знак:",
+  "options": [
+   "wschodni znak kardynalny,\nвосточный кардинальный знак,",
+   "zachodni znak kardynalny,\nзападный кардинальный знак,",
+   "rozgałęzienie szlaku żeglownego.\nразветвление судоходного пути."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-097.png"
+ },
+ {
+  "id": "zj-098",
+  "license": "zeglarz",
+  "q": "Znak na rysunku mówi nam, że niebezpieczeństwo znajduje się na:\nЗнак на рисунке говорит о том, что опасность находится:",
+  "options": [
+   "wschód od znaku,\nк востоку от знака,",
+   "zachód od znaku,\nк западу от знака,",
+   "północ od znaku.\nк северу от знака."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-097.png"
+ },
+ {
+  "id": "zj-099",
+  "license": "zeglarz",
+  "q": "Widząc północny znak kardynalny, należy go opłynąć od?\nУвидев северный кардинальный знак, следует обогнуть его:",
+  "options": [
+   "od południa,\nс юга,",
+   "od północy,\nс севера",
+   "od zachodu.\nс запада ."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-099.png"
+ },
+ {
+  "id": "zj-100",
+  "license": "zeglarz",
+  "q": "Na wodach morskich kierunek toru wodnego oznaczony jest:\nНа морской акватории направление фарватера обозначается:",
+  "options": [
+   "od strony portu do morza,\nиз порта в море,",
+   "od strony morza do portu,\nот моря до порта,",
+   "tak jak na wodach śródlądowych.\nкак во внутренних водах."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-101",
+  "license": "zeglarz",
+  "q": "Podczas śluzowania nie wolno:\nВо время шлюзования нельзя:",
+  "options": [
+   "odpychać się od ściany śluzy za pomocą rąk lub nóg,\nотталкиваться от стены шлюза руками или ногами,",
+   "cumować na biegowo,\nзаложить швартовую серьгу,",
+   "cumować do innego jachtu.\nшвартоваться к другой яхте."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-102",
+  "license": "zeglarz",
+  "q": "Hamowanie żaglami polega na:\nТорможение паруса производится:",
+  "options": [
+   "wyluzowaniu żagli,\nтравлением паруса,",
+   "wypchnięciu ich na wiatr,\nперекидыванием их на ветер,",
+   "wybraniu ich maksymalnie.\nполным выбором паруса."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-103",
+  "license": "zeglarz",
+  "q": "Co stanie się gdy wrzucimy bieg wstecz przy śrubie prawoskrętnej trzymając ster „zero”:\nЧто произойдёт, если включить задний  ход с правосторонним винтом, при удержании руля в нейтральном положении:",
+  "options": [
+   "jacht ruszy do tyłu, a rufa zostanie odrzucona w prawo,\nлодка будет двигаться назад, а корма будет отброшена на правый борт,",
+   "jacht ruszy prosto do tyłu,\nлодка пойдет прямо назад,",
+   "jacht ruszy do tyłu, a rufa zostanie odrzucona w lewo.\nлодка будет двигаться назад, а корма будет отброшена влево."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-104",
+  "license": "zeglarz",
+  "q": "Szpring dziobowy na jachcie jest poprowadzony od:\nНосовой шпринг на яхте проводится от:",
+  "options": [
+   "dziobu jachtu do polera przed jachtem,\nот носа яхты на кнехт возле носа яхты,",
+   "dziobu jachtu do polera przy rufie jachtu,\nот носа яхты на кнехт позади кормы яхты,",
+   "rufy jachtu do polera przy dziobie jachtu.\nот кормы яхты до кнехта возле носа яхт."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-105",
+  "license": "zeglarz",
+  "q": "Aby zrównoważyć silną nawietrzność jachtu podczas szkwału, należy:\nЧтобы уравновесить сильную наветренность лодки при порыве ветра, нужно:",
+  "options": [
+   "wybrać tylny żagiel,\nвыбрать задний парус,",
+   "zrzucić przednie żagle,\nскрутить передний парус,",
+   "poluzować tylny żagiel.\nпотравить задний парус."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-106",
+  "license": "zeglarz",
+  "q": "Wyjaśnij pojęcie zawietrzności jachtu:\nОбъясните понятие подветренности яхты:",
+  "options": [
+   "jest to tendencja jachtu do samoistnego ostrzenia,\nэто склонность лодки приводить себя самостоятельно,",
+   "jest to tendencja jachtu do samoistnego odpadnięcia,\nэто склонность лодки уваливать себя самостоятельно,",
+   "jest to tendencja jachtu do samoistnego pływania z wiatrem.\nэто склонность яхты плыть по ветру самостоятельно."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-107",
+  "license": "zeglarz",
+  "q": "Co to znaczy, że jacht płynie prawym halsem?\nЧто означает, что яхта идёт правым галсом?",
+  "options": [
+   "lewa burta jest burtą nawietrzną, żagle układają się na prawej burcie,\nлевый борт - наветренная сторона, паруса расположены на правом борту,",
+   "jacht płynie w prawą stronę,\nяхта идёт вправо,",
+   "prawa burta jest burtą nawietrzną, żagle układają się na lewej burcie.\nправый борт - наветренная сторона, паруса расположены на левом борту."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-108",
+  "license": "zeglarz",
+  "q": "Co trzeba zrobić, gdy jacht nadmiernie się przechyla?\nЧто делать, если яхту сильно кренит?",
+  "options": [
+   "przenieść balast na burtę zawietrzną, wybrać maksymalnie żagle, odpaść od wiatru,\nпереместить вес на подветренную сторону, максимально поднять паруса, увалиться от ветра,",
+   "przenieść balast na burtę nawietrzną, luzować żagle, ostrzyć, refować żagle,\nпереместить вес на наветренную сторону, потравить паруса, привестись, зарифовать паруса,",
+   "przenieść balast do tyłu, ustawić się bokiem do wiatru.\nпереместить вес назад, встать боком к ветру."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-109",
+  "license": "zeglarz",
+  "q": "Siła ciągu powstająca na żaglu zwiększa się w przypadku:\nСила тяги паруса увеличивается при:",
+  "options": [
+   "zwiększenia przechyłu jachtu,\nувеличении крена яхты,",
+   "zmniejszenia przechyłu przez balastowanie jachtu,\nуменьшению крена с помощью откренивая,",
+   "wyluzowania żagli do łopotu.\nослабления парусов до фалания."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-110",
+  "license": "zeglarz",
+  "q": "Podniesienie płetwy sterowej o 45° spowoduje:\nПоднятие пера руля на 45° приведет к",
+  "options": [
+   "polepszenie sterowności,\nулучшению управляемости,",
+   "pogorszenie sterowności,\nухудшению управляемости,",
+   "zmniejszenie dryfu.\nуменьшению дрейфа."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-111",
+  "license": "zeglarz",
+  "q": "Wiatr zachodni wieje:\nЗападный ветер дует:",
+  "options": [
+   "z zachodu,\nс запада,",
+   "na zachód,\nна запад,",
+   "zachodzie Słońca.\nна закате."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-112",
+  "license": "zeglarz",
+  "q": "Bryza dzienna na jeziorze wieje w kierunku:\nДневной бриз на озере дует в сторону:",
+  "options": [
+   "od jeziora do jego brzegu,\nот озера до его берега,",
+   "od brzegów jeziora do jego środka,\nот берегов озера к его центру,",
+   "zawsze ze wschodu na zachód.\nвсегда с востока на запад."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-113",
+  "license": "zeglarz",
+  "q": "Długotrwałe opady o niezbyt silnym natężeniu zwiastują chmury:\nПродолжительные дожди не очень сильной интенсивности предвещают облака:",
+  "options": [
+   "Cirrus i cirrostratus,\ncirrus и cirrostratus (перистые и перисто-кучевые),",
+   "Cumulus i cumulonimbus,\ncumulus и cumulonimbus (кучевые и кучево-дождевые),",
+   "Stratus i nimbostratus,\nstratus и nimbostratus (слоистые и слоисто-дождевые)."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-114",
+  "license": "zeglarz",
+  "q": "Jednostką ciśnienia atmosferycznego jest:\nЕдиницей атмосферного давления является:",
+  "options": [
+   "lux,\nлюкс,",
+   "hektopaskal,\nгектопаскаль,",
+   "m 2 .\nм 2 ."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-115",
+  "license": "zeglarz",
+  "q": "Zakres skali Beauforta to:\nДиапазон шкалы Бофорта составляет:",
+  "options": [
+   "0°- 9 °,\n0°- 9°,",
+   "0°- 10°,\n0°- 10°,",
+   "0°- 12 °.\n0°- 12°."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-116",
+  "license": "zeglarz",
+  "q": "Jak zachowuje się wiatr wiejący znad wysokiego brzegu?\nКак ведет себя ветер, дующий с высокого берега?",
+  "options": [
+   "zmienia kierunek na przeciwny do wiatru rzeczywistego – na dopychający do brzegu,\nМеняет направление на противоположное относительно истинного ветра – становится прижимным ветром",
+   "zmienia kierunek na równoległy do brzegu,\nменяет направление на параллельное берегу,",
+   "zwiększa tylko siłę.\nтолько увеличивает силу."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-117",
+  "license": "zeglarz",
+  "q": "Bezpieczniejsze kotwicowisko na jeziorze znajduje się:\nБолее безопасная якорная стоянка на озере находится:",
+  "options": [
+   "po stronie zawietrznej wyspy,\nна подветренной стороне острова,",
+   "po stronie nawietrznej wyspy,\nна наветренной стороне острова,",
+   "obie strony są niebezpieczne.\nобе стороны не безопасны."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-118",
+  "license": "zeglarz",
+  "q": "Prędkość wiatru zależy od:\nСкорость ветра зависит от:",
+  "options": [
+   "różnicy ciśnień między dwoma punktami,\nразницы давлений между двумя точками,",
+   "wielkości jachtu,\nразмера яхты,",
+   "wielkości barometru,\nразмера барометра."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-119",
+  "license": "zeglarz",
+  "q": "Szkwał jest to:\nШквал – это:",
+  "options": [
+   "część dziobowa jachtu balastowego,\nносовая часть балластной яхты,",
+   "nagły silny podmuch,\nвнезапный сильный порыв ветра,",
+   "wiatr występujący w strefie międzyzwrotnikowej.\nтропический ветер (ветер, возникающий в межтропической зоне)"
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-120",
+  "license": "zeglarz",
+  "q": "W obszarze wyżu wiatry wieją:\nВ зоне повышенного давления дуют ветры:",
+  "options": [
+   "od środka układu na zewnątrz,\nиз центра системы наружу,",
+   "do środka układu,\nк центру системы,",
+   "od środka układu na półkuli północnej, a do środka na półkuli południowej.\nот центра системы в северном полушарии и до центра в южном полушарии."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-121",
+  "license": "zeglarz",
+  "q": "Jeden długi dźwięk nadawany przez statek na drodze śródlądowej oznacza:\nОдин длинный звуковой сигнал с судна на внутреннем водном пути означает:",
+  "options": [
+   "uwaga,\nобратить внимание,",
+   "moje maszyny pracują wstecz,\nдвигатель работает реверсом,",
+   "nie mogę manewrować.\nне могу маневрировать."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-122",
+  "license": "zeglarz",
+  "q": "Powtarzające się długie dźwięki oznaczają:\nПовторяющиеся длинные гудки означают:",
+  "options": [
+   "wzywam pomocy,\nзову на помощь,",
+   "zmieniam mój kurs w lewo,\nменяю курс влево,",
+   "mam zamiar zawrócić w prawo.\nсобираюсь повернуть направо."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-123",
+  "license": "zeglarz",
+  "q": "Czarny stożek wierzchołkiem w dół wywieszony na statku oznacza:\nПеревернутый черный конус, свисающий с штага означает:",
+  "options": [
+   "pojedynczy mały statek w ruchu,\nодин небольшой корабль в движении,",
+   "statek płynący jednocześnie na żaglach i na silniku,\nсудно, идущее под парусами и двигателем одновременно,",
+   "statek na kotwicy.\nсудно на якоре."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-124",
+  "license": "zeglarz",
+  "q": "Czarna kula wywieszona na dziobie jachtu oznacza:\nЧерный шар, свисающий с носа яхты, означает:",
+  "options": [
+   "statek płynący jednocześnie na żaglach i na silniku,\nсудно, идущее под парусами и двигателем одновременно,",
+   "pojedynczy mały statek w ruchu,\nодин небольшой корабль в движении,",
+   "statek na kotwicy.\nсудно на якоре."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-125",
+  "license": "zeglarz",
+  "q": "W jaki sposób postawisz jacht w dryf?\nКак поставить яхту в дрейф?",
+  "options": [
+   "w kursie bajdewind wykonasz zwrot przez sztag bez luzowania foka,\nна курсе бейдевинд сделать поворот оверштаг без переброса переднего паруса (стакселя),",
+   "z kursu baksztag zrobisz zwrot przez sztag i umocujesz ster do burty,\nна курсе бакштаг сделать поворот оверштаг и прикрепить руль к борту,",
+   "zrzucisz żagle, przymocujesz ster do prawej burty.\nспустить паруса и вывернуть штурвал на правый борт."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-126",
+  "license": "zeglarz",
+  "q": "Jakie czynności należy wykonać przed wyrzuceniem kotwicy z dziobu:\nЧто делать перед тем, как сбросить якорь с носа:",
+  "options": [
+   "dla bezpieczeństwa zrzucić foka i przygotować linę kotwiczną,\nв целях безопасности опустить передний парус и подготовить якорный канат,",
+   "płynąć w linii pod wiatr i poczekać aż jacht zatrzyma się lub zacznie się cofać,\nидти против ветра и ждать пока лодка остановится или начнет двигаться задним ходом,",
+   "obie odpowiedzi są prawidłowe.\nоба варианта верные."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-127",
+  "license": "zeglarz",
+  "q": "Którą burta podejmujemy człowieka z wody na jachcie mieczowym?\nС какого борта нужно поднимать человека за бортом на швертботе?",
+  "options": [
+   "zawietrzną,\nподветренной,",
+   "nawietrzną,\nнаветренной,",
+   "nie ma to znaczenia.\nне имеет значения."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-128",
+  "license": "zeglarz",
+  "q": "Halsowanie jest to:\nЛавировка – это:",
+  "options": [
+   "wyciąganie jachtów z hali,\nвытягивание яхты с стоянки,",
+   "przemieszczanie się pod wiatr, na zmianę prawym i lewym bajdewindem,\nдвижение против ветра, попеременно с правым и левым бейдевиндом,",
+   "zmniejszanie powierzchni żagli.\nуменьшение площади паруса."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-129",
+  "license": "zeglarz",
+  "q": "Stawianie i zrzucanie żagli należy wykonywać:\nПодъем и спуск парусов следует производить:",
+  "options": [
+   "pod wiatr,\nпротив ветра,",
+   "w dowolnym kursie,\nна любом курсе,",
+   "tylko w kursach pełnych.\nтолько на полных курсах."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-130",
+  "license": "zeglarz",
+  "q": "Jaki kąt ma światło burtowe?\nКакой сектор освещения у бортового огня судна?",
+  "options": [
+   "112,5 °,\n112,5°,",
+   "135  °,\n135°,",
+   "225  °.\n225°."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-131",
+  "license": "zeglarz",
+  "q": "Na brzegu widnieje taki znak. Co on oznacza:\nНа берегу виден такой знак. Что он означает?",
+  "options": [
+   "uwaga most o wysokości przęsła nad wodą podanej na znaku (12 m),\nобратить внимание на мост с высотой пролета над водой, указанной на знаке (12 м),",
+   "zakaz ruchu statków o mocy silnika większej niż podana na znaku (12KM),\nЗапрещение движения судов с мощностью двигателя большей, чем указано на знаке (12 л.с.),",
+   "nakaz nie przekraczania prędkości podanej na znaku (12km/h).\nприказ не превышать скорость, указанную на знаке (12 км/ч)."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-131.png"
+ },
+ {
+  "id": "zj-132",
+  "license": "zeglarz",
+  "q": "Na brzegu zaobserwowano znak jak na rysunku. Jak należy się zachować?\nНа берегу замечен следующий знак. Как нужно себя вести?",
+  "options": [
+   "zachować ostrożność, mogą przepływać szybkie łodzie i skutery wodne,\nбудьте осторожны, могут пройти быстроходные катера и водные мотоциклы,",
+   "zmniejszyć szybkość, aby nie wytwarzać fali,\nуменьшить скорость, чтобы не создавать волну,",
+   "zachować ostrożność, nierówna linia brzegowa, spłycenia.\nбудьте осторожны, неровная береговая линия, мелководье."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-132.png"
+ },
+ {
+  "id": "zj-133",
+  "license": "zeglarz",
+  "q": "Zaobserwowano znak przedstawiony na rysunku. Co on oznacza?\nЗамечен следующий знак. Что он означает?",
+  "options": [
+   "nakaz zachowania szczególnej ostrożności,\nзамечание проявить крайнюю осторожность,",
+   "zakaz ruchu statków żaglowych,\nзапрет на движение парусных судов,",
+   "nakaz nadania sygnału dźwiękowego.\nзамечание для подачи звукового сигнала."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-133.png"
+ },
+ {
+  "id": "zj-134",
+  "license": "zeglarz",
+  "q": "Co oznacza ten znak?\nЧто означает этот знак?",
+  "options": [
+   "nakaz żeglugi tylko z jednym żaglem,\nприказ плыть только с одним парусом,",
+   "pierwszeństwo przejścia dla jachtów żaglowych,\nприоритет прохода парусных яхт,",
+   "zakaz żeglugi pod żaglami.\nзапрет движения под парусом."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-134.png"
+ },
+ {
+  "id": "zj-135",
+  "license": "zeglarz",
+  "q": "Zaobserwowała znak oznacza:\nНаблюдаемый знак обозначает:",
+  "options": [
+   "uwaga, przeszkoda podwodna,\nвнимание, подводное препятствие,",
+   "nakaz nadania sygnału dźwiękowego,\nприказ подать звуковой сигнал,",
+   "zakaz zatrzymywania się.\nзапрет остановки."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-135.png"
+ },
+ {
+  "id": "zj-136",
+  "license": "zeglarz",
+  "q": "Jacht o długości 8 m i wysokości masztu 14 m wpływa do kanału. Na brzegu ustawione są znaki. Co należy zrobić?\nЯхта длиной 8 м и высотой мачты 14 м входит в канал. На берегу есть указатели. Как следует поступить?",
+  "options": [
+   "nie ma przeszkód, płynąć dalej,\nпрепятствий нет, продолжить движение,",
+   "położyć maszt i płynąć dalej,\nопустить мачту и идти дальше,",
+   "nie da się przejść jacht jest za długi.\nневозможно пройти, яхта слишком длинная."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-136.png"
+ },
+ {
+  "id": "zj-137",
+  "license": "zeglarz",
+  "q": "Z jachtu o wysokości masztu 8 m, szerokości 3 m i zanurzeniu 1 m, zaobserwowano przy wejściu do kanału tablice jak na rysunku. Jak należy postąpić?\nС яхты с высотой мачты 8 м, шириной 3 м и осадкой 1 м у входа в канал был замечен такой знак, как показано на рисунке. Как поступить?",
+  "options": [
+   "nie da się przejść, należy zawrócić,\nпройти невозможно, надо повернуть назад,",
+   "można przejść po złożeniu masztu,\nвы можете идти после складывания мачты,",
+   "można przejść nie ma przeszkód.\nвы можете идти без препятствий."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)",
+  "image": "images/zj/zj-137.png"
+ },
+ {
+  "id": "zj-138",
+  "license": "zeglarz",
+  "q": "Według zasad bhp trzymanie rąk i nóg poza burtą jachtu jest:\nСогласно правилам безопасности держать руки и ноги за бортом яхты:",
+  "options": [
+   "nie mówią nic na ten temat,\nоб этом ничего не говорят,",
+   "zdecydowanie zabronione,\nкатегорически запрещено,",
+   "dozwolone, ale tylko podczas żeglugi.\nразрешено, но только во время плавания."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-139",
+  "license": "zeglarz",
+  "q": "Osoba posiadająca stopień żeglarza jachtowego jest uprawniona do prowadzenia na wodach śródlądowych jachtów o powierzchni żagli:\nЛицо, имеющее сертификат яхтенного матроса, имеет право управлять яхтами во внутренних водах со следующей площадью парусности:",
+  "options": [
+   "do 15 m 2 ,\nдо 15 м 2 ,",
+   "do 40 m 2 ,\nдо 40 м 2 ,",
+   "bez ograniczeń.\nбез ограничений."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-140",
+  "license": "zeglarz",
+  "q": "Przy śluzie pierwszeństwo mają statki:\nУ шлюза приоритет прохода имеют следующие суда:",
+  "options": [
+   "wchodzące do śluzy,\nвходящие в шлюз,",
+   "duże, niezależnie czy wchodzą czy wychodzą ze śluzy,\nбольшие, независимо от того, входят ли они в шлюз или выходят из него,",
+   "wychodzące ze śluzy.\nвыходящие из шлюза."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-141",
+  "license": "zeglarz",
+  "q": "Jacht płynący lewym halsem ustępuje z drogi jachtowi płynącemu prawym halsem:\nЯхта на левом галсе уступает место лодке на правом галсе:",
+  "options": [
+   "tak,\nда,",
+   "nie,\nнет,",
+   "zawsze ustępuje jacht mniejszy.\nменьшая яхта всегда уступает."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-142",
+  "license": "zeglarz",
+  "q": "Jeżeli dwa jachty żaglowe mają wiatr z tej samej burty, to jacht znajdujący się od strony nawietrznej powinien:\nЕсли две парусные яхты идут одинаковым галсом, то яхта, находящаяся на наветренной стороне должна:",
+  "options": [
+   "kontynuować rejs po ustalonej trasie,\nпродолжить курс по своему маршруту,",
+   "wezwać jacht żaglowy znajdujący się po zawietrznej do ustąpienia z drogi,\nсообщить подветренной парусной лодке уступить дорогу,",
+   "ustąpić z drogi.\nуступить дорогу подветренной яхте."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-143",
+  "license": "zeglarz",
+  "q": "Dwa jachty płyną przeciwnymi halsami, ustępuje:\nДве яхты идут противоположными галсами, уступить должна:",
+  "options": [
+   "jacht płynący prawym halsem,\nидущая правым галсом,",
+   "jacht płynący lewym halsem,\nидущая левым галсом,",
+   "jacht większy.\nбольшая яхта."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-144",
+  "license": "zeglarz",
+  "q": "Prawa burta jachtu żaglowego na śródlądziu oznaczona jest światłem koloru:\nПравый борт парусной яхты во внутренних водах маркируется цветным огнем:",
+  "options": [
+   "czerwonego,\nкрасного цвета,",
+   "zielonego,\nзеленого цвета,",
+   "białego.\nбелого цвета."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-145",
+  "license": "zeglarz",
+  "q": "Pozycja HELP to:\nПозиция ПОМОЩЬ:",
+  "options": [
+   "sposób wzywania pomocy,\nкак позвать на помощь,",
+   "sposób ułożenia ciała w wodzie zmniejszający utratę ciepła z organizmu,\nспособ расположения тела в воде, уменьшающий потери тепла телом,",
+   "sposób ułożenia ciała w wodzie zwiększający utratę ciepła z organizmu.\nположение тела в воде, что увеличивает потерю тепла телом."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-146",
+  "license": "zeglarz",
+  "q": "Pierwszą czynnością po wywróceniu jachtu jest:\nПервое действие после опрокидывания яхты:",
+  "options": [
+   "sprawdzenie stanu załogi,\nпроверка экипажа,",
+   "zabezpieczenie jachtu przed ‘grzybem’,\nпопытка перевернуть яхту обратно,",
+   "zabezpieczenie osprzętu i wyposażenia ruchomego przed utonięciem.\nзащита приспособлений и подвижного оборудования от затопления."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-147",
+  "license": "zeglarz",
+  "q": "Pozycję „boczną bezpieczną” stosujemy w przypadku:\nПоложение «потерпевшегос» используется в случае:",
+  "options": [
+   "krwawienia z nosa,\nносовых кровотечений,",
+   "gdy osoba jest nieprzytomna,\nкогда человек без сознания,",
+   "po urazie kręgosłupa.\nпосле травмы позвоночника."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-148",
+  "license": "zeglarz",
+  "q": "Resuscytacje krążeniowo-oddechową osoby dorosłej prowadzimy w schemacie:\nСердечно-легочная реанимация взрослого человека проводится по следующей схеме:",
+  "options": [
+   "30 uciśnięć klatki piersiowej do 2 wdechów ratunkowych,\n30 компрессий грудной клетки на 2 искусственных вдоха,",
+   "5 wdechów ratunkowych i następnie 30 uciśnięć klatki piersiowej do 2 wdechów ratunkowych,\n5 искусственных вдохов, за которыми следует 30 компрессий грудной клетки до 2 искусственных вдохов,",
+   "2 wdechy ratunkowe do 15 uciśnięć klatki piersiowej.\nот 2 искусственных вдохов до 15 нажатий на грудную клетку."
+  ],
+  "answer": 0,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-149",
+  "license": "zeglarz",
+  "q": "Do koła ratunkowego wchodzimy:\nИспользование спасательного круга:",
+  "options": [
+   "podpływając pod koło,\nподплыть под круг,",
+   "chwytamy się obiema rękoma,\nхватать обеими руками,",
+   "zakładamy koło przez głowę i zakładamy pod pachy.\nнадеть обруч на голову и положить его под мышки."
+  ],
+  "answer": 2,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ },
+ {
+  "id": "zj-150",
+  "license": "zeglarz",
+  "q": "Sztrandowanie jest to:\nШтрандование (посадка на мель) это:",
+  "options": [
+   "niezamierzone wejście na mieliznę,\nнепреднамеренная посадка на мель,",
+   "celowe wejście na mieliznę,\nпреднамеренная посадка на мель,",
+   "wyciąganie jachtu na brzeg po sezonie.\nвытаскивание яхты на берег после окончания сезона."
+  ],
+  "answer": 1,
+  "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
+ }
+]

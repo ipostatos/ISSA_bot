@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Польские лицензии — экзамен</title>
+<link rel="stylesheet" href="theme.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="nav.js"></script>
+<script src="icons.js"></script>
+<script src="zeglarz_data.js"></script>
+<style>
+  :root{
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --text: var(--tg-theme-text-color, #fff);
+    --hint: var(--tg-theme-hint-color, #8a9aa9);
+    --card: var(--tg-theme-secondary-bg-color, #232e3c);
+    --accent: var(--tg-theme-button-color, #50a8eb);
+    --accent-text: var(--tg-theme-button-text-color, #fff);
+    --border: rgba(255,255,255,.10);
+    --ok:#4caf72; --bad:#e5544b;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg: var(--tg-theme-bg-color, #ffffff);
+      --text: var(--tg-theme-text-color, #1a1a1a);
+      --hint: var(--tg-theme-hint-color, #7d8a99);
+      --card: var(--tg-theme-secondary-bg-color, #f1f3f5);
+      --accent: var(--tg-theme-button-color, #3390ec);
+      --accent-text: var(--tg-theme-button-text-color, #ffffff);
+      --border: rgba(0,0,0,.10);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0; padding:16px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.5; -webkit-tap-highlight-color:transparent}
+  h1{font-size:19px; margin:0 0 2px}
+  .sub{color:var(--hint); font-size:13px; margin:0 0 16px}
+  .hidden{display:none !important}
+
+  .big{width:100%; padding:16px; margin-bottom:10px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); border-radius:14px; cursor:pointer;
+    font-size:16px; font-weight:600; text-align:left; display:flex; align-items:center; gap:12px}
+  .big .bic{flex:0 0 auto; color:var(--accent)}
+  .big.accent{background:var(--accent); color:var(--accent-text); border-color:var(--accent)}
+  .big.accent .bic{color:var(--accent-text)}
+  .big small{display:block; font-weight:400; font-size:13px; opacity:.85; margin-top:2px}
+
+  .top{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; color:var(--hint); font-size:13px}
+  .timer{font-family:ui-monospace,Menlo,Consolas,monospace; font-weight:800; font-size:15px}
+  .timer.warn{color:var(--bad)}
+  .prog{height:6px; background:var(--border); border-radius:4px; overflow:hidden; margin-bottom:14px}
+  .prog > i{display:block; height:100%; background:var(--accent); width:0; transition:width .2s}
+
+  .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px}
+  .q{font-size:16px; font-weight:600; white-space:pre-line; margin-bottom:12px}
+  .sign{display:block; max-width:170px; margin:0 auto 14px; border-radius:10px; background:#fff; padding:8px}
+  .opt{display:flex; gap:10px; align-items:flex-start; padding:12px; border:1px solid var(--border);
+    border-radius:11px; margin-bottom:8px; font-size:15px; cursor:pointer; white-space:pre-line}
+  .opt .lt{font-weight:800; color:var(--hint); flex:0 0 auto}
+  .opt:active{transform:scale(.99)}
+  .opt.chosen{border-color:var(--accent)}
+  .opt.ok{background:rgba(76,175,114,.15); border-color:var(--ok)} .opt.ok .lt{color:var(--ok)}
+  .opt.bad{background:rgba(229,84,75,.15); border-color:var(--bad)} .opt.bad .lt{color:var(--bad)}
+  .opt.lock{cursor:default}
+
+  .row{display:flex; gap:8px; margin-top:12px}
+  .btn{flex:1; padding:13px; border:none; border-radius:12px; background:var(--accent);
+    color:var(--accent-text); font-weight:600; font-size:15px; cursor:pointer}
+  .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--border)}
+  .btn:disabled{opacity:.5}
+
+  .result{text-align:center; padding:8px 0}
+  .result .big-num{font:800 44px/1 ui-monospace,Menlo,Consolas,monospace; margin:6px 0}
+  .result .verdict{font-size:18px; font-weight:700; margin-bottom:4px}
+  .result .pass{color:var(--ok)} .result .fail{color:var(--bad)}
+
+  .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px}
+</style>
+</head>
+<body>
+  <!-- ── МЕНЮ ── -->
+  <section id="menu">
+    <h1 id="mTitle">Польские лицензии</h1>
+    <p class="sub" id="mSub">Гибридные вопросы PL/RU как на экзаменационном листе.</p>
+    <button class="big accent" id="startExam">
+      <span class="bic" data-icon="file-check"></span>
+      <span>Экзамен<small id="examSub"></small></span>
+    </button>
+    <button class="big" id="startTrain">
+      <span class="bic" data-icon="target"></span>
+      <span>Тренировка<small>все вопросы подряд · сразу видно правильный</small></span>
+    </button>
+    <p class="foot" id="bankInfo"></p>
+  </section>
+
+  <!-- ── ПРОХОЖДЕНИЕ ── -->
+  <section id="run" class="hidden">
+    <div class="top">
+      <span id="counter">—</span>
+      <span class="timer" id="timer"></span>
+    </div>
+    <div class="prog"><i id="progBar"></i></div>
+    <div class="card">
+      <div class="q" id="q">…</div>
+      <div id="signWrap"></div>
+      <div id="opts"></div>
+      <div class="row" id="controls"></div>
+    </div>
+    <button class="btn ghost" id="quit" style="width:100%">Выйти</button>
+  </section>
+
+  <!-- ── РЕЗУЛЬТАТ ── -->
+  <section id="result" class="hidden">
+    <div class="card result">
+      <div class="verdict" id="rVerdict"></div>
+      <div class="big-num" id="rScore"></div>
+      <div class="sub" id="rDetail"></div>
+    </div>
+    <div class="row">
+      <button class="btn ghost" id="rMenu">В меню</button>
+      <button class="btn" id="rAgain">Ещё раз</button>
+    </div>
+  </section>
+
+<script>
+"use strict";
+const tg = window.Telegram?.WebApp;
+if (tg){ tg.ready(); tg.expand(); }
+const $ = id => document.getElementById(id);
+
+const D = window.ZEGLARZ_DATA || {questions:[], examSize:75, examPass:65, examMinutes:90, title:"Żeglarz jachtowy"};
+const ALL = D.questions || [];
+
+$("mTitle").textContent = D.title || "Польские лицензии";
+$("examSub").textContent =
+  ` ${Math.min(D.examSize, ALL.length)} вопросов · ${D.examMinutes} мин · сдать ${D.examPass}`;
+$("bankInfo").textContent =
+  `Банк: ${ALL.length} вопросов (${D.meta?.withImage||0} со знаками). Не является официальным материалом.`;
+
+// ── состояние сессии ──
+let S = null;     // {mode, queue, idx, answers, timerEnd, tick}
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function startExam(){
+  const queue = shuffle(ALL).slice(0, Math.min(D.examSize, ALL.length));
+  S = { mode:"exam", queue, idx:0, answers:new Array(queue.length).fill(null),
+        timerEnd: Date.now() + D.examMinutes*60*1000, tick:null };
+  enterRun();
+  S.tick = setInterval(updateTimer, 1000); updateTimer();
+}
+function startTrain(){
+  S = { mode:"train", queue: shuffle(ALL), idx:0, answers:[], timerEnd:null, tick:null };
+  enterRun();
+}
+
+function enterRun(){
+  $("menu").classList.add("hidden");
+  $("result").classList.add("hidden");
+  $("run").classList.remove("hidden");
+  $("timer").classList.toggle("hidden", S.mode!=="exam");
+  render();
+}
+
+function updateTimer(){
+  if (!S || S.mode!=="exam") return;
+  const left = Math.max(0, S.timerEnd - Date.now());
+  const m = Math.floor(left/60000), s = Math.floor(left%60000/1000);
+  $("timer").textContent = `${m}:${String(s).padStart(2,"0")}`;
+  $("timer").classList.toggle("warn", left < 5*60000);
+  if (left <= 0){ clearInterval(S.tick); finishExam(); }
+}
+
+function render(){
+  const q = S.queue[S.idx];
+  $("counter").textContent = `${S.idx+1} / ${S.queue.length}`;
+  $("progBar").style.width = `${(S.idx)/S.queue.length*100}%`;
+  $("q").textContent = q.q;
+  $("signWrap").innerHTML = q.image ? `<img class="sign" src="${q.image}" alt="знак">` : "";
+
+  const chosen = S.mode==="exam" ? S.answers[S.idx] : (S._trainPicked ?? null);
+  $("opts").innerHTML = q.options.map((o,i)=>{
+    let cls="opt";
+    if (S.mode==="exam"){
+      if (chosen===i) cls+=" chosen";
+    } else if (S._trainPicked!=null){
+      cls+=" lock";
+      if (i===q.answer) cls+=" ok";
+      else if (i===S._trainPicked) cls+=" bad";
+    }
+    return `<div class="${cls}" data-i="${i}"><span class="lt">${"abcde"[i]}</span><span>${esc(o)}</span></div>`;
+  }).join("");
+  renderControls(chosen);
+}
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+function renderControls(chosen){
+  const last = S.idx===S.queue.length-1;
+  if (S.mode==="exam"){
+    $("controls").innerHTML =
+      `${S.idx>0?'<button class="btn ghost" id="prev">Назад</button>':''}
+       <button class="btn" id="next">${last?"Завершить":"Далее →"}</button>`;
+    $("next").onclick = ()=>{ if(last) finishExam(); else { S.idx++; render(); } };
+    if ($("prev")) $("prev").onclick = ()=>{ S.idx--; render(); };
+  } else {
+    // тренировка: после выбора показываем «Далее»
+    if (S._trainPicked!=null){
+      $("controls").innerHTML = `<button class="btn" id="next">${last?"В меню":"Следующий →"}</button>`;
+      $("next").onclick = ()=>{ S._trainPicked=null; if(last){ toMenu(); } else { S.idx++; render(); } };
+    } else {
+      $("controls").innerHTML = `<span class="sub" style="margin:auto">Выбери вариант</span>`;
+    }
+  }
+}
+
+// клик по варианту
+$("opts").addEventListener("click", e=>{
+  const el = e.target.closest(".opt"); if(!el) return;
+  const i = +el.dataset.i;
+  if (S.mode==="exam"){
+    S.answers[S.idx] = i; render();
+    haptic("light");
+  } else {
+    if (S._trainPicked!=null) return;   // уже отвечено
+    S._trainPicked = i;
+    haptic(i===S.queue[S.idx].answer ? "success" : "error");
+    render();
+  }
+});
+
+function finishExam(){
+  if (S.tick) clearInterval(S.tick);
+  let correct=0;
+  S.queue.forEach((q,i)=>{ if(S.answers[i]===q.answer) correct++; });
+  const total=S.queue.length, pass = correct>=D.examPass;
+  $("run").classList.add("hidden");
+  $("result").classList.remove("hidden");
+  $("rVerdict").innerHTML = pass
+    ? `<span class="pass">Сдано ✓</span>` : `<span class="fail">Не сдано</span>`;
+  $("rScore").textContent = `${correct} / ${total}`;
+  $("rDetail").textContent = pass
+    ? `Порог ${D.examPass} пройден.`
+    : `Нужно ${D.examPass}. Не хватило ${D.examPass-correct}.`;
+  haptic(pass?"success":"error");
+}
+
+function toMenu(){
+  if (S?.tick) clearInterval(S.tick);
+  S=null;
+  $("run").classList.add("hidden");
+  $("result").classList.add("hidden");
+  $("menu").classList.remove("hidden");
+}
+
+$("startExam").onclick = startExam;
+$("startTrain").onclick = startTrain;
+$("quit").onclick = ()=>{ if(confirm("Выйти? Прогресс не сохранится.")) toMenu(); };
+$("rMenu").onclick = toMenu;
+$("rAgain").onclick = ()=> S?.mode==="train" ? startTrain() : startExam();
+
+if (window.Icons) Icons.hydrate();
+</script>
+</body>
+</html>
