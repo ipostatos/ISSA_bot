@@ -828,6 +828,15 @@ async def on_poll_answer(poll_answer: PollAnswer) -> None:
             await asyncio.sleep(1.0)
             # chat_id == user_id для приватных чатов
             await send_next_exam_question(poll_answer.bot, user_id, user_id)
+        else:
+            # экзамен живёт в памяти и теряется при перезапуске бота — честно
+            # сообщаем, а не игнорируем молча ответ на «осиротевший» вопрос.
+            with contextlib.suppress(Exception):
+                await poll_answer.bot.send_message(
+                    user_id,
+                    "Этот экзамен больше не активен (возможно, бот перезапускался). "
+                    "Начни заново: /menu → «📝 Экзамен».",
+                )
 
 
 # ──────────────────────────── Иллюстрации ────────────────────────────
@@ -1193,7 +1202,9 @@ async def cb_task_solve(cb: CallbackQuery) -> None:
     task_id = ACTIVE_TASK.get(cb.from_user.id)
     task = nav_tasks.TASKS_BY_ID.get(task_id) if task_id else None
     if not task:
-        await cb.answer("Сначала возьми задачу")
+        # активная задача живёт в памяти и сбрасывается при перезапуске бота
+        await cb.answer("Задача не активна (возможно, бот перезапускался). "
+                        "Возьми новую: /tasks", show_alert=True)
         return
     await cb.message.answer(
         f"💡 <b>Решение</b>\n\n{task.text}\n\n<pre>{task.solution}</pre>\n"
