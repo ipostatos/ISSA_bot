@@ -92,9 +92,10 @@ WEBAPP_QUIZ_URL = _webapp_url("WEBAPP_QUIZ_URL", "/quiz.html")
 WEBAPP_HOME_URL = _webapp_url("WEBAPP_HOME_URL", "/")
 # URL экрана польских лицензий (exam_pl.html) — экзамены Żeglarz/Sternik (PL/RU).
 WEBAPP_LICENSES_URL = _webapp_url("WEBAPP_LICENSES_URL", "/exam_pl.html")
-TG_MSG_LIMIT = 4096       # ограничение Telegram на длину сообщения
-POLL_OPTION_LIMIT = 100   # ограничение Telegram на длину варианта ответа
-POLL_QUESTION_LIMIT = 300 # ограничение Telegram на длину текста вопроса/пояснения
+TG_MSG_LIMIT = 4096         # ограничение Telegram на длину сообщения
+POLL_OPTION_LIMIT = 100     # ограничение Telegram на длину варианта ответа
+POLL_QUESTION_LIMIT = 300   # лимит Telegram на текст вопроса опроса (300)
+POLL_EXPL_LIMIT = 200       # лимит Telegram на explanation опроса (200!) — иначе send_poll 400
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("issa-bot")
@@ -436,7 +437,7 @@ async def send_quiz(
 ) -> None:
     """Отправляет вопрос как нативный Telegram quiz-poll."""
     options = [_truncate(opt, POLL_OPTION_LIMIT) for opt in question["options"]]
-    explanation = _truncate(question.get("expl", ""), POLL_QUESTION_LIMIT)
+    explanation = _truncate(question.get("expl", ""), POLL_EXPL_LIMIT)   # 200, не 300
     q_text = _truncate(f"[{question['topic']}] {question['q']}", POLL_QUESTION_LIMIT)
 
     msg = await bot.send_poll(
@@ -800,6 +801,23 @@ async def cb_study(cb: CallbackQuery) -> None:
 
 @dp.callback_query(F.data == "mode:reset")
 async def cb_reset(cb: CallbackQuery) -> None:
+    # Сброс необратим — требуем подтверждение вторым тапом, чтобы случайное
+    # нажатие в меню не стёрло весь прогресс.
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⚠️ Да, стереть весь прогресс", callback_data="mode:reset_confirm")],
+        [InlineKeyboardButton(text="Отмена", callback_data="mode:menu")],
+    ])
+    await cb.message.answer(
+        "♻️ <b>Сбросить прогресс?</b>\n\n"
+        "Будут стёрты пройденные вопросы, работа над ошибками и статистика. "
+        "Это действие необратимо.",
+        reply_markup=kb,
+    )
+    await cb.answer()
+
+
+@dp.callback_query(F.data == "mode:reset_confirm")
+async def cb_reset_confirm(cb: CallbackQuery) -> None:
     save_progress(cb.from_user.id, {"seen": [], "wrong": [], "stats": {"answered": 0, "correct": 0}})
     await cb.message.answer("♻️ Прогресс сброшен.", reply_markup=main_menu_kb())
     await cb.answer()

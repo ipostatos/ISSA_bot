@@ -92,9 +92,20 @@ const tg = window.Telegram?.WebApp;
 const $ = id => document.getElementById(id);
 if (window.Icons) Icons.hydrate();
 const params = new URLSearchParams(location.search);
-const file = params.get("file") || "";
+const rawFile = params.get("file") || "";
 const title = params.get("title") || "Книга";
 document.title = title;
+
+// БЕЗОПАСНОСТЬ: разрешаем ТОЛЬКО свои книги из books/ (same-origin, без обхода
+// каталога). Иначе reader.html?file=https://evil/x.pdf грузил бы чужой PDF в
+// origin мини-аппа (кража initData/localStorage через CVE pdf.js). Формат:
+// "books/<имя>.pdf" — только латиница/цифры/подчёркивание/дефис, без "..".
+function safeBookPath(f){
+  if (!/^books\/[A-Za-z0-9_-]+\.pdf$/.test(f)) return "";
+  if (f.indexOf("..") !== -1) return "";
+  return f;
+}
+const file = safeBookPath(rawFile);
 
 // внешняя ссылка для «скачать», если встроенный рендер не справится
 $("dl").onclick = () => {
@@ -145,7 +156,10 @@ function startReader(){
   function loadPdf(){
     // disableStream/Range: качаем файл целиком — надёжнее на простой статике (Caddy),
     // где частичные Range-ответы для PDF.js иногда отдаются некорректно.
-    const task = pdfjsLib.getDocument({ url, disableStream:true, disableRange:true, disableAutoFetch:true });
+    // isEvalSupported:false — не выполнять код из PDF (защита от CVE-2024-4367,
+    // где вредоносный шрифт мог привести к eval произвольного JS).
+    const task = pdfjsLib.getDocument({ url, disableStream:true, disableRange:true,
+      disableAutoFetch:true, isEvalSupported:false });
     task.onProgress = p => {
       if (p.total){ $("loadBar").style.width = Math.round(p.loaded/p.total*100) + "%"; }
     };

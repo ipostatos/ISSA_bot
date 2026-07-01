@@ -98,6 +98,16 @@ def merge_progress(server: dict | None, incoming: dict | None) -> dict:
         out["frozenUsed"] = bool(
             (incoming if last_i >= last_s else server).get("frozenUsed", False)
         )
+    # флаги-достижения (examPass/flawless) — заслуженный бейдж не должен теряться:
+    # объединяем (OR) из обоих источников. Иначе sync стирает только что выданные бейджи.
+    flags = {}
+    for src in (server.get("flags") or {}, incoming.get("flags") or {}):
+        if isinstance(src, dict):
+            for k, v in src.items():
+                if v:
+                    flags[k] = True
+    if flags:
+        out["flags"] = flags
     return out
 
 

@@ -85,6 +85,13 @@
       out.lastDay = last;
       out.frozenUsed = !!((lastB >= lastA ? b : a).frozenUsed);
     }
+    // флаги-достижения (examPass/flawless) — объединяем OR, чтобы sync не стирал
+    // только что заслуженные бейджи (см. merge.py).
+    var flags = {};
+    [a.flags || {}, b.flags || {}].forEach(function (src) {
+      Object.keys(src).forEach(function (k) { if (src[k]) flags[k] = true; });
+    });
+    if (Object.keys(flags).length) out.flags = flags;
     return out;
   }
 

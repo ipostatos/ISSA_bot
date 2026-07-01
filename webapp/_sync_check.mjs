@@ -39,5 +39,15 @@ eq(mProg.lastDay, "2026-06-21", "progress: lastDay = более поздний")
 eq(mProg.goal, 20, "progress: goal из incoming");
 eq(mergeProgress(null, null).streak, 0, "progress: None → дефолт");
 
+// флаги-достижения: OR из обоих источников (sync не должен стирать бейджи)
+const mFlags = mergeProgress(
+  { flags: { examPass: true } },
+  { flags: { flawless: true } }
+);
+eq([!!mFlags.flags.examPass, !!mFlags.flags.flawless], [true, true],
+   "progress: flags объединяются (бейджи не теряются)");
+eq(!!mergeProgress({ flags: { examPass: true } }, {}).flags.examPass, true,
+   "progress: flag из server сохранён при пустом incoming");
+
 if (fails) { console.log(`\nSYNC CHECK: ${fails} провал(ов)`); process.exit(1); }
 console.log("\nSYNC CHECK OK (JS-merge совпадает с серверным)");
