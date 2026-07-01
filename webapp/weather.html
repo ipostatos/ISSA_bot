@@ -80,8 +80,20 @@
   .map-wrap{ position:relative; width:100%; height:320px; border-radius:var(--r-md);
     overflow:hidden; border:1px solid var(--border); background:#0b1a2b }
   #windMap{ position:absolute; inset:0; z-index:1; background:#0b1a2b }
-  #windCanvas{ position:absolute; inset:0; z-index:2; pointer-events:none }
+  #partCanvas{ position:absolute; inset:0; z-index:2; pointer-events:none }
+  #windCanvas{ position:absolute; inset:0; z-index:3; pointer-events:none }
   .map-hint{ font-size:11px; color:var(--hint); margin-top:8px; line-height:1.5 }
+  /* слои: чипы-переключатели (стрелки/частицы/волны) */
+  .layer-row{ display:flex; gap:6px; flex-wrap:wrap; margin-top:10px }
+  .layer-chip{ flex:0 0 auto; display:inline-flex; align-items:center; gap:6px;
+    padding:6px 11px; font-size:var(--fs-xs); color:var(--text); background:var(--card);
+    border:1px solid var(--border); border-radius:var(--r-pill); cursor:pointer; user-select:none }
+  .layer-chip.on{ border-color:var(--accent); color:var(--accent) }
+  /* таймлайн по часам */
+  .tl-row{ display:flex; align-items:center; gap:10px; margin-top:12px }
+  .tl-row input[type=range]{ flex:1; accent-color:var(--accent) }
+  .tl-label{ font-size:var(--fs-xs); color:var(--hint); min-width:96px; text-align:right;
+    font-variant-numeric:tabular-nums }
   /* компактная атрибуция (лицензионное требование CARTO/OSM) */
   .leaflet-control-attribution{ font-size:9px !important; background:rgba(0,0,0,.5) !important;
     color:var(--hint) !important }
@@ -177,11 +189,23 @@
     </div>
     <div class="map-wrap">
       <div id="windMap"></div>
+      <canvas id="partCanvas"></canvas>
       <canvas id="windCanvas"></canvas>
     </div>
+    <!-- переключатель слоёв -->
+    <div class="layer-row" id="layerRow">
+      <span class="layer-chip on" data-layer="arrows"><span class="emi" data-icon="navigation"></span>Стрелки</span>
+      <span class="layer-chip on" data-layer="particles"><span class="emi" data-icon="wind"></span>Частицы</span>
+      <span class="layer-chip" data-layer="waves"><span class="emi" data-icon="waves"></span>Волны</span>
+    </div>
+    <!-- таймлайн по часам прогноза -->
+    <div class="tl-row" id="tlRow" style="display:none">
+      <input type="range" id="tlRange" min="0" max="0" value="0" step="1">
+      <span class="tl-label" id="tlLabel">сейчас</span>
+    </div>
     <div class="wind-legend" id="windLegend"></div>
-    <div class="map-hint">Стрелки показывают направление и силу ветра по сетке.
-      Двигай и масштабируй карту — стрелки пересчитываются. Данные Open-Meteo, карта © OpenStreetMap © CARTO.</div>
+    <div class="map-hint">Стрелки/частицы — направление и сила ветра по сетке; «Волны» — высота волны.
+      Двигай и масштабируй карту, перематывай время. Данные Open-Meteo, карта © OpenStreetMap © CARTO.</div>
   </div>
 
   <p class="foot">Открытые модели погоды Open-Meteo (ECMWF/GFS · Marine).
@@ -490,16 +514,30 @@ function renderHourly(f){
 // Карта берегов — Leaflet + CARTO dark-тайлы. Стрелки ветра рисуем сами на
 // canvas-слое поверх карты: тянем сетку N×N точек из Open-Meteo (1 запрос),
 // цвет/длину стрелки задаёт сила ветра, поворот — направление «куда дует».
-var wmap = null, windCanvas = null, windGrid = null, gridBusy = false;
-var GRID_N = 7;   // 7×7 = 49 точек на один запрос
+var wmap = null, windCanvas = null, partCanvas = null;
+var windGrid = null;      // [{lat,lon, hrs:[{ms,dir}], wave:[m,...]}] — по часам
+var gridBusy = false, gridBounds = null;
+var GRID_N = 7;           // 7×7 = 49 точек на один запрос
+var HOURS = 24;           // сколько часов прогноза тянем/листаем
+var hourIdx = 0;          // текущий час на таймлайне (0 = сейчас)
+var layers = { arrows:true, particles:true, waves:false };
+var particles = [], partRAF = null, partTime = null;
 
-// цвет стрелки по силе ветра (узлы) — от спокойного к штормовому
+// цвет по силе ветра (узлы) — от спокойного к штормовому
 function windColor(kn){
   if (kn < 6)  return "#8ecae6";   // слабый
   if (kn < 12) return "#95d5b2";   // умеренный
   if (kn < 18) return "#e9c46a";   // свежий
   if (kn < 25) return "#f4a261";   // сильный
   return "#e5544b";                // штормовой
+}
+// цвет по высоте волны (м)
+function waveColor(m){
+  if (m < 0.5) return "rgba(80,180,220,0.28)";
+  if (m < 1.0) return "rgba(90,200,150,0.32)";
+  if (m < 2.0) return "rgba(233,196,106,0.36)";
+  if (m < 3.0) return "rgba(244,162,97,0.40)";
+  return "rgba(229,84,75,0.44)";
 }
 
 function showWindMap(spot){
@@ -514,10 +552,14 @@ function showWindMap(spot){
       attribution:'&copy; OpenStreetMap &copy; CARTO'
     }).addTo(wmap);
     windCanvas = $("windCanvas");
-    // перерисовывать стрелки при движении/зуме; сетку тянуть после окончания
-    wmap.on("move zoom", drawArrows);
+    partCanvas = $("partCanvas");
+    // при движении: стрелки+волны перерисовываем сразу, частицы сбрасываем;
+    // сетку тянем после окончания движения
+    wmap.on("move zoom", function(){ drawOverlay(); particles = []; });
     wmap.on("moveend zoomend", function(){ fetchWindGrid(); });
-    // корректный размер после появления карточки
+    setupLayerChips();
+    setupTimeline();
+    startParticles();
     setTimeout(function(){ wmap.invalidateSize(); wmap.setView([spot.lat, spot.lon], 8); fetchWindGrid(); }, 60);
   } else {
     wmap.setView([spot.lat, spot.lon], 8);
@@ -526,7 +568,8 @@ function showWindMap(spot){
   renderLegend();
 }
 
-// Подтянуть сетку ветра по текущим границам карты (декартова N×N).
+// Подтянуть сетку ветра (по часам) + волну по текущим границам карты.
+// Один запрос Forecast (hourly ветер, N² пар) + один Marine (hourly волна).
 function fetchWindGrid(){
   if (!wmap || gridBusy) return;
   gridBusy = true;
@@ -539,66 +582,234 @@ function fetchWindGrid(){
       lons.push((w + (e-w)*(j/(GRID_N-1))).toFixed(3));
     }
   }
-  var url = "https://api.open-meteo.com/v1/forecast?latitude="+lats.join(",")
-    + "&longitude="+lons.join(",")
-    + "&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&timezone=auto";
+  var LA = lats.join(","), LO = lons.join(",");
+  var fUrl = "https://api.open-meteo.com/v1/forecast?latitude="+LA+"&longitude="+LO
+    + "&hourly=wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&forecast_days=2&timezone=auto";
+  var mUrl = "https://marine-api.open-meteo.com/v1/marine?latitude="+LA+"&longitude="+LO
+    + "&hourly=wave_height&forecast_days=2&timezone=auto";
   var reqCenter = wmap.getCenter(), reqZoom = wmap.getZoom();
-  fetch(url).then(function(r){ return r.json(); }).then(function(arr){
+
+  Promise.all([
+    fetch(fUrl).then(function(r){ return r.json(); }),
+    fetch(mUrl).then(function(r){ return r.json(); }).catch(function(){ return null; })
+  ]).then(function(res){
     gridBusy = false;
-    if (Array.isArray(arr)){
-      windGrid = arr.map(function(p){
-        return { lat:p.latitude, lon:p.longitude,
-          ms:(p.current&&p.current.wind_speed_10m)||0,
-          dir:(p.current&&p.current.wind_direction_10m)||0 };
+    var wind = res[0], marine = res[1];
+    if (Array.isArray(wind)){
+      windGrid = wind.map(function(p, idx){
+        var h = (p.hourly) || {};
+        var spd = h.wind_speed_10m || [], dr = h.wind_direction_10m || [];
+        var hrs = [];
+        for (var t=0; t<Math.min(HOURS, spd.length); t++)
+          hrs.push({ ms: spd[t]||0, dir: dr[t]||0 });
+        // волну берём из marine по тому же индексу точки (порядок пар совпадает)
+        var wave = [];
+        var mp = Array.isArray(marine) ? marine[idx] : null;
+        var wh = (mp && mp.hourly && mp.hourly.wave_height) || [];
+        for (var t2=0; t2<Math.min(HOURS, hrs.length); t2++) wave.push(wh[t2]);
+        return { lat:p.latitude, lon:p.longitude, hrs:hrs, wave:wave };
       });
-      drawArrows();
+      gridBounds = b;
+      updateTimelineMax();
+      drawOverlay();
     }
-    // карту успели подвигать, пока летел запрос → дотянуть сетку под новый вид
     var c = wmap.getCenter();
     if (wmap.getZoom() !== reqZoom || c.distanceTo(reqCenter) > 1000) fetchWindGrid();
   }).catch(function(){ gridBusy = false; });
 }
 
-// Нарисовать стрелки на canvas по текущей проекции карты.
-function drawArrows(){
-  if (!wmap || !windCanvas) return;
+// ── билинейная интерполяция поля ветра в произвольной точке (lat,lon) ──
+// Сетка — регулярная GRID_N×GRID_N в границах gridBounds. Возвращает {ms,dir}
+// на текущий hourIdx или null, если вне сетки/нет данных.
+function sampleWind(lat, lon){
+  if (!windGrid || !gridBounds) return null;
+  var s = gridBounds.getSouth(), n = gridBounds.getNorth();
+  var w = gridBounds.getWest(), e = gridBounds.getEast();
+  var fy = (lat - s) / (n - s), fx = (lon - w) / (e - w);
+  if (fx < 0 || fx > 1 || fy < 0 || fy > 1) return null;
+  var gx = fx * (GRID_N - 1), gy = fy * (GRID_N - 1);
+  var i0 = Math.floor(gy), j0 = Math.floor(gx);
+  var i1 = Math.min(i0 + 1, GRID_N - 1), j1 = Math.min(j0 + 1, GRID_N - 1);
+  var ty = gy - i0, tx = gx - j0;
+  function at(i, j){
+    var cell = windGrid[i * GRID_N + j];
+    var h = cell && cell.hrs[Math.min(hourIdx, cell.hrs.length - 1)];
+    if (!h) return null;
+    var a = (h.dir + 180) * Math.PI / 180;   // вектор движения потока
+    return { ux: Math.sin(a) * h.ms, uy: -Math.cos(a) * h.ms };
+  }
+  var a = at(i0, j0), bb = at(i0, j1), c = at(i1, j0), d = at(i1, j1);
+  if (!a || !bb || !c || !d) return null;
+  var ux = (a.ux*(1-tx)+bb.ux*tx)*(1-ty) + (c.ux*(1-tx)+d.ux*tx)*ty;
+  var uy = (a.uy*(1-tx)+bb.uy*tx)*(1-ty) + (c.uy*(1-tx)+d.uy*tx)*ty;
+  var ms = Math.sqrt(ux*ux + uy*uy);
+  return { ux:ux, uy:uy, ms:ms };
+}
+
+// подогнать размер canvas под карту (DPR-aware). Возвращает 2d-контекст.
+function fitCanvas(cv){
   var size = wmap.getSize();
   var dpr = window.devicePixelRatio || 1;
-  if (windCanvas.width !== size.x*dpr || windCanvas.height !== size.y*dpr){
-    windCanvas.width = size.x*dpr; windCanvas.height = size.y*dpr;
-    windCanvas.style.width = size.x+"px"; windCanvas.style.height = size.y+"px";
+  if (cv.width !== size.x*dpr || cv.height !== size.y*dpr){
+    cv.width = size.x*dpr; cv.height = size.y*dpr;
+    cv.style.width = size.x+"px"; cv.style.height = size.y+"px";
   }
-  var ctx = windCanvas.getContext("2d");
+  var ctx = cv.getContext("2d");
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  return ctx;
+}
+
+// Верхний слой (windCanvas): слой волн (заливка) + стрелки. Перерисовывается
+// при движении карты, смене часа/слоёв. Частицы — на отдельном canvas в цикле.
+function drawOverlay(){
+  if (!wmap || !windCanvas) return;
+  var size = wmap.getSize();
+  var ctx = fitCanvas(windCanvas);
   ctx.clearRect(0,0,size.x,size.y);
   if (!windGrid) return;
 
-  windGrid.forEach(function(g){
-    var pt = wmap.latLngToContainerPoint([g.lat, g.lon]);
-    if (pt.x < -20 || pt.y < -20 || pt.x > size.x+20 || pt.y > size.y+20) return;
-    var kn = knots(g.ms);
-    var col = windColor(kn);
-    // длина стрелки растёт с силой (12–26 px), поворот — «куда дует» (dir = откуда)
-    var len = Math.min(26, 12 + kn*0.7);
-    var ang = (g.dir + 180) * Math.PI/180;   // направление движения потока
-    var dx = Math.sin(ang), dy = -Math.cos(ang);
-    var x0 = pt.x - dx*len/2, y0 = pt.y - dy*len/2;
-    var x1 = pt.x + dx*len/2, y1 = pt.y + dy*len/2;
-    ctx.strokeStyle = col; ctx.fillStyle = col;
-    ctx.lineWidth = 2; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
-    // наконечник
-    var ah = 5, aa = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 - (dx*Math.cos(aa)-dy*Math.sin(aa))*ah, y1 - (dy*Math.cos(aa)+dx*Math.sin(aa))*ah);
-    ctx.lineTo(x1 - (dx*Math.cos(-aa)-dy*Math.sin(-aa))*ah, y1 - (dy*Math.cos(-aa)+dx*Math.sin(-aa))*ah);
-    ctx.closePath(); ctx.fill();
+  // — слой волн: круги-пятна по сетке, цвет по высоте волны —
+  if (layers.waves){
+    windGrid.forEach(function(g){
+      var m = g.wave[Math.min(hourIdx, g.wave.length-1)];
+      if (m == null) return;
+      var pt = wmap.latLngToContainerPoint([g.lat, g.lon]);
+      if (pt.x<-40||pt.y<-40||pt.x>size.x+40||pt.y>size.y+40) return;
+      ctx.fillStyle = waveColor(m);
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 34, 0, Math.PI*2); ctx.fill();
+    });
+  }
+
+  // — стрелки ветра по сетке (на текущий час) —
+  if (layers.arrows){
+    windGrid.forEach(function(g){
+      var h = g.hrs[Math.min(hourIdx, g.hrs.length-1)]; if (!h) return;
+      var pt = wmap.latLngToContainerPoint([g.lat, g.lon]);
+      if (pt.x<-20||pt.y<-20||pt.x>size.x+20||pt.y>size.y+20) return;
+      var kn = knots(h.ms), col = windColor(kn);
+      var len = Math.min(26, 12 + kn*0.7);
+      var ang = (h.dir + 180) * Math.PI/180;
+      var dx = Math.sin(ang), dy = -Math.cos(ang);
+      var x0 = pt.x - dx*len/2, y0 = pt.y - dy*len/2;
+      var x1 = pt.x + dx*len/2, y1 = pt.y + dy*len/2;
+      ctx.strokeStyle = col; ctx.fillStyle = col;
+      ctx.lineWidth = 2; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+      var ah = 5, aa = 0.5;
+      ctx.beginPath(); ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 - (dx*Math.cos(aa)-dy*Math.sin(aa))*ah, y1 - (dy*Math.cos(aa)+dx*Math.sin(aa))*ah);
+      ctx.lineTo(x1 - (dx*Math.cos(-aa)-dy*Math.sin(-aa))*ah, y1 - (dy*Math.cos(-aa)+dx*Math.sin(-aa))*ah);
+      ctx.closePath(); ctx.fill();
+    });
+  }
+}
+
+// ── частицы ветра (как течения на Windy) ──
+// Частица живёт в контейнерных координатах; скорость берём из sampleWind по её
+// гео-позиции. След — за счёт полупрозрачной заливки поверх прошлого кадра.
+var PART_COUNT = 260, PART_LIFE = 90;   // частиц и макс. возраст (кадров)
+function spawnParticle(size){
+  return { x: Math.random()*size.x, y: Math.random()*size.y,
+           age: Math.floor(Math.random()*PART_LIFE) };
+}
+function startParticles(){
+  if (partRAF) return;
+  function frame(ts){
+    partRAF = requestAnimationFrame(frame);
+    if (!wmap || !partCanvas) return;
+    // не жечь CPU, когда карта скрыта или слой частиц выключен
+    if ($("mapCard").classList.contains("hidden")) return;
+    if (!layers.particles){ return; }
+    if (!windGrid) return;
+    var size = wmap.getSize();
+    var ctx = fitCanvas(partCanvas);
+    // затухающий след: гасим прошлый кадр полупрозрачным прямоугольником
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.fillStyle = "rgba(0,0,0,0.12)";
+    ctx.fillRect(0,0,size.x,size.y);
+    ctx.globalCompositeOperation = "source-over";
+
+    if (particles.length !== PART_COUNT){
+      particles = []; for (var i=0;i<PART_COUNT;i++) particles.push(spawnParticle(size));
+    }
+    for (var k=0;k<particles.length;k++){
+      var p = particles[k];
+      // гео-координаты частицы → скорость ветра
+      var ll = wmap.containerPointToLatLng([p.x, p.y]);
+      var wv = sampleWind(ll.lat, ll.lng);
+      if (!wv || p.age > PART_LIFE || p.x<0||p.y<0||p.x>size.x||p.y>size.y){
+        particles[k] = spawnParticle(size); continue;
+      }
+      // масштаб: 1 м/с ≈ 0.35 px/кадр (умеренная скорость визуализации)
+      var nx = p.x + wv.ux*0.35, ny = p.y + wv.uy*0.35;
+      var kn = knots(wv.ms);
+      ctx.strokeStyle = windColor(kn);
+      ctx.globalAlpha = 0.65;
+      ctx.lineWidth = 1.4; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(nx, ny); ctx.stroke();
+      ctx.globalAlpha = 1;
+      p.x = nx; p.y = ny; p.age++;
+    }
+  }
+  partRAF = requestAnimationFrame(frame);
+}
+
+// ── переключатель слоёв ──
+function setupLayerChips(){
+  var row = $("layerRow"); if (!row) return;
+  Array.prototype.forEach.call(row.querySelectorAll(".layer-chip"), function(chip){
+    chip.onclick = function(){
+      var key = chip.dataset.layer;
+      layers[key] = !layers[key];
+      chip.classList.toggle("on", layers[key]);
+      if (key === "particles" && !layers.particles){
+        // очистить след частиц
+        if (partCanvas){ var c = fitCanvas(partCanvas); var sz = wmap.getSize(); c.clearRect(0,0,sz.x,sz.y); }
+        particles = [];
+      }
+      drawOverlay(); renderLegend();
+    };
   });
+  if (window.Icons) Icons.hydrate(row);
+}
+
+// ── таймлайн по часам ──
+function setupTimeline(){
+  var rng = $("tlRange"); if (!rng) return;
+  rng.oninput = function(){
+    hourIdx = parseInt(rng.value, 10) || 0;
+    particles = [];          // сбросить след при перемотке
+    updateTimeLabel();
+    drawOverlay();
+  };
+}
+function updateTimelineMax(){
+  var rng = $("tlRange"), row = $("tlRow"); if (!rng) return;
+  var maxH = 0;
+  if (windGrid && windGrid[0]) maxH = Math.min(HOURS, windGrid[0].hrs.length) - 1;
+  rng.max = Math.max(0, maxH);
+  if (hourIdx > rng.max){ hourIdx = 0; rng.value = 0; }
+  row.style.display = maxH > 0 ? "flex" : "none";
+  updateTimeLabel();
+}
+function updateTimeLabel(){
+  var lab = $("tlLabel"); if (!lab) return;
+  if (hourIdx === 0){ lab.textContent = "сейчас"; return; }
+  // подпись «+Nч» и примерное время суток
+  var d = new Date(Date.now() + hourIdx*3600*1000);
+  var hh = String(d.getHours()).padStart(2,"0");
+  lab.textContent = "+" + hourIdx + "ч · " + hh + ":00";
 }
 
 function renderLegend(){
   var box = $("windLegend"); if (!box) return;
+  if (layers.waves){
+    var wsteps = [["<0.5","rgba(80,180,220,0.6)"],["0.5–1","rgba(90,200,150,0.6)"],
+      ["1–2","rgba(233,196,106,0.7)"],["2–3","rgba(244,162,97,0.75)"],["3+","rgba(229,84,75,0.8)"]];
+    box.innerHTML = "Волна, м: " + wsteps.map(function(s){
+      return '<span><i style="background:'+s[1]+'"></i>'+s[0]+'</span>'; }).join("");
+    return;
+  }
   var steps = [["<6","#8ecae6"],["6–12","#95d5b2"],["12–18","#e9c46a"],
     ["18–25","#f4a261"],["25+","#e5544b"]];
   box.innerHTML = "Ветер, узлы: " + steps.map(function(s){
@@ -640,7 +851,7 @@ $("unitToggle").onclick = function(e){
   this.textContent = useKnots ? "Показать в м/с" : "Показать в узлах";
   // единицы клиентские — перерисовываем из уже загруженных данных, без сети
   if (lastData){ renderNow(lastData.spot, lastData.f, lastData.m); renderHourly(lastData.f); }
-  drawArrows();   // стрелки: длина считается в узлах, перекрасить не нужно, но перерисуем
+  drawOverlay();   // стрелки/волны — перерисовать под новые единицы
 };
 
 // старт: подтянуть «Мои точки» и восстановить последнюю открытую точку
