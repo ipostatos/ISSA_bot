@@ -120,6 +120,8 @@ const $ = id => document.getElementById(id);
 const show = id => $(id).classList.remove("hidden");
 const hide = id => $(id).classList.add("hidden");
 const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// XSS: пользовательский запрос попадает в innerHTML — экранируем как в glossary.html.
+const esc = s => String(s).replace(/[&<>]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
 
 if (!DATA.length){
   $("tiles").innerHTML =
@@ -219,11 +221,14 @@ function highlightIn(root, term){
 
 function snippet(text, term){
   const i = text.toLowerCase().indexOf(term.toLowerCase());
-  if (i < 0) return text.slice(0, 90) + "…";
+  if (i < 0) return esc(text.slice(0, 90)) + "…";
   const start = Math.max(0, i - 35);
   const end = Math.min(text.length, i + term.length + 55);
   let s = (start > 0 ? "…" : "") + text.slice(start, end) + (end < text.length ? "…" : "");
-  const re = new RegExp(escRe(term), "gi");
+  // сначала экранируем весь фрагмент, потом ищем <mark> по esc-версии term —
+  // иначе «<» из запроса поломает разметку (XSS).
+  s = esc(s);
+  const re = new RegExp(escRe(esc(term)), "gi");
   return s.replace(re, m => `<mark>${m}</mark>`);
 }
 
@@ -235,7 +240,7 @@ function doSearch(q){
   const found = DATA.filter(t => t.text.toLowerCase().includes(ql)
                               || t.title.toLowerCase().includes(ql));
   if (!found.length){
-    $("hits").innerHTML = `<div class="empty">Ничего не найдено по «${q}».<br>Попробуй другое слово.</div>`;
+    $("hits").innerHTML = `<div class="empty">Ничего не найдено по «${esc(q)}».<br>Попробуй другое слово.</div>`;
     return;
   }
   $("hits").innerHTML = "";
