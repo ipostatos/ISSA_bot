@@ -39,7 +39,7 @@
   .hidden{display:none !important}
 
   /* сцена: тёмное «море и ночь» + судно на canvas */
-  .scene{ position:relative; width:100%; aspect-ratio:3/4; max-height:420px; border-radius:16px;
+  .scene{ position:relative; width:100%; aspect-ratio:4/3; max-height:300px; border-radius:16px;
     overflow:hidden; border:1px solid var(--border);
     background:linear-gradient(#02060c 0%, #04101d 55%, #061626 100%) }
   .scene canvas{ position:absolute; inset:0; width:100%; height:100%; display:block }
@@ -420,6 +420,7 @@ function openView(id){
 
 // ─────────────────────── Тест ───────────────────────
 let qQueue = [], qIdx = 0, qScore = 0, qAnswered = false;
+let qOpts = [], qCorrect = 0;   // перемешанные варианты и индекс правильного
 function startQuiz(){
   qQueue = shuffle(DATA.vessels.slice());
   qIdx = 0; qScore = 0;
@@ -432,8 +433,11 @@ function renderQuiz(){
   $("quizCounter").textContent = (qIdx+1)+" / "+qQueue.length;
   $("quizQ").textContent = questionText(v);
   requestAnimationFrame(()=> drawShip($("shipQuiz"), v, curMode));
-  const opts = v.quiz.options;
-  $("quizOpts").innerHTML = opts.map((o,i)=>
+  // перемешать варианты, чтобы правильный не был всегда первым
+  const correctText = v.quiz.options[v.quiz.correct];
+  qOpts = shuffle(v.quiz.options.slice());
+  qCorrect = qOpts.indexOf(correctText);
+  $("quizOpts").innerHTML = qOpts.map((o,i)=>
     '<div class="opt" data-i="'+i+'">'+esc(o)+'</div>'
   ).join("");
   Array.prototype.forEach.call($("quizOpts").querySelectorAll(".opt"), el=>{
@@ -455,14 +459,13 @@ function answerQuiz(i){
   if (qAnswered) return;
   qAnswered = true;
   const v = qQueue[qIdx];
-  const correct = v.quiz.correct;
   const els = $("quizOpts").querySelectorAll(".opt");
   els.forEach((el,k)=>{
     el.classList.add("lock");
-    if (k===correct) el.classList.add("ok");
+    if (k===qCorrect) el.classList.add("ok");
     else if (k===i) el.classList.add("bad");
   });
-  if (i===correct){ qScore++; haptic("success"); } else haptic("error");
+  if (i===qCorrect){ qScore++; haptic("success"); } else haptic("error");
   // разбор
   $("qeRule").textContent = v.rule;
   $("qeText").textContent = v.answer + ". " + v.hint;

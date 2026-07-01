@@ -39,7 +39,7 @@
   .hidden{display:none !important}
 
   /* сцена: море + буй */
-  .scene{ position:relative; width:100%; aspect-ratio:3/4; max-height:440px; border-radius:16px;
+  .scene{ position:relative; width:100%; aspect-ratio:1/1; max-height:300px; border-radius:16px;
     overflow:hidden; border:1px solid var(--border);
     background:linear-gradient(#0a2438 0%, #0d3350 45%, #0a2a44 100%) }
   .scene canvas{ position:absolute; inset:0; width:100%; height:100%; display:block }
@@ -213,9 +213,9 @@ function drawBuoy(canvas, b, lit){
   canvas.width=W*dpr; canvas.height=H*dpr;
   const ctx=canvas.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
 
-  const waterY = H*0.72, cx = W/2;
+  const waterY = H*0.82, cx = W/2;             // линия воды ниже — больше места сверху
   const bodyW = Math.min(W*0.16, 62);          // ширина корпуса
-  const bodyTop = H*0.34;                       // верх корпуса
+  const bodyTop = H*0.50;                       // верх корпуса опущен (топмарка не режется)
   const bodyBot = waterY;                       // низ у воды
 
   // вода
@@ -376,24 +376,29 @@ function lightText(l){
 
 // ─────────────────────── Тест ───────────────────────
 let qQueue=[], qIdx=0, qScore=0, qAnswered=false;
+let qOpts=[], qCorrect=0;   // перемешанные варианты и индекс правильного
 function startQuiz(){ qQueue=shuffle(DATA.buoys.slice()); qIdx=0; qScore=0; hide("menu"); show("quiz"); renderQuiz(); }
 function renderQuiz(){
   qAnswered=false; const b=qQueue[qIdx];
   $("quizCounter").textContent=(qIdx+1)+" / "+qQueue.length;
   $("quizQ").textContent=b.quiz.q;
   startBuoyAnim($("buoyQuiz"), b);
-  $("quizOpts").innerHTML=b.quiz.options.map((o,i)=>'<div class="opt" data-i="'+i+'">'+esc(o)+'</div>').join("");
+  // перемешать варианты, чтобы правильный не был всегда первым
+  const correctText = b.quiz.options[b.quiz.correct];
+  qOpts = shuffle(b.quiz.options.slice());
+  qCorrect = qOpts.indexOf(correctText);
+  $("quizOpts").innerHTML=qOpts.map((o,i)=>'<div class="opt" data-i="'+i+'">'+esc(o)+'</div>').join("");
   $("quizOpts").querySelectorAll(".opt").forEach(el=>el.onclick=()=>answerQuiz(+el.dataset.i));
   hide("quizExpl"); $("quizCtrl").style.display="none"; $("quizScore").textContent="";
 }
 function answerQuiz(i){
   if(qAnswered) return; qAnswered=true;
-  const b=qQueue[qIdx], correct=b.quiz.correct;
+  const b=qQueue[qIdx];
   $("quizOpts").querySelectorAll(".opt").forEach((el,k)=>{
     el.classList.add("lock");
-    if(k===correct) el.classList.add("ok"); else if(k===i) el.classList.add("bad");
+    if(k===qCorrect) el.classList.add("ok"); else if(k===i) el.classList.add("bad");
   });
-  if(i===correct){ qScore++; haptic("success"); } else haptic("error");
+  if(i===qCorrect){ qScore++; haptic("success"); } else haptic("error");
   $("qeLP").textContent = lightText(b.light);
   $("qeText").textContent = b.answer + ". " + b.hint;
   show("quizExpl");
