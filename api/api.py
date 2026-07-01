@@ -321,6 +321,58 @@ async def post_attempt(
     return {"ok": True, "attempts": list_attempts(user_id)}
 
 
+# ── благодарность автору: ссылка на счёт Telegram Stars ──
+# Mini App просит invoice-ссылку → открывает её через tg.openInvoice() ПРЯМО в
+# окне (без ухода в чат). Ссылку создаёт Telegram методом createInvoiceLink;
+# оплату (pre_checkout / successful_payment) обрабатывает БОТ, не API.
+DONATE_AMOUNTS = {50, 100, 300}   # допустимые суммы в звёздах (совпадают с ботом)
+
+
+class InvoiceIn(BaseModel):
+    amount: int = Field(..., ge=1, le=100000)
+
+
+@app.post("/api/invoice")
+async def create_invoice(
+    request: Request,
+    x_init_data: str | None = Header(default=None, alias="X-Init-Data"),
+):
+    _auth(x_init_data)   # аутентификация обязательна, user_id тут не нужен
+    if not BOT_TOKEN:
+        raise HTTPException(500, "server misconfigured: no BOT_TOKEN")
+    raw = await request.body()
+    if len(raw) > 1024:
+        raise HTTPException(413, "payload too large")
+    try:
+        body = InvoiceIn.model_validate_json(raw or b"{}")
+    except ValidationError:
+        raise HTTPException(422, "invalid amount")
+    amount = body.amount
+    if amount not in DONATE_AMOUNTS:
+        raise HTTPException(422, "amount not allowed")
+
+    import httpx
+    payload = {
+        "title": "Поддержка ISSA Trainer",
+        "description": "Благодарность автору тренажёра. Спасибо за поддержку! ⚓",
+        "payload": f"donate_{amount}",
+        "currency": "XTR",
+        "prices": [{"label": f"{amount} Stars", "amount": amount}],
+    }
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/createInvoiceLink"
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.post(url, json=payload)
+        data = r.json()
+    except Exception as e:  # сеть/парсинг
+        log.error("createInvoiceLink failed: %s", type(e).__name__)
+        raise HTTPException(502, "telegram unreachable")
+    if not data.get("ok"):
+        log.error("createInvoiceLink not ok: %s", data.get("description"))
+        raise HTTPException(502, "invoice creation failed")
+    return {"ok": True, "link": data["result"]}
+
+
 # CORS: домен Mini App берётся из окружения (ISSA_API_ORIGIN), хост не хардкодим.
 # За Caddy запросы same-origin и CORS не нужен — поэтому если переменная не задана,
 # заголовки CORS просто не добавляются (безопасный дефолт без привязки к серверу).

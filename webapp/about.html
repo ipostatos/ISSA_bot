@@ -39,9 +39,9 @@
     transition:background .2s, width .2s }
   .bank-dots i.on{ background:var(--accent); width:18px; border-radius:3px }
 
-  /* благодарность автору */
-  .donate-row{ display:flex; gap:10px; flex-wrap:wrap }
-  .donate-row .btn{ flex:1; min-width:150px }
+  /* благодарность автору — кнопки в столбик */
+  .donate-row{ display:flex; flex-direction:column; gap:10px }
+  .donate-row .btn{ width:100% }
   /* ссылки без подчёркивания (акцентный цвет уже выделяет их) */
   a{ text-decoration:none }
 </style>
@@ -145,12 +145,19 @@
       <a href="https://t.me/ipostatos" target="_blank" rel="noopener"
          style="color:var(--accent)"><span class="emi" data-icon="send"></span> @ipostatos</a>.
     </div>
+    <div class="muted" style="font-size:12px; margin-bottom:8px">Поддержать в Telegram Stars:</div>
     <div class="donate-row">
-      <button class="btn" id="starsBtn">
-        <span class="emi" data-icon="star"></span> Поддержать · Telegram Stars
+      <button class="btn stars-btn" data-stars="50">
+        <span class="emi" data-icon="coffee"></span> Кофе · 50 ⭐
+      </button>
+      <button class="btn stars-btn" data-stars="100">
+        <span class="emi" data-icon="star"></span> Спасибо · 100 ⭐
+      </button>
+      <button class="btn stars-btn" data-stars="300">
+        <span class="emi" data-icon="rocket"></span> Щедро · 300 ⭐
       </button>
       <a class="btn ghost" href="https://buymeacoffee.com/ipostatos" target="_blank" rel="noopener" id="coffeeBtn">
-        <span class="emi" data-icon="coffee"></span> Купить кофе
+        <span class="emi" data-icon="coffee"></span> Или купить кофе (внешне)
       </a>
     </div>
     <div class="muted" id="donateNote" style="font-size:12px; margin-top:10px; text-align:center"></div>
@@ -202,25 +209,52 @@ if (!D){
   track.addEventListener("scroll", sync); sync();
 })();
 
-// ── благодарность: Telegram Stars через бота, кофе — внешняя ссылка ──
+// ── благодарность: Telegram Stars ПРЯМО в мини-аппе (openInvoice) ──
 (function(){
   const tg = window.Telegram?.WebApp;
-  const btn = $("starsBtn"), note = $("donateNote");
-  if (!btn) return;
-  // username бота-хоста. Пробрасывается ботом через ?bot=... (см. bot.py);
-  // если параметра нет — берём дефолт. Так ссылка не ломается при смене имени.
-  var qsBot = new URLSearchParams(location.search).get("bot");
-  var BOT = (qsBot || "issa_test_bot").replace(/^@/, "");
-  btn.onclick = function(){
-    // Открываем бота с deep-link → он показывает выбор суммы и шлёт счёт в Stars.
-    var link = "https://t.me/" + BOT + "?start=donate";
-    if (tg && tg.openTelegramLink){
-      tg.openTelegramLink(link);   // откроет чат с ботом, Mini App свернётся
-    } else {
-      window.open(link, "_blank");
-    }
+  const note = $("donateNote");
+  const btns = document.querySelectorAll(".stars-btn");
+  if (!btns.length) return;
+
+  // Резервный путь, если API/openInvoice недоступны: deep-link в чат с ботом.
+  const qsBot = new URLSearchParams(location.search).get("bot");
+  const BOT = (qsBot || "issa_test_bot").replace(/^@/, "");
+  function fallbackDeepLink(){
+    const link = "https://t.me/" + BOT + "?start=donate";
+    if (tg && tg.openTelegramLink) tg.openTelegramLink(link);
+    else window.open(link, "_blank");
     note.textContent = "Открыли чат с ботом — там выбери сумму в звёздах ⭐";
-  };
+  }
+
+  function pay(amount, btn){
+    note.textContent = "";
+    const initData = (tg && tg.initData) || "";
+    // Без initData или без openInvoice — не сможем открыть счёт по месту.
+    if (!initData || !(tg && tg.openInvoice)){ fallbackDeepLink(); return; }
+    btn.disabled = true;
+    fetch("/api/invoice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Init-Data": initData },
+      body: JSON.stringify({ amount: amount }),
+    })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(d => {
+      if (!d.link) throw new Error("no link");
+      // Открываем счёт ПРЯМО в окне мини-аппа.
+      tg.openInvoice(d.link, function(status){
+        if (status === "paid"){
+          note.textContent = "💙 Спасибо за поддержку! Попутного ветра ⛵";
+          if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
+        } else if (status === "failed"){
+          note.textContent = "Платёж не прошёл. Можно попробовать ещё раз.";
+        } // "cancelled" / "pending" — молча
+      });
+    })
+    .catch(() => { fallbackDeepLink(); })
+    .finally(() => { btn.disabled = false; });
+  }
+
+  btns.forEach(b => b.onclick = () => pay(parseInt(b.dataset.stars, 10), b));
 })();
 
 if (window.Icons) Icons.hydrate();

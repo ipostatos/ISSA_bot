@@ -148,6 +148,20 @@ def test_endpoints():
         big = client.post("/api/state", headers=h, content=b"x" * (300 * 1024))
         check("слишком большое тело → 413", big.status_code == 413)
 
+        # /api/invoice — благодарность (Stars)
+        check("invoice без initData → 401",
+              client.post("/api/invoice", json={"amount": 50}).status_code == 401)
+        check("invoice: недопустимая сумма → 422",
+              client.post("/api/invoice", headers=h, json={"amount": 77}).status_code == 422)
+        check("invoice: отрицательная сумма → 422",
+              client.post("/api/invoice", headers=h, json={"amount": -5}).status_code == 422)
+        # допустимая сумма проходит валидацию и доходит до Telegram (фейк-токен →
+        # createInvoiceLink не ok → 502). Главное: не 401/422, т.е. авторизация и
+        # валидация пройдены.
+        r = client.post("/api/invoice", headers=h, json={"amount": 50})
+        check("invoice: валидная сумма проходит валидацию (не 401/422)",
+              r.status_code not in (401, 422))
+
 
 def test_attempts():
     try:
