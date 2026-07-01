@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Буи IALA · навигационные знаки</title>
+<link rel="stylesheet" href="theme.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="nav.js"></script>
+<script src="icons.js"></script>
+<script src="buoys_data.js"></script>
+<style>
+  :root{
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --text: var(--tg-theme-text-color, #fff);
+    --hint: var(--tg-theme-hint-color, #8a9aa9);
+    --card: var(--tg-theme-secondary-bg-color, #232e3c);
+    --accent: var(--tg-theme-button-color, #50a8eb);
+    --accent-text: var(--tg-theme-button-text-color, #fff);
+    --border: rgba(255,255,255,.10);
+    --ok:#4caf72; --bad:#e5544b;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg: var(--tg-theme-bg-color, #ffffff);
+      --text: var(--tg-theme-text-color, #1a1a1a);
+      --hint: var(--tg-theme-hint-color, #7d8a99);
+      --card: var(--tg-theme-secondary-bg-color, #f1f3f5);
+      --accent: var(--tg-theme-button-color, #3390ec);
+      --accent-text: var(--tg-theme-button-text-color, #ffffff);
+      --border: rgba(0,0,0,.10);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0; padding:14px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.5; -webkit-tap-highlight-color:transparent}
+  h1{font-size:19px; margin:0 0 2px}
+  .sub{color:var(--hint); font-size:13px; margin:0 0 14px}
+  .hidden{display:none !important}
+
+  /* сцена: море + буй */
+  .scene{ position:relative; width:100%; aspect-ratio:3/4; max-height:440px; border-radius:16px;
+    overflow:hidden; border:1px solid var(--border);
+    background:linear-gradient(#0a2438 0%, #0d3350 45%, #0a2a44 100%) }
+  .scene canvas{ position:absolute; inset:0; width:100%; height:100%; display:block }
+  .scene-cap{ position:absolute; left:0; right:0; bottom:8px; text-align:center; font-size:12px;
+    color:#9fc4e0; text-shadow:0 1px 3px #000 }
+
+  .big{width:100%; padding:15px; margin-bottom:10px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); border-radius:14px; cursor:pointer;
+    font-size:16px; font-weight:600; text-align:left; display:flex; align-items:center; gap:12px}
+  .big .bic{flex:0 0 auto; color:var(--accent)}
+  .big small{display:block; font-weight:400; font-size:13px; opacity:.85; margin-top:2px}
+
+  .row{display:flex; gap:8px; margin-top:12px; align-items:center}
+  .btn{flex:1; padding:13px; border:none; border-radius:12px; background:var(--accent);
+    color:var(--accent-text); font-weight:600; font-size:15px; cursor:pointer}
+  .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--border)}
+  .btn:disabled{opacity:.5}
+
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px }
+  .chip{ flex:0 0 auto; padding:6px 11px; font-size:12px; color:var(--text); background:var(--card);
+    border:1px solid var(--border); border-radius:999px; cursor:pointer }
+  .chip.on{ border-color:var(--accent); color:var(--accent) }
+  .vlist{ display:flex; flex-direction:column; gap:8px }
+  .vcard{ display:flex; align-items:center; gap:10px; padding:12px 14px; border:1px solid var(--border);
+    background:var(--card); border-radius:12px; cursor:pointer; font-size:15px; text-align:left; width:100%; color:var(--text) }
+  .vcard .sw{ flex:0 0 auto; width:14px; height:22px; border-radius:3px; border:1px solid var(--border) }
+
+  .info{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-top:12px }
+  .info .t{ font-weight:700; margin-bottom:4px }
+  .info .lp{ font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:.03em }
+  .info .h{ font-size:13px; color:var(--hint); margin-top:8px }
+
+  .opt{display:flex; gap:10px; align-items:flex-start; padding:12px; border:1px solid var(--border);
+    border-radius:11px; margin-bottom:8px; font-size:15px; cursor:pointer}
+  .opt:active{transform:scale(.99)}
+  .opt.ok{background:rgba(76,175,114,.15); border-color:var(--ok)}
+  .opt.bad{background:rgba(229,84,75,.15); border-color:var(--bad)}
+  .opt.lock{cursor:default}
+  .score{ color:var(--hint); font-size:13px; text-align:center; margin-top:6px }
+
+  .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px}
+</style>
+</head>
+<body>
+  <!-- ── МЕНЮ ── -->
+  <section id="menu">
+    <h1>🔆 Буи и знаки IALA</h1>
+    <p class="sub">Навигационные знаки Region A (Балтика/Европа). Смотри форму, цвет, топовую фигуру и <b>ритм проблесков</b>.</p>
+    <div class="scene" style="margin-bottom:14px">
+      <canvas id="buoyMenu"></canvas>
+      <div class="scene-cap">с какой стороны обходить?</div>
+    </div>
+    <button class="big" id="toLearn">
+      <span class="bic" data-icon="book-open"></span>
+      <span>Справочник<small>все буи с огнями и разбором обхода</small></span>
+    </button>
+    <button class="big" id="toQuiz">
+      <span class="bic" data-icon="target"></span>
+      <span>Тест «Куда обходить?»<small>показываем буй — определи знак и сторону</small></span>
+    </button>
+    <p class="foot">Учебный материал по IALA MBS (Region A). Не заменяет официальные карты и лоции.</p>
+  </section>
+
+  <!-- ── СПРАВОЧНИК ── -->
+  <section id="learn" class="hidden">
+    <div class="row" style="margin:0 0 12px">
+      <button class="btn ghost" id="learnBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Меню</button>
+      <div style="flex:1"></div>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="vlist" id="vlist"></div>
+  </section>
+
+  <!-- ── ПРОСМОТР ── -->
+  <section id="view" class="hidden">
+    <div class="row" style="margin:0 0 12px">
+      <button class="btn ghost" id="viewBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Список</button>
+      <div style="flex:1"></div>
+    </div>
+    <div class="scene">
+      <canvas id="buoyView"></canvas>
+      <div class="scene-cap" id="viewCap"></div>
+    </div>
+    <div class="info">
+      <div class="lp" id="viewLP"></div>
+      <div class="t" id="viewTitle"></div>
+      <div id="viewAnswer"></div>
+      <div class="h" id="viewHint"></div>
+    </div>
+  </section>
+
+  <!-- ── ТЕСТ ── -->
+  <section id="quiz" class="hidden">
+    <div class="row" style="margin:0 0 12px">
+      <button class="btn ghost" id="quizBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Меню</button>
+      <div style="flex:1; text-align:right; color:var(--hint); font-size:13px" id="quizCounter"></div>
+    </div>
+    <div class="scene">
+      <canvas id="buoyQuiz"></canvas>
+    </div>
+    <div style="margin-top:12px; font-weight:600" id="quizQ"></div>
+    <div id="quizOpts" style="margin-top:10px"></div>
+    <div class="info hidden" id="quizExpl">
+      <div class="lp" id="qeLP"></div>
+      <div id="qeText"></div>
+    </div>
+    <div class="row" id="quizCtrl" style="display:none">
+      <button class="btn" id="quizNext">Следующий →</button>
+    </div>
+    <div class="score" id="quizScore"></div>
+  </section>
+
+<script>
+"use strict";
+const tg = window.Telegram?.WebApp;
+if (tg){ tg.ready(); tg.expand(); }
+const $ = id => document.getElementById(id);
+const show = id => $(id).classList.remove("hidden");
+const hide = id => $(id).classList.add("hidden");
+if (window.Icons) Icons.hydrate();
+
+const DATA = window.BUOYS_DATA || { buoys:[], categories:[] };
+const COL = {
+  red:"#e33", green:"#2c2", yellow:"#f2c200", black:"#181818", white:"#f4f4f4"
+};
+
+// ─────────────────────── Анимация проблесков ───────────────────────
+// pattern: массив [вкл, выкл, вкл, выкл...] в мс (циклично) ИЛИ строка
+// "VQ"/"VQ3"/"VQ6"/"VQ9" — очень частые проблески (кардинальные ритмы).
+function buildPattern(p){
+  if (Array.isArray(p)) return p.slice();
+  // VQ = very quick (непрерывно ~120/мин): вкл 120 / выкл 180
+  const on=120, off=180;
+  const seq=[];
+  const groups = { "VQ":0, "VQ3":3, "VQ6":6, "VQ9":9 };
+  const n = groups[p] || 0;
+  if (n===0){ return [on, off]; }                 // непрерывные (север)
+  for (let i=0;i<n;i++){ seq.push(on, off); }
+  seq[seq.length-1] = 1400;                        // пауза между группами
+  return seq;
+}
+function isLit(pattern, t){
+  const cyc = pattern.reduce((a,b)=>a+b,0);
+  let x = t % cyc, on = true;
+  for (let i=0;i<pattern.length;i++){ if (x < pattern[i]) return on; x -= pattern[i]; on = !on; }
+  return false;
+}
+
+// ─────────────────────── Отрисовка буя ───────────────────────
+let animRAF = null, animBuoy = null, animCanvas = null, animStart = null;
+function startBuoyAnim(canvas, buoy){
+  stopBuoyAnim();
+  animCanvas = canvas; animBuoy = buoy;
+  const pat = buildPattern(buoy.light.pattern);
+  function frame(ts){
+    animRAF = requestAnimationFrame(frame);
+    if (animStart===null) animStart = ts;
+    const lit = isLit(pat, ts - animStart);
+    drawBuoy(canvas, buoy, lit);
+  }
+  animStart = null;
+  animRAF = requestAnimationFrame(frame);
+}
+function stopBuoyAnim(){ if (animRAF){ cancelAnimationFrame(animRAF); animRAF=null; } animStart=null; }
+
+function drawBuoy(canvas, b, lit){
+  const dpr = window.devicePixelRatio||1;
+  const r = canvas.getBoundingClientRect(); const W=r.width, H=r.height;
+  if (!W||!H) return;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  const ctx=canvas.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+
+  const waterY = H*0.72, cx = W/2;
+  const bodyW = Math.min(W*0.16, 62);          // ширина корпуса
+  const bodyTop = H*0.34;                       // верх корпуса
+  const bodyBot = waterY;                       // низ у воды
+
+  // вода
+  ctx.save(); ctx.globalAlpha=.5;
+  for (let i=0;i<4;i++){ ctx.fillStyle="rgba(60,120,170,"+(0.14-i*0.03)+")"; ctx.fillRect(0,waterY+i*9,W,3); }
+  ctx.restore();
+
+  // мачта под топмаркой
+  ctx.strokeStyle="rgba(200,210,220,.6)"; ctx.lineWidth=2.5;
+  const lightY = bodyTop - H*0.10;              // где горит огонь
+  const topmarkY = bodyTop - H*0.19;            // топовая фигура
+  ctx.beginPath(); ctx.moveTo(cx, bodyTop); ctx.lineTo(cx, topmarkY); ctx.stroke();
+
+  // корпус буя по форме
+  drawBody(ctx, b, cx, bodyTop, bodyBot, bodyW);
+
+  // топовая фигура
+  drawTopmark(ctx, b.topmark, cx, topmarkY, bodyW*0.42);
+
+  // огонь (мигает): ореол только когда lit
+  const lc = COL[b.light.color] || "#fff";
+  if (lit){
+    const g=ctx.createRadialGradient(cx,lightY,0,cx,lightY,bodyW*1.1);
+    g.addColorStop(0,lc); g.addColorStop(0.3,hexA(lc,.6)); g.addColorStop(1,hexA(lc,0));
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,lightY,bodyW*1.1,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(cx,lightY,3,0,Math.PI*2); ctx.fill();
+    // отражение на воде
+    const refY=waterY+(waterY-lightY)*0.3;
+    const rg=ctx.createLinearGradient(cx,waterY,cx,refY);
+    rg.addColorStop(0,hexA(lc,.4)); rg.addColorStop(1,hexA(lc,0));
+    ctx.fillStyle=rg; ctx.fillRect(cx-6,waterY,12,refY-waterY);
+  } else {
+    // погашенный огонь — тусклая точка-фонарь
+    ctx.fillStyle="rgba(120,130,140,.5)"; ctx.beginPath(); ctx.arc(cx,lightY,3,0,Math.PI*2); ctx.fill();
+  }
+}
+
+// корпус: цвет(а) по строке color ("red", "black-yellow", "red-white"...)
+function drawBody(ctx, b, cx, top, bot, w){
+  const hw=w/2, h=bot-top;
+  const bands = colorBands(b.color);
+  ctx.save();
+  ctx.beginPath();
+  if (b.shape==="cone"){                         // конус (вершиной вверх)
+    ctx.moveTo(cx, top); ctx.lineTo(cx+hw, bot); ctx.lineTo(cx-hw, bot); ctx.closePath();
+  } else if (b.shape==="sphere"){                // сфера
+    ctx.arc(cx, top+h*0.55, hw*1.15, 0, Math.PI*2);
+  } else if (b.shape==="pillar"){                // столб (узкий высокий)
+    roundRect(ctx, cx-hw*0.7, top, hw*1.4, h, 6);
+  } else {                                       // can (цилиндр) — по умолчанию
+    roundRect(ctx, cx-hw, top, w, h, 6);
+  }
+  ctx.clip();
+  // горизонтальные цветные полосы
+  let y=top; const bh=h/bands.length;
+  bands.forEach(c=>{ ctx.fillStyle=COL[c]||c; ctx.fillRect(cx-hw*1.3, y, w*1.6, bh+0.6); y+=bh; });
+  ctx.restore();
+  // контур
+  ctx.strokeStyle="rgba(255,255,255,.25)"; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  if (b.shape==="cone"){ ctx.moveTo(cx,top); ctx.lineTo(cx+hw,bot); ctx.lineTo(cx-hw,bot); ctx.closePath(); }
+  else if (b.shape==="sphere"){ ctx.arc(cx,top+h*0.55,hw*1.15,0,Math.PI*2); }
+  else if (b.shape==="pillar"){ roundRect(ctx,cx-hw*0.7,top,hw*1.4,h,6); }
+  else { roundRect(ctx,cx-hw,top,w,h,6); }
+  ctx.stroke();
+}
+
+// цвет строки → массив полос сверху вниз
+function colorBands(c){
+  const map = {
+    "red":["red"], "green":["green"], "yellow":["yellow"], "black":["black"],
+    "black-yellow":["black","yellow"],
+    "yellow-black":["yellow","black"],
+    "black-yellow-black":["black","yellow","black"],
+    "yellow-black-yellow":["yellow","black","yellow"],
+    "black-red-black":["black","red","black"],
+    "red-green-red":["red","green","red"],
+    "red-white":["red","white","red","white"],   // верт. полосы упрощаем в гориз.
+  };
+  return map[c] || [c];
+}
+
+// топовая фигура
+function drawTopmark(ctx, tm, cx, y, s){
+  ctx.fillStyle="#111"; ctx.strokeStyle="rgba(255,255,255,.3)"; ctx.lineWidth=1;
+  const cone=(dir,yy)=>{ ctx.beginPath();
+    if(dir>0){ ctx.moveTo(cx,yy-s); ctx.lineTo(cx+s*0.7,yy); ctx.lineTo(cx-s*0.7,yy); }
+    else { ctx.moveTo(cx,yy+s); ctx.lineTo(cx+s*0.7,yy); ctx.lineTo(cx-s*0.7,yy); }
+    ctx.closePath(); ctx.fill(); ctx.stroke(); };
+  const ball=(yy,rr)=>{ ctx.beginPath(); ctx.arc(cx,yy,rr||s*0.6,0,Math.PI*2); ctx.fill(); ctx.stroke(); };
+
+  if (tm==="cones-up"){ cone(1,y); cone(1,y-s*1.4); }               // ▲▲ вверх (север)
+  else if (tm==="cones-down"){ cone(-1,y); cone(-1,y-s*1.4); }      // ▼▼ вниз (юг)
+  else if (tm==="cones-base"){ cone(-1,y-s*0.7); cone(1,y-s*0.7+s*1.4); } // основаниями (восток)
+  else if (tm==="cones-point"){ cone(1,y-s*0.1); cone(-1,y-s*1.5); }// вершинами (запад)
+  else if (tm==="balls-two"){ ball(y); ball(y-s*1.5); }            // 2 шара (опасность)
+  else if (tm==="ball-red"){ ctx.fillStyle=COL.red; ball(y); }     // 1 красный шар (безоп. вода)
+  else if (tm==="cone-green"){ ctx.fillStyle=COL.green; cone(1,y); }
+  else if (tm==="can-red"){ ctx.fillStyle=COL.red; roundRect(ctx,cx-s*0.6,y-s,s*1.2,s,3); ctx.fill(); ctx.stroke(); }
+  else if (tm==="cross-yellow"){ ctx.strokeStyle=COL.yellow; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(cx-s*0.6,y-s*0.6); ctx.lineTo(cx+s*0.6,y);
+    ctx.moveTo(cx+s*0.6,y-s*0.6); ctx.lineTo(cx-s*0.6,y); ctx.stroke(); }
+}
+
+function roundRect(ctx,x,y,w,h,r){ ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function hexA(hex,a){ const n=parseInt(hex.slice(1),16);
+  return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")"; }
+
+// ─────────────────────── Меню ───────────────────────
+function renderMenu(){
+  const demo = DATA.buoys.find(b=>b.id==="north") || DATA.buoys[0];
+  startBuoyAnim($("buoyMenu"), demo);
+}
+
+// ─────────────────────── Справочник ───────────────────────
+let curCat = "all";
+function renderChips(){
+  const box=$("chips");
+  const cats=[{key:"all",name:"Все"}].concat(DATA.categories||[]);
+  box.innerHTML=cats.map(c=>'<span class="chip'+(c.key===curCat?' on':'')+'" data-cat="'+c.key+'">'+c.name+'</span>').join("");
+  box.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>{curCat=ch.dataset.cat; renderChips(); renderVList();});
+}
+function renderVList(){
+  const box=$("vlist");
+  const list=DATA.buoys.filter(b=>curCat==="all"||b.cat===curCat);
+  box.innerHTML=list.map(b=>{
+    const c = (colorBands(b.color)[0]);
+    return '<button class="vcard" data-id="'+b.id+'">'
+      + '<span class="sw" style="background:'+(COL[c]||c)+'"></span>'
+      + '<span>'+esc(b.title)+'</span></button>';
+  }).join("");
+  box.querySelectorAll(".vcard").forEach(bt=>bt.onclick=()=>openView(bt.dataset.id));
+}
+function openView(id){
+  const b=DATA.buoys.find(x=>x.id===id); if(!b) return;
+  hide("learn"); show("view");
+  $("viewLP").textContent = lightText(b.light);
+  $("viewTitle").textContent = b.title;
+  $("viewAnswer").textContent = b.answer;
+  $("viewHint").textContent = b.hint;
+  $("viewCap").textContent = b.title;
+  startBuoyAnim($("buoyView"), b);
+}
+function lightText(l){
+  const cn = {red:"красный",green:"зелёный",yellow:"жёлтый",white:"белый"}[l.color]||l.color;
+  const pat = typeof l.pattern==="string" ? l.pattern : "проблесковый";
+  return "огонь: "+cn+" · "+pat;
+}
+
+// ─────────────────────── Тест ───────────────────────
+let qQueue=[], qIdx=0, qScore=0, qAnswered=false;
+function startQuiz(){ qQueue=shuffle(DATA.buoys.slice()); qIdx=0; qScore=0; hide("menu"); show("quiz"); renderQuiz(); }
+function renderQuiz(){
+  qAnswered=false; const b=qQueue[qIdx];
+  $("quizCounter").textContent=(qIdx+1)+" / "+qQueue.length;
+  $("quizQ").textContent=b.quiz.q;
+  startBuoyAnim($("buoyQuiz"), b);
+  $("quizOpts").innerHTML=b.quiz.options.map((o,i)=>'<div class="opt" data-i="'+i+'">'+esc(o)+'</div>').join("");
+  $("quizOpts").querySelectorAll(".opt").forEach(el=>el.onclick=()=>answerQuiz(+el.dataset.i));
+  hide("quizExpl"); $("quizCtrl").style.display="none"; $("quizScore").textContent="";
+}
+function answerQuiz(i){
+  if(qAnswered) return; qAnswered=true;
+  const b=qQueue[qIdx], correct=b.quiz.correct;
+  $("quizOpts").querySelectorAll(".opt").forEach((el,k)=>{
+    el.classList.add("lock");
+    if(k===correct) el.classList.add("ok"); else if(k===i) el.classList.add("bad");
+  });
+  if(i===correct){ qScore++; haptic("success"); } else haptic("error");
+  $("qeLP").textContent = lightText(b.light);
+  $("qeText").textContent = b.answer + ". " + b.hint;
+  show("quizExpl");
+  $("quizScore").textContent="Верно: "+qScore+" из "+(qIdx+1);
+  $("quizCtrl").style.display="flex";
+  $("quizNext").textContent=(qIdx<qQueue.length-1)?"Следующий →":"Завершить";
+}
+$("quizNext").onclick=()=>{ if(qIdx<qQueue.length-1){qIdx++; renderQuiz();} else toMenu(); };
+
+// ─────────────────────── Навигация ───────────────────────
+function toMenu(){ hide("learn"); hide("view"); hide("quiz"); show("menu"); renderMenu(); }
+$("toLearn").onclick=()=>{ stopBuoyAnim(); hide("menu"); show("learn"); renderChips(); renderVList(); };
+$("toQuiz").onclick=startQuiz;
+$("learnBack").onclick=toMenu;
+$("viewBack").onclick=()=>{ stopBuoyAnim(); hide("view"); show("learn"); };
+$("quizBack").onclick=toMenu;
+window.__navBack=()=>{
+  if(!$("view").classList.contains("hidden")){ stopBuoyAnim(); hide("view"); show("learn"); return true; }
+  if(!$("learn").classList.contains("hidden")){ toMenu(); return true; }
+  if(!$("quiz").classList.contains("hidden")){ toMenu(); return true; }
+  return false;
+};
+
+function esc(s){ return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function haptic(t){ try{ tg?.HapticFeedback?.notificationOccurred(t); }catch(e){} }
+
+renderMenu();
+</script>
+</body>
+</html>
