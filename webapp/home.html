@@ -10,6 +10,7 @@
 <script src="quiz_data.js"></script>
 <script src="srs.js"></script>
 <script src="progress.js"></script>
+<script src="pl_progress.js"></script>
 <script src="heatmap.js"></script>
 <script src="badges.js"></script>
 <script src="icons.js"></script>
@@ -50,6 +51,20 @@
   .beta-badge{ font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
     color:var(--accent); border:1px solid var(--accent); border-radius:999px;
     padding:1px 5px; margin-left:4px; vertical-align:1px; opacity:.85 }
+
+  /* свайп-карусель «Готовность» по лицензиям */
+  .ready-track{ display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px }
+  .ready-track::-webkit-scrollbar{ display:none }
+  .ready-slide{ flex:0 0 100%; scroll-snap-align:center; min-width:0 }
+  .ready-dots{ display:flex; justify-content:center; gap:6px; margin-top:8px }
+  .ready-dots i{ width:6px; height:6px; border-radius:50%; background:var(--border);
+    transition:background .2s, width .2s }
+  .ready-dots i.on{ background:var(--accent); width:18px; border-radius:3px }
+  .pl-mini{ display:flex; gap:10px; margin-top:12px }
+  .pl-mini > div{ flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px }
+  .pl-mini .k{ font-size:11px; color:var(--hint) }
+  .pl-mini .v{ font-weight:800; font-size:18px }
 </style>
 </head>
 <body>
@@ -67,32 +82,44 @@
     </div>
   </div>
 
-  <!-- ГОТОВНОСТЬ + дневная цель + серия (видны после первой активности) -->
-  <div class="card hidden" id="readyCard" style="margin-bottom:14px">
-    <div style="display:flex; align-items:center; gap:16px">
-      <div class="ring" id="readyRing">
-        <div class="ring-val"><span class="ring-num" id="readyPct">0%</span></div>
+  <!-- ГОТОВНОСТЬ — свайп по лицензиям (ISSA / Żeglarz / Sternik) -->
+  <div class="hidden" id="readyWrap" style="margin-bottom:14px">
+    <div class="ready-track" id="readyTrack">
+
+      <!-- слайд ISSA -->
+      <div class="card ready-slide" data-lic="issa" style="margin:0">
+        <div style="display:flex; align-items:center; gap:16px">
+          <div class="ring" id="readyRing">
+            <div class="ring-val"><span class="ring-num" id="readyPct">0%</span></div>
+          </div>
+          <div style="flex:1; min-width:0">
+            <div class="h2" style="margin:0 0 4px">Готовность · ISSA</div>
+            <div class="muted" style="font-size:13px" id="readyVerdict"></div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:12px">
+          <div id="goalBox" style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px; cursor:pointer">
+            <div style="font-size:11px; color:var(--hint)">Сегодня</div>
+            <div style="font-weight:800; font-size:18px" id="goalToday">0/0</div>
+          </div>
+          <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
+            <div style="font-size:11px; color:var(--hint)">Серия</div>
+            <div style="font-weight:800; font-size:18px" id="streakVal">0 <span class="emi" data-icon="flame"></span></div>
+          </div>
+          <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
+            <div style="font-size:11px; color:var(--hint)">Рекорд</div>
+            <div style="font-weight:800; font-size:18px" id="bestVal">0</div>
+          </div>
+        </div>
+        <div class="muted" style="font-size:12px; margin-top:8px" id="weakLine"></div>
       </div>
-      <div style="flex:1; min-width:0">
-        <div class="h2" style="margin:0 0 4px">Готовность к экзамену</div>
-        <div class="muted" style="font-size:13px" id="readyVerdict"></div>
-      </div>
+
+      <!-- слайды польских лицензий (заполняются JS) -->
+      <div class="card ready-slide pl-slide" data-lic="zeglarz" style="margin:0"></div>
+      <div class="card ready-slide pl-slide" data-lic="sternik" style="margin:0"></div>
+
     </div>
-    <div style="display:flex; gap:10px; margin-top:12px">
-      <div id="goalBox" style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px; cursor:pointer">
-        <div style="font-size:11px; color:var(--hint)">Сегодня</div>
-        <div style="font-weight:800; font-size:18px" id="goalToday">0/0</div>
-      </div>
-      <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
-        <div style="font-size:11px; color:var(--hint)">Серия</div>
-        <div style="font-weight:800; font-size:18px" id="streakVal">0 <span class="emi" data-icon="flame"></span></div>
-      </div>
-      <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
-        <div style="font-size:11px; color:var(--hint)">Рекорд</div>
-        <div style="font-weight:800; font-size:18px" id="bestVal">0</div>
-      </div>
-    </div>
-    <div class="muted" style="font-size:12px; margin-top:8px" id="weakLine"></div>
+    <div class="ready-dots" id="readyDots"></div>
   </div>
 
   <!-- АКТИВНОСТЬ (heatmap по дням) -->
@@ -234,40 +261,50 @@ function render(){
       `На сегодня всё повторено · закреплено ${st.learned} из ${total}`;
   }
 
-  // ── карточка «Готовность» (показываем только после первой активности) ──
-  if (window.Progress && st.started > 0){
-    const boxOf = id => { const s = SRS.state(id); return s ? s.box : null; };
-    const r = Progress.readiness(D.questions, boxOf);
-    const goal = Progress.getGoal();
-    const todayN = Progress.todayCount();
-    const streak = Progress.streakInfo();
+  // ── «Готовность» — свайп по лицензиям (ISSA + польские) ──
+  // Показываем блок, если есть активность хоть где-то: ISSA (SRS) или PL.
+  const plZ = window.PLProgress ? PLProgress.solvedCount("zeglarz") : 0;
+  const plS = window.PLProgress ? PLProgress.solvedCount("sternik") : 0;
+  const anyActivity = (window.Progress && st.started > 0) || plZ > 0 || plS > 0;
 
-    const card = document.getElementById("readyCard");
-    document.getElementById("readyPct").textContent = r.percent + "%";
-    // кольцо готовности: заполнение --p и цвет по уровню
-    const ring = document.getElementById("readyRing");
-    ring.style.setProperty("--p", r.percent);
-    ring.style.setProperty("--ring-color",
-      r.percent>=80 ? "var(--ok)" : r.percent>=50 ? "var(--warn)" : "var(--bad)");
-    document.getElementById("readyVerdict").textContent = r.verdict;
-    document.getElementById("goalToday").textContent = `${todayN}/${goal}`;
-    document.getElementById("streakVal").innerHTML =
-      `${streak.streak} ${window.Icons ? Icons.svg("flame") : ""}`;
-    document.getElementById("bestVal").textContent = `${streak.best}`;
-    // настройка дневной цели: тап по «Сегодня» → выбор значения
-    document.getElementById("goalBox").onclick = ()=>{
-      const cur = Progress.getGoal();
-      const v = prompt("Дневная цель — сколько вопросов в день? (5–100)", cur);
-      if (v === null) return;
-      const n = parseInt(v, 10);
-      if (!isNaN(n)){ Progress.setGoal(n); if (window.Sync) Sync.schedulePush(); render(); }
-    };
-    const weak = r.topics.filter(t=>t.pct<60).slice(0,3).map(t=>t.topic);
-    document.getElementById("weakLine").textContent =
-      weak.length ? "Слабее всего: " + weak.join(", ") : "Слабых тем нет — отличная база!";
-    card.classList.remove("hidden");
+  if (anyActivity){
+    // — слайд ISSA — заполняем всегда (даже с 0%, если ISSA ещё не начат) —
+    if (window.Progress){
+      const boxOf = id => { const s = SRS.state(id); return s ? s.box : null; };
+      const r = Progress.readiness(D.questions, boxOf);
+      const goal = Progress.getGoal();
+      const todayN = Progress.todayCount();
+      const streak = Progress.streakInfo();
+      document.getElementById("readyPct").textContent = r.percent + "%";
+      const ring = document.getElementById("readyRing");
+      ring.style.setProperty("--p", r.percent);
+      ring.style.setProperty("--ring-color",
+        r.percent>=80 ? "var(--ok)" : r.percent>=50 ? "var(--warn)" : "var(--bad)");
+      document.getElementById("readyVerdict").textContent = r.verdict;
+      document.getElementById("goalToday").textContent = `${todayN}/${goal}`;
+      document.getElementById("streakVal").innerHTML =
+        `${streak.streak} ${window.Icons ? Icons.svg("flame") : ""}`;
+      document.getElementById("bestVal").textContent = `${streak.best}`;
+      document.getElementById("goalBox").onclick = ()=>{
+        const cur = Progress.getGoal();
+        const v = prompt("Дневная цель — сколько вопросов в день? (5–100)", cur);
+        if (v === null) return;
+        const n = parseInt(v, 10);
+        if (!isNaN(n)){ Progress.setGoal(n); if (window.Sync) Sync.schedulePush(); render(); }
+      };
+      const weak = r.topics.filter(t=>t.pct<60).slice(0,3).map(t=>t.topic);
+      document.getElementById("weakLine").textContent =
+        weak.length ? "Слабее всего: " + weak.join(", ") : "Слабых тем нет — отличная база!";
+    }
 
-    // heatmap активности (как на GitHub) — поверх темы, в тёмной и светлой
+    // — польские слайды (Żeglarz 150 / Sternik 460) —
+    renderPlSlide("zeglarz", "Żeglarz jachtowy", 150, "anchor");
+    renderPlSlide("sternik", "Sternik motorowodny", 460, "compass");
+
+    document.getElementById("readyWrap").classList.remove("hidden");
+    setupReadyDots();
+
+    // heatmap активности (учитывает и польские ответы — они пишутся в Progress)
     if (window.Heatmap){
       document.getElementById("activityCard").classList.remove("hidden");
       Heatmap.render(document.getElementById("heatmap"), { weeks: 18 });
@@ -281,6 +318,49 @@ function render(){
     document.getElementById("profileSub").textContent =
       `Достижения: ${nb} из ${tot} · звания, бейджи`;
   }
+}
+
+// заполнить слайд готовности польской лицензии
+function renderPlSlide(lic, title, total, icon){
+  const el = document.querySelector(`.pl-slide[data-lic="${lic}"]`);
+  if (!el || !window.PLProgress) return;
+  const r = PLProgress.readiness(lic, total);
+  const best = PLProgress.bestExam(lic);
+  const color = r.percent>=80 ? "var(--ok)" : r.percent>=50 ? "var(--warn)" : "var(--bad)";
+  const ic = window.Icons ? Icons.svg(icon) : "";
+  el.innerHTML =
+    `<div style="display:flex; align-items:center; gap:16px">
+       <div class="ring" style="--p:${r.percent}; --ring-color:${color}">
+         <div class="ring-val"><span class="ring-num">${r.percent}%</span></div>
+       </div>
+       <div style="flex:1; min-width:0">
+         <div class="h2" style="margin:0 0 4px">Готовность · ${title}</div>
+         <div class="muted" style="font-size:13px">${r.verdict}</div>
+       </div>
+     </div>
+     <div class="pl-mini">
+       <div><div class="k">Изучено</div><div class="v">${r.solved}/${total}</div></div>
+       <div><div class="k">Лучший экз.</div><div class="v">${best ? best.correct+"/"+best.total : "—"}</div></div>
+       <div><div class="k">Порог</div><div class="v">65</div></div>
+     </div>
+     <a class="muted" href="exam_pl.html" style="display:block; font-size:12px; margin-top:8px;
+        color:var(--accent); text-decoration:none">Открыть тренажёр →</a>`;
+}
+
+// точки-индикаторы под каруселью + подсветка активного слайда при свайпе
+function setupReadyDots(){
+  const track = document.getElementById("readyTrack");
+  const dots = document.getElementById("readyDots");
+  const slides = track.querySelectorAll(".ready-slide");
+  if (!dots.childElementCount){
+    slides.forEach(() => dots.appendChild(document.createElement("i")));
+  }
+  const sync = () => {
+    const i = Math.round(track.scrollLeft / track.clientWidth);
+    dots.querySelectorAll("i").forEach((d, k) => d.classList.toggle("on", k === i));
+  };
+  track.onscroll = sync;
+  sync();
 }
 
 render();

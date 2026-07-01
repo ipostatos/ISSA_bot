@@ -8,6 +8,8 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
 <script src="icons.js"></script>
+<script src="progress.js"></script>
+<script src="pl_progress.js"></script>
 <script src="zeglarz_data.js"></script>
 <script src="sternik_data.js"></script>
 <script src="konspekt_pl_data.js"></script>
@@ -166,9 +168,10 @@ const BANKS = {
 };
 // карта «id вопроса -> ключ темы конспекта» для «лампочки-источника»
 const Q2TOPIC = (window.KONSPEKT_PL_DATA && window.KONSPEKT_PL_DATA.q2topic) || {};
-let D = null, ALL = [];   // выбранная лицензия
+let D = null, ALL = [], curLic = null;   // выбранная лицензия (ключ + данные)
 
 function pickLicense(lic){
+  curLic = lic;
   D = BANKS[lic] || {questions:[], examSize:75, examPass:65, examMinutes:90, title:"—"};
   ALL = D.questions || [];
   $("pick").classList.add("hidden");
@@ -284,7 +287,11 @@ $("opts").addEventListener("click", e=>{
   } else {
     if (S._trainPicked!=null) return;   // уже отвечено
     S._trainPicked = i;
-    haptic(i===S.queue[S.idx].answer ? "success" : "error");
+    const q = S.queue[S.idx];
+    const ok = i===q.answer;
+    haptic(ok ? "success" : "error");
+    // прогресс: верный ответ в тренировке засчитываем + пишем активность
+    if (window.PLProgress && curLic) PLProgress.record(curLic, q.id, ok);
     render();
   }
 });
@@ -292,8 +299,14 @@ $("opts").addEventListener("click", e=>{
 function finishExam(){
   if (S.tick) clearInterval(S.tick);
   let correct=0;
-  S.queue.forEach((q,i)=>{ if(S.answers[i]===q.answer) correct++; });
+  S.queue.forEach((q,i)=>{
+    const ok = S.answers[i]===q.answer;
+    if(ok) correct++;
+    // прогресс: каждый верно отвеченный вопрос экзамена засчитываем в банк
+    if (window.PLProgress && curLic && S.answers[i]!=null) PLProgress.record(curLic, q.id, ok);
+  });
   const total=S.queue.length, pass = correct>=D.examPass;
+  if (window.PLProgress && curLic) PLProgress.recordExam(curLic, correct, total);
   $("run").classList.add("hidden");
   $("result").classList.remove("hidden");
   $("rVerdict").innerHTML = pass

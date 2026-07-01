@@ -29,16 +29,18 @@ from pathlib import Path
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import (
     CallbackQuery,
     FSInputFile,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     KeyboardButton,
+    LabeledPrice,
     MenuButtonWebApp,
     Message,
     PollAnswer,
+    PreCheckoutQuery,
     ReplyKeyboardMarkup,
     WebAppInfo,
 )
@@ -481,8 +483,84 @@ async def group_cb_redirect(cb: CallbackQuery) -> None:
     await cb.answer("Открой бота в личном чате 🙂", show_alert=True)
 
 
+# ─────────────────────────── Благодарность автору (Telegram Stars) ───────────────────────────
+# Донат в Telegram Stars (валюта XTR). Провайдер не нужен, provider_token пустой.
+# Поток: Mini App «Поддержать» → deep-link /start donate → выбор суммы → invoice →
+# pre_checkout approve → successful_payment → спасибо. Оплата опциональна.
+DONATE_TIERS = [
+    ("☕ Кофе", 50),
+    ("⭐ Спасибо", 100),
+    ("🚀 Щедро", 300),
+]
+
+
+def donate_kb() -> InlineKeyboardMarkup:
+    rows = [[InlineKeyboardButton(text=f"{label} · {amount} ⭐",
+                                  callback_data=f"donate:{amount}")]
+            for label, amount in DONATE_TIERS]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+async def show_donate_options(message: Message) -> None:
+    await message.answer(
+        "💙 <b>Спасибо, что хочешь поддержать проект!</b>\n\n"
+        "Тренажёр — некоммерческий и делается в свободное время. "
+        "Любая поддержка мотивирует развивать его дальше. "
+        "Выбери сумму в Telegram Stars — это не обязательно и ни на что не влияет 🙂",
+        reply_markup=donate_kb(),
+    )
+
+
+@dp.callback_query(F.data.startswith("donate:"))
+async def cb_donate(cb: CallbackQuery) -> None:
+    try:
+        amount = int(cb.data.split(":", 1)[1])
+    except (ValueError, IndexError):
+        await cb.answer("Некорректная сумма")
+        return
+    if amount < 1 or amount > 100000:
+        await cb.answer("Некорректная сумма")
+        return
+    await cb.answer()
+    # Счёт в Stars: currency="XTR", provider_token="" (для Stars не требуется).
+    await cb.message.answer_invoice(
+        title="Поддержка ISSA Trainer",
+        description="Благодарность автору тренажёра. Спасибо за поддержку! ⚓",
+        payload=f"donate_{amount}",
+        currency="XTR",
+        prices=[LabeledPrice(label=f"{amount} Stars", amount=amount)],
+        provider_token="",
+    )
+
+
+@dp.pre_checkout_query()
+async def on_pre_checkout(pcq: PreCheckoutQuery) -> None:
+    # Для Stars всегда подтверждаем (никаких внешних платёжных проверок).
+    await pcq.answer(ok=True)
+
+
+@dp.message(F.successful_payment)
+async def on_successful_payment(message: Message) -> None:
+    sp = message.successful_payment
+    stars = sp.total_amount if sp else 0
+    await message.answer(
+        f"💙 <b>Огромное спасибо за поддержку — {stars} ⭐!</b>\n\n"
+        "Это правда помогает развивать тренажёр. Попутного ветра! ⛵",
+    )
+
+
+@dp.message(Command("donate"))
+async def cmd_donate(message: Message) -> None:
+    await show_donate_options(message)
+
+
 @dp.message(CommandStart())
-async def cmd_start(message: Message) -> None:
+async def cmd_start(message: Message, command: CommandObject | None = None) -> None:
+    # Deep-link «/start donate» из кнопки «Поддержать» в Mini App → выбор суммы ⭐.
+    if command and (command.args or "").strip() == "donate":
+        await show_donate_options(message)
+        return
+
     # Если развёрнут Mini App — делаем его ГЛАВНЫМ входом: крупная кнопка-приложение
     # первым сообщением. Весь тренажёр (тесты с разбором, конспект, калькуляторы,
     # повторение, прогресс) удобнее в приложении; чат-режимы — как быстрый доступ.

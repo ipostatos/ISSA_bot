@@ -26,6 +26,22 @@
   .ok-i{ color:var(--ok) } .li{ display:flex; gap:8px; margin:6px 0; font-size:var(--fs-sm); line-height:1.5 }
   .li .b{ color:var(--ok); flex:0 0 auto }
   .emi{ display:inline-flex; vertical-align:-2px } .emi svg{ width:1em; height:1em }
+
+  /* свайп по банкам лицензий */
+  .bank-track{ display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px }
+  .bank-track::-webkit-scrollbar{ display:none }
+  .bank-slide{ flex:0 0 100%; scroll-snap-align:center; min-width:0 }
+  .bank-title{ font-weight:700; font-size:15px; margin-bottom:4px }
+  .bank-num{ font-size:30px; font-weight:800; font-variant-numeric:tabular-nums }
+  .bank-dots{ display:flex; justify-content:center; gap:6px; margin:8px 0 12px }
+  .bank-dots i{ width:6px; height:6px; border-radius:50%; background:var(--border);
+    transition:background .2s, width .2s }
+  .bank-dots i.on{ background:var(--accent); width:18px; border-radius:3px }
+
+  /* благодарность автору */
+  .donate-row{ display:flex; gap:10px; flex-wrap:wrap }
+  .donate-row .btn{ flex:1; min-width:150px }
 </style>
 </head>
 <body>
@@ -36,6 +52,33 @@
     <div class="big-num" id="total">—</div>
     <div class="big-cap">проверенных вопросов · ревизия <span id="rev">—</span></div>
   </div>
+
+  <!-- Свайп по лицензиям: банки вопросов (ISSA / Żeglarz / Sternik) -->
+  <div class="section-title" style="margin:4px 0 8px">Лицензии и банки</div>
+  <div class="bank-track" id="bankTrack">
+    <div class="card bank-slide" style="margin:0">
+      <div class="bank-title"><span class="emi" data-icon="graduation-cap"></span> ISSA Inshore Skipper + SRC</div>
+      <div class="bank-num">605</div>
+      <div class="muted" style="font-size:12px">вопросов · 15 тем · экзамен 100/90% · RU</div>
+      <div class="muted" style="font-size:12px; margin-top:6px">80 из них — с реального экзаменационного листа.
+        Источники: МППСС-72, IALA, VHF/GMDSS, учебник ISSA.</div>
+    </div>
+    <div class="card bank-slide" style="margin:0">
+      <div class="bank-title"><span class="emi" data-icon="anchor"></span> Żeglarz jachtowy 🇵🇱</div>
+      <div class="bank-num">150</div>
+      <div class="muted" style="font-size:12px">вопросов · 21 знак · экзамен 75/65 · 90 мин · PL/RU</div>
+      <div class="muted" style="font-size:12px; margin-top:6px">Гибридный формат «как на экзаменационном листе».
+        Конспект по программе PZŻ (7 тем) с разбором каждого ответа.</div>
+    </div>
+    <div class="card bank-slide" style="margin:0">
+      <div class="bank-title"><span class="emi" data-icon="compass"></span> Sternik motorowodny 🇵🇱</div>
+      <div class="bank-num">460</div>
+      <div class="muted" style="font-size:12px">вопросов · 129 знаков · экзамен 75/65 · 90 мин · PL/RU</div>
+      <div class="muted" style="font-size:12px; margin-top:6px">8 разделов: лоция, метео, спасение, двигатели,
+        конструкции, навигация, право дороги, этикет. Разбор — в Конспекте PL.</div>
+    </div>
+  </div>
+  <div class="bank-dots" id="bankDots"></div>
 
   <div class="card" style="margin-bottom:12px">
     <div class="h2">Что выверено</div>
@@ -62,13 +105,53 @@
   <div class="card" style="margin-bottom:12px">
     <div class="h2">Источники</div>
     <div class="muted" style="font-size:13px; line-height:1.6">
-      Вопросы составлены по открытым первоисточникам:
-      <b>МППСС-72 (COLREG)</b>, система ограждения <b>IALA MBS</b>,
+      <b>ISSA (Inshore Skipper + SRC):</b> вопросы составлены по открытым
+      первоисточникам — <b>МППСС-72 (COLREG)</b>, система ограждения <b>IALA MBS</b>,
       процедуры <b>VHF / GMDSS (SRC)</b>, учебник ISSA «Шкипер прибрежного плавания»
-      и общепринятая навигационная практика. Полные тексты — в разделе
-      <a href="book.html" style="color:var(--accent)"><span class="emi" data-icon="library"></span> Библиотека</a>,
-      теория — в <a href="konspekt.html" style="color:var(--accent)"><span class="emi" data-icon="book-open"></span> Конспекте</a>.
+      и общепринятая навигационная практика.
     </div>
+    <div class="muted" style="font-size:13px; line-height:1.6; margin-top:10px">
+      <b>Польские лицензии (Żeglarz / Sternik) 🇵🇱:</b> формулировки взяты из
+      открытых экзаменационных тестов и приведены «как на листе» (гибрид PL/RU,
+      без перевода). Конспект и обоснования ответов переработаны по официальной
+      программе <b>PZŻ / PYA</b> (zakres wymagań egzaminacyjnych) и польским
+      нормам судоходства (постановления министра о квалификациях и правилах на
+      внутренних/морских водах), COLREG и IALA. Материалы школ не копируются
+      дословно — переработаны самостоятельно.
+    </div>
+    <div class="muted" style="font-size:13px; line-height:1.6; margin-top:10px">
+      Полные тексты учебников —
+      <a href="book.html" style="color:var(--accent)"><span class="emi" data-icon="library"></span> Библиотека</a>;
+      теория ISSA —
+      <a href="konspekt.html" style="color:var(--accent)"><span class="emi" data-icon="book-open"></span> Конспект</a>,
+      теория PL —
+      <a href="konspekt_pl.html" style="color:var(--accent)"><span class="emi" data-icon="book-open"></span> Конспект PL</a>.
+    </div>
+  </div>
+
+  <!-- Об авторе + благодарность -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="h2">Об авторе</div>
+    <div class="muted" style="font-size:13px; line-height:1.6; margin-bottom:10px">
+      Тренажёр — независимый некоммерческий проект: подготовка к экзаменам по
+      яхтингу на русском. Собран и поддерживается одним человеком в свободное время.
+      Если он помог тебе в подготовке — можно поблагодарить автора. Это не обязательно
+      и ни на что не влияет 🙂
+    </div>
+    <div class="muted" style="font-size:13px; line-height:1.6; margin-bottom:12px">
+      Нашёл ошибку в вопросе или хочешь такого же бота под свою задачу — пиши
+      <a href="https://t.me/ipostatos" target="_blank" rel="noopener"
+         style="color:var(--accent)"><span class="emi" data-icon="send"></span> @ipostatos</a>.
+    </div>
+    <div class="donate-row">
+      <button class="btn" id="starsBtn">
+        <span class="emi" data-icon="star"></span> Поддержать · Telegram Stars
+      </button>
+      <a class="btn ghost" href="https://buymeacoffee.com/ipostatos" target="_blank" rel="noopener" id="coffeeBtn">
+        <span class="emi" data-icon="coffee"></span> Купить кофе
+      </a>
+    </div>
+    <div class="muted" id="donateNote" style="font-size:12px; margin-top:10px; text-align:center"></div>
   </div>
 
   <p class="foot">Это вспомогательный учебный материал для самостоятельной
@@ -104,6 +187,36 @@ if (!D){
       <span class="v">${t.n}</span>
     </div>`).join("");
 }
+
+// ── свайп по банкам: точки-индикаторы ──
+(function(){
+  const track = $("bankTrack"), dots = $("bankDots");
+  if (!track || !dots) return;
+  track.querySelectorAll(".bank-slide").forEach(()=> dots.appendChild(document.createElement("i")));
+  const sync = ()=>{
+    const i = Math.round(track.scrollLeft / track.clientWidth);
+    dots.querySelectorAll("i").forEach((d,k)=> d.classList.toggle("on", k===i));
+  };
+  track.addEventListener("scroll", sync); sync();
+})();
+
+// ── благодарность: Telegram Stars через бота, кофе — внешняя ссылка ──
+(function(){
+  const tg = window.Telegram?.WebApp;
+  const btn = $("starsBtn"), note = $("donateNote");
+  if (!btn) return;
+  var BOT = "issa_tests_bot";   // username бота-хоста тренажёра
+  btn.onclick = function(){
+    // Открываем бота с deep-link → он показывает выбор суммы и шлёт счёт в Stars.
+    var link = "https://t.me/" + BOT + "?start=donate";
+    if (tg && tg.openTelegramLink){
+      tg.openTelegramLink(link);   // откроет чат с ботом, Mini App свернётся
+    } else {
+      window.open(link, "_blank");
+    }
+    note.textContent = "Открыли чат с ботом — там выбери сумму в звёздах ⭐";
+  };
+})();
 
 if (window.Icons) Icons.hydrate();
 </script>
