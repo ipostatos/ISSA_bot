@@ -532,21 +532,41 @@ function windColor(kn){
   if (kn < 25) return "#f4a261";   // сильный
   return "#e5544b";                // штормовой
 }
-// цвет по высоте волны (м)
-function waveColor(m){
-  if (m < 0.5) return "rgba(80,180,220,0.28)";
-  if (m < 1.0) return "rgba(90,200,150,0.32)";
-  if (m < 2.0) return "rgba(233,196,106,0.36)";
-  if (m < 3.0) return "rgba(244,162,97,0.40)";
-  return "rgba(229,84,75,0.44)";
-}
-// цвет по интенсивности осадков (мм/ч) — сине-фиолетовая шкала
-function rainColor(mm){
-  if (mm < 0.1) return null;                    // сухо — не рисуем
-  if (mm < 0.5) return "rgba(120,170,230,0.30)"; // морось
-  if (mm < 2.0) return "rgba(70,130,220,0.38)";  // слабый
-  if (mm < 5.0) return "rgba(50,90,210,0.46)";   // умеренный
-  return "rgba(110,60,200,0.52)";                // сильный ливень
+// Градиентные стопы [значение, [r,g,b,a]] для плавной тепловой заливки.
+// Заливка рендерится на маленьком offscreen-canvas (билинейная интерполяция
+// сетки) и растягивается на карту со сглаживанием — как на Windy, без кругов.
+var WAVE_STOPS = [
+  [0.0, [80,180,220,0]],    // штиль — прозрачно
+  [0.5, [80,180,220,90]],
+  [1.0, [90,200,150,110]],
+  [2.0, [233,196,106,125]],
+  [3.0, [244,162,97,140]],
+  [5.0, [229,84,75,160]]
+];
+var RAIN_STOPS = [
+  [0.0,  [120,170,230,0]],   // сухо — прозрачно
+  [0.1,  [120,170,230,70]],
+  [0.5,  [90,150,235,100]],
+  [2.0,  [60,110,225,135]],
+  [5.0,  [70,80,215,165]],
+  [10.0, [110,60,200,190]]
+];
+// интерполяция цвета по стопам → [r,g,b,a]
+function lerpStops(stops, v){
+  if (v <= stops[0][0]) return stops[0][1];
+  for (var i=1;i<stops.length;i++){
+    if (v <= stops[i][0]){
+      var a = stops[i-1], b = stops[i];
+      var t = (v - a[0]) / (b[0] - a[0]);
+      return [
+        Math.round(a[1][0]+(b[1][0]-a[1][0])*t),
+        Math.round(a[1][1]+(b[1][1]-a[1][1])*t),
+        Math.round(a[1][2]+(b[1][2]-a[1][2])*t),
+        Math.round(a[1][3]+(b[1][3]-a[1][3])*t)
+      ];
+    }
+  }
+  return stops[stops.length-1][1];
 }
 
 function showWindMap(spot){
@@ -670,37 +690,67 @@ function fitCanvas(cv){
   return ctx;
 }
 
-// Верхний слой (windCanvas): слой волн (заливка) + стрелки. Перерисовывается
-// при движении карты, смене часа/слоёв. Частицы — на отдельном canvas в цикле.
+// Плавная тепловая заливка скалярного поля (волны/осадки). Значение в узле i,j
+// берёт valueFn(cell). Рендерим на маленьком offscreen (GRID пикселей/ячейку),
+// билинейно интерполируем цвет, затем растягиваем со сглаживанием на canvas карты
+// по 4 угловым точкам сетки (аффинно — сетка регулярна в lat/lon).
+var heatOff = null;
+function drawHeatmap(ctx, size, stops, valueFn){
+  if (!windGrid || !gridBounds) return;
+  var SS = 6;                       // субпикселей на ячейку сетки (гладкость)
+  var W = (GRID_N-1)*SS + 1, H = W;
+  if (!heatOff){ heatOff = document.createElement("canvas"); }
+  heatOff.width = W; heatOff.height = H;
+  var octx = heatOff.getContext("2d");
+  var img = octx.createImageData(W, H);
+  var d = img.data;
+  // билинейная интерполяция значения и цвета по ячейкам сетки
+  function cellVal(i,j){ var c = windGrid[i*GRID_N+j]; var v = valueFn(c); return v==null?0:v; }
+  for (var py=0; py<H; py++){
+    var gy = py/SS, i0 = Math.min(Math.floor(gy),GRID_N-2), ty = gy-i0;
+    // затухание к краям (виньетка) — убирает прямоугольный обрыв заливки
+    var edgeY = Math.min(1, Math.min(py, H-1-py) / (SS*0.9));
+    for (var px=0; px<W; px++){
+      var gx = px/SS, j0 = Math.min(Math.floor(gx),GRID_N-2), tx = gx-j0;
+      var v = cellVal(i0,j0)*(1-tx)*(1-ty) + cellVal(i0,j0+1)*tx*(1-ty)
+            + cellVal(i0+1,j0)*(1-tx)*ty  + cellVal(i0+1,j0+1)*tx*ty;
+      var col = lerpStops(stops, v);
+      var edgeX = Math.min(1, Math.min(px, W-1-px) / (SS*0.9));
+      var edge = edgeX * edgeY;                 // 0 на кромке → 1 внутри
+      var o = (py*W+px)*4;
+      d[o]=col[0]; d[o+1]=col[1]; d[o+2]=col[2]; d[o+3]=Math.round(col[3]*edge);
+    }
+  }
+  octx.putImageData(img,0,0);
+  // растянуть offscreen на реальную область сетки (4 угла) со сглаживанием
+  var b = gridBounds;
+  var tl = wmap.latLngToContainerPoint([b.getNorth(), b.getWest()]);
+  var br = wmap.latLngToContainerPoint([b.getSouth(), b.getEast()]);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(heatOff, tl.x, tl.y, br.x-tl.x, br.y-tl.y);
+}
+
+// Верхний слой (windCanvas): тепловые заливки (осадки/волны) + стрелки.
+// Перерисовывается при движении карты, смене часа/слоёв. Частицы — отдельно.
 function drawOverlay(){
   if (!wmap || !windCanvas) return;
   var size = wmap.getSize();
   var ctx = fitCanvas(windCanvas);
   ctx.clearRect(0,0,size.x,size.y);
   if (!windGrid) return;
+  var hi = function(arr){ return Math.min(hourIdx, arr.length-1); };
 
-  // — слой осадков: пятна по сетке, цвет/яркость по интенсивности (мм/ч) —
+  // — слой осадков: плавная сине-фиолетовая заливка по интенсивности —
   if (layers.rain){
-    windGrid.forEach(function(g){
-      var mm = g.rain ? g.rain[Math.min(hourIdx, g.rain.length-1)] : null;
-      var col = (mm != null) ? rainColor(mm) : null;
-      if (!col) return;                       // сухо → не рисуем
-      var pt = wmap.latLngToContainerPoint([g.lat, g.lon]);
-      if (pt.x<-40||pt.y<-40||pt.x>size.x+40||pt.y>size.y+40) return;
-      ctx.fillStyle = col;
-      ctx.beginPath(); ctx.arc(pt.x, pt.y, 34, 0, Math.PI*2); ctx.fill();
+    drawHeatmap(ctx, size, RAIN_STOPS, function(c){
+      return c && c.rain ? c.rain[hi(c.rain)] : 0;
     });
   }
-
-  // — слой волн: круги-пятна по сетке, цвет по высоте волны —
+  // — слой волн: плавная заливка по высоте волны —
   if (layers.waves){
-    windGrid.forEach(function(g){
-      var m = g.wave[Math.min(hourIdx, g.wave.length-1)];
-      if (m == null) return;
-      var pt = wmap.latLngToContainerPoint([g.lat, g.lon]);
-      if (pt.x<-40||pt.y<-40||pt.x>size.x+40||pt.y>size.y+40) return;
-      ctx.fillStyle = waveColor(m);
-      ctx.beginPath(); ctx.arc(pt.x, pt.y, 34, 0, Math.PI*2); ctx.fill();
+    drawHeatmap(ctx, size, WAVE_STOPS, function(c){
+      var m = c && c.wave ? c.wave[hi(c.wave)] : null;
+      return m==null?0:m;
     });
   }
 
