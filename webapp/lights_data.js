@@ -10,6 +10,12 @@
 // Ракурс важен: с носа видны оба борта (R слева, G справа) + топовые; с кормы —
 // белый кормовой; с борта — один борт + топовые/кормовой.
 //
+// hull — тип силуэта для рисовки: motor (обычное моторное/PD), sail (парусная
+// яхта), fishing (рыболовное с краном), tug (буксир), big (крупное судно).
+// day — дневные знаки (day shapes) по COLREG, знак: {y, shape, c}. y: 0 верх
+// мачты .. 1 палуба; shape: ball, cone-up, cone-down, cylinder, diamond;
+// c — цвет (чёрный, днём знаки видны как тёмные силуэты на светлом небе).
+//
 // Источник: COLREG-72 (МППСС), общедоступный текст правил. Не является
 // официальным материалом ISSA/PZŻ.
 
@@ -27,7 +33,7 @@ window.LIGHTS_DATA = {
 
     // ── Rule 23: судно с механическим приводом ──
     {
-      id: "power_head", cat: "power", hull: "motor", view: "head",
+      id: "power_head", cat: "power", hull: "motor", view: "head", day: [],
       title: "Моторное судно — вид с носа",
       rule: "Rule 23",
       answer: "Судно с механическим приводом на ходу, идёт на вас",
@@ -41,7 +47,7 @@ window.LIGHTS_DATA = {
       quiz: { type: "vessel", options: ["Моторное на ходу","Парусное","На якоре","Рыболовное"], correct: 0 },
     },
     {
-      id: "power_head_small", cat: "power", hull: "motor", view: "head",
+      id: "power_head_small", cat: "power", hull: "motor", view: "head", day: [],
       title: "Моторное <50 м — вид с носа",
       rule: "Rule 23",
       answer: "Моторное судно длиной менее 50 м (один топовый)",
@@ -54,7 +60,7 @@ window.LIGHTS_DATA = {
       quiz: { type: "size", options: ["Менее 50 м","50 м и более","Не определить"], correct: 0 },
     },
     {
-      id: "power_stern", cat: "power", hull: "motor", view: "stern",
+      id: "power_stern", cat: "power", hull: "motor", view: "stern", day: [],
       title: "Моторное судно — вид с кормы",
       rule: "Rule 23",
       answer: "Моторное судно удаляется от вас (виден кормовой)",
@@ -65,7 +71,7 @@ window.LIGHTS_DATA = {
       quiz: { type: "aspect", options: ["Удаляется (корма)","Идёт на вас (нос)","Пересекает курс"], correct: 0 },
     },
     {
-      id: "power_port", cat: "power", hull: "motor", view: "port",
+      id: "power_port", cat: "power", hull: "motor", view: "port", day: [],
       title: "Моторное судно — вид с левого борта",
       rule: "Rule 23",
       answer: "Моторное судно, вы видите его ЛЕВЫЙ борт (красный)",
@@ -79,7 +85,7 @@ window.LIGHTS_DATA = {
 
     // ── Rule 25: парусное судно ──
     {
-      id: "sail_head", cat: "sail", hull: "sail", view: "head",
+      id: "sail_head", cat: "sail", hull: "sail", view: "head", day: [],
       title: "Парусное судно — вид с носа",
       rule: "Rule 25",
       answer: "Парусное судно на ходу (только бортовые + кормовой, БЕЗ топового)",
@@ -91,7 +97,7 @@ window.LIGHTS_DATA = {
       quiz: { type: "vessel", options: ["Парусное на ходу","Моторное на ходу","На якоре","Неуправляемое"], correct: 0 },
     },
     {
-      id: "sail_tricolor", cat: "sail", hull: "sail", view: "head",
+      id: "sail_tricolor", cat: "sail", hull: "sail", view: "head", day: [],
       title: "Парусное <20 м — трёхцветный на топе",
       rule: "Rule 25",
       answer: "Малое парусное судно с трёхцветным огнём на топе мачты",
@@ -105,7 +111,7 @@ window.LIGHTS_DATA = {
 
     // ── Rule 30: судно на якоре ──
     {
-      id: "anchor", cat: "special", hull: "motor", view: "head",
+      id: "anchor", cat: "special", hull: "motor", view: "head", day: [{ y: 0.15, shape: "ball", c: "black" }],
       title: "На якоре",
       rule: "Rule 30",
       answer: "Судно на якоре — один белый круговой огонь (носовой)",
@@ -118,7 +124,7 @@ window.LIGHTS_DATA = {
 
     // ── Rule 26: рыболовные суда ──
     {
-      id: "trawler", cat: "special", hull: "motor", view: "head",
+      id: "trawler", cat: "special", hull: "fishing", view: "head", day: [{ y: 0.25, shape: "cone-down", c: "black" }, { y: 0.42, shape: "cone-up", c: "black" }],
       title: "Траулер (трал) — вид с носа",
       rule: "Rule 26",
       answer: "Судно, занятое тралением: зелёный над белым (круговые) + бортовые",
@@ -132,7 +138,7 @@ window.LIGHTS_DATA = {
       quiz: { type: "vessel", options: ["Траление (трал)","Иной лов","Буксир","Моторное"], correct: 0 },
     },
     {
-      id: "fishing_other", cat: "special", hull: "motor", view: "head",
+      id: "fishing_other", cat: "special", hull: "fishing", view: "head", day: [{ y: 0.25, shape: "cone-down", c: "black" }, { y: 0.42, shape: "cone-up", c: "black" }],
       title: "Рыболовное (не трал) — вид с носа",
       rule: "Rule 26",
       answer: "Судно на промысле (не траление): красный над белым (круговые)",
@@ -148,7 +154,7 @@ window.LIGHTS_DATA = {
 
     // ── Rule 24: буксир ──
     {
-      id: "towing", cat: "special", hull: "motor", view: "head",
+      id: "towing", cat: "special", hull: "tug", view: "head", day: [{ y: 0.25, shape: "diamond", c: "black" }],
       title: "Буксир (длина буксира >200 м)",
       rule: "Rule 24",
       answer: "Судно, занятое буксировкой: ТРИ топовых белых в ряд + бортовые + жёлтый буксирный",
@@ -165,7 +171,7 @@ window.LIGHTS_DATA = {
 
     // ── Rule 27: неуправляемое / ограниченное в манёвре ──
     {
-      id: "nuc", cat: "restricted", hull: "motor", view: "head",
+      id: "nuc", cat: "restricted", hull: "big", view: "head", day: [{ y: 0.16, shape: "ball", c: "black" }, { y: 0.34, shape: "ball", c: "black" }],
       title: "Не управляется (NUC)",
       rule: "Rule 27",
       answer: "Судно, лишённое возможности управляться: два красных круговых вертикально",
@@ -179,7 +185,7 @@ window.LIGHTS_DATA = {
       quiz: { type: "vessel", options: ["Неуправляемое (NUC)","Ограниченное в манёвре","Траление","На якоре"], correct: 0 },
     },
     {
-      id: "ram", cat: "restricted", hull: "motor", view: "head",
+      id: "ram", cat: "restricted", hull: "big", view: "head", day: [{ y: 0.12, shape: "ball", c: "black" }, { y: 0.28, shape: "diamond", c: "black" }, { y: 0.44, shape: "ball", c: "black" }],
       title: "Ограничено в манёвре (RAM)",
       rule: "Rule 27",
       answer: "Судно, ограниченное в возможности маневрировать: красный-белый-красный (круговые)",
@@ -194,7 +200,7 @@ window.LIGHTS_DATA = {
       quiz: { type: "vessel", options: ["Ограничено в манёвре (RAM)","Неуправляемое","Буксир","Лоцман"], correct: 0 },
     },
     {
-      id: "pilot", cat: "restricted", hull: "motor", view: "head",
+      id: "pilot", cat: "restricted", hull: "big", view: "head", day: [],
       title: "Лоцманское судно",
       rule: "Rule 29",
       answer: "Лоцманское судно на службе: белый над красным (круговые) + бортовые",
@@ -208,7 +214,7 @@ window.LIGHTS_DATA = {
       quiz: { type: "vessel", options: ["Лоцманское","Неуправляемое","Траление","На якоре"], correct: 0 },
     },
     {
-      id: "constrained_draught", cat: "restricted", hull: "motor", view: "head",
+      id: "constrained_draught", cat: "restricted", hull: "big", view: "head", day: [{ y: 0.20, shape: "cylinder", c: "black" }],
       title: "Стеснено осадкой",
       rule: "Rule 28",
       answer: "Судно, стеснённое своей осадкой: три красных круговых вертикально",
