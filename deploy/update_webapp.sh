@@ -43,6 +43,7 @@ cp -f "$SRC/profile.html"    "$DST/profile.html"  # профиль и дости
 cp -f "$SRC/history.html"    "$DST/history.html"  # история прохождений
 cp -f "$SRC/reader.html"     "$DST/reader.html"   # встроенный PDF-просмотрщик
 cp -f "$SRC/exam_pl.html"    "$DST/exam_pl.html"  # польские лицензии (Żeglarz/Sternik)
+cp -f "$SRC/weather.html"    "$DST/weather.html"  # BETA: погода (Open-Meteo, без бэкенда)
 cp -f "$SRC/nav.js"          "$DST/nav.js"        # общая навигация (BackButton)
 cp -f "$SRC/lightbox.js"     "$DST/lightbox.js"   # зум картинок
 cp -f "$SRC/srs.js"          "$DST/srs.js"        # интервальное повторение (SRS)

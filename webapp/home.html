@@ -46,6 +46,10 @@
   .section-title{ font-size:var(--fs-sm); font-weight:700; color:var(--hint);
     margin:var(--sp-4) 0 var(--sp-2); text-transform:uppercase; letter-spacing:.03em }
   .emi{ display:inline-flex; vertical-align:-2px } .emi svg{ width:1em; height:1em }
+  /* BETA:weather — маркер бета-плитки; удаляется вместе с фичей */
+  .beta-badge{ font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    color:var(--accent); border:1px solid var(--accent); border-radius:999px;
+    padding:1px 5px; margin-left:4px; vertical-align:1px; opacity:.85 }
 </style>
 </head>
 <body>
@@ -125,6 +129,13 @@
       <div class="t">Калькулятор</div>
       <div class="d">TVMDC и S·D·T·ETA</div>
     </a>
+    <!-- BETA:weather — самодостаточный блок, можно удалить целиком без правки грида -->
+    <a class="cell" href="weather.html" data-beta="weather">
+      <div class="ic-tile cyan" data-icon="wind"></div>
+      <div class="t">Погода <span class="beta-badge">beta</span></div>
+      <div class="d">Ветер и волна по точке</div>
+    </a>
+    <!-- /BETA:weather -->
   </div>
 
   <div class="section-title">Теория и справка</div>
@@ -183,6 +194,15 @@
 
 <script>
 "use strict";
+// BETA:weather — рубильник бета-плитки «Погода». false → плитка скрыта,
+// разметку и weather.html можно не трогать. Удалить фичу целиком:
+// снести этот блок, стиль .beta-badge и <!-- BETA:weather ... /BETA -->.
+var WEATHER_BETA = true;
+if (!WEATHER_BETA){
+  var wt = document.querySelector('[data-beta="weather"]');
+  if (wt) wt.remove();
+}
+
 // заменить data-icon на SVG-иконки (Lucide) сразу при загрузке
 if (window.Icons) Icons.hydrate();
 
