@@ -97,6 +97,10 @@ echo "→ копируем картинки (схемы конспекта)"
 mkdir -p "$DST/images"
 cp -f "$APP_DIR/images/"*.png "$APP_DIR/images/"*.jpg "$DST/images/" 2>/dev/null || true
 
+echo "→ копируем фото узлов (images/knots/)"
+mkdir -p "$DST/images/knots"
+cp -f "$APP_DIR/images/knots/"*.jpg "$DST/images/knots/" 2>/dev/null && echo "  knots: $(ls "$APP_DIR/images/knots/"*.jpg 2>/dev/null | wc -l) фото" || true
+
 echo "→ копируем знаки польских лицензий (images/zj/, images/st/)"
 mkdir -p "$DST/images/zj" "$DST/images/st"
 cp -f "$SRC/images/zj/"*.png "$DST/images/zj/" 2>/dev/null && echo "  zj: $(ls "$SRC/images/zj/"*.png 2>/dev/null | wc -l) знаков" || true
