@@ -42,6 +42,8 @@
   /* благодарность автору */
   .donate-row{ display:flex; gap:10px; flex-wrap:wrap }
   .donate-row .btn{ flex:1; min-width:150px }
+  /* ссылки без подчёркивания (акцентный цвет уже выделяет их) */
+  a{ text-decoration:none }
 </style>
 </head>
 <body>
@@ -205,7 +207,10 @@ if (!D){
   const tg = window.Telegram?.WebApp;
   const btn = $("starsBtn"), note = $("donateNote");
   if (!btn) return;
-  var BOT = "issa_tests_bot";   // username бота-хоста тренажёра
+  // username бота-хоста. Пробрасывается ботом через ?bot=... (см. bot.py);
+  // если параметра нет — берём дефолт. Так ссылка не ломается при смене имени.
+  var qsBot = new URLSearchParams(location.search).get("bot");
+  var BOT = (qsBot || "issa_test_bot").replace(/^@/, "");
   btn.onclick = function(){
     // Открываем бота с deep-link → он показывает выбор суммы и шлёт счёт в Stars.
     var link = "https://t.me/" + BOT + "?start=donate";
