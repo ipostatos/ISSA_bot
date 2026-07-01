@@ -83,11 +83,12 @@
   // конспекта/шпаргалок/словаря). Если эмодзи нет в таблице — оставляем как есть.
   var EMOJI = {
     "🧭": "compass", "🗺": "map", "🗺️": "map", "📍": "map-pin",
-    "🌊": "waves", "🚦": "life-buoy", "🌦": "wind", "🌬": "wind", "💨": "wind",
+    "🌊": "waves", "🚦": "map-pin", "🌦": "wind", "🌬": "wind", "💨": "wind",
     "⛵": "sailboat", "⚙️": "settings", "⚙": "settings", "⚓": "anchor",
     "⚠️": "alert-triangle", "⚠": "alert-triangle", "🔴": "circle", "📟": "calculator",
     "⛑": "life-buoy", "⛑️": "life-buoy", "🌱": "sprout", "🔊": "volume-2", "🔉": "volume-2",
     "🪢": "anchor", "📻": "radio", "🔄": "rotate-cw", "🛟": "life-buoy", "🇵🇱": "flag-pl",
+    "🔁": "rotate-cw", "📜": "file-text",
   };
 
   function svg(name, attrs) {
