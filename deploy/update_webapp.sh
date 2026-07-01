@@ -48,6 +48,7 @@ cp -f "$SRC/reader.html"     "$DST/reader.html"   # встроенный PDF-п�
 cp -f "$SRC/exam_pl.html"    "$DST/exam_pl.html"  # польские лицензии (Żeglarz/Sternik)
 cp -f "$SRC/konspekt_pl.html" "$DST/konspekt_pl.html"  # польский конспект (разбор ответов)
 cp -f "$SRC/weather.html"    "$DST/weather.html"  # BETA: погода (Open-Meteo, без бэкенда)
+cp -f "$SRC/lights.html"     "$DST/lights.html"   # бонус: огни судов ночью (COLREG)
 cp -f "$SRC/nav.js"          "$DST/nav.js"        # общая навигация (BackButton)
 cp -f "$SRC/lightbox.js"     "$DST/lightbox.js"   # зум картинок
 cp -f "$SRC/srs.js"          "$DST/srs.js"        # интервальное повторение (SRS)
@@ -66,6 +67,7 @@ cp -f "$SRC/content_data.js"  "$DST/content_data.js"
 cp -f "$SRC/zeglarz_data.js"  "$DST/zeglarz_data.js"
 cp -f "$SRC/sternik_data.js"  "$DST/sternik_data.js"
 cp -f "$SRC/konspekt_pl_data.js" "$DST/konspekt_pl_data.js"
+cp -f "$SRC/lights_data.js"   "$DST/lights_data.js"   # огни судов (COLREG)
 
 echo "→ копируем PDF-книги (если есть)"
 # Книги кладём в $SRC/books/ под латинскими именами (book.pdf / studbook.pdf / toghill.pdf).

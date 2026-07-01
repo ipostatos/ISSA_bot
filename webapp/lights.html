@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Огни судов · COLREG</title>
+<link rel="stylesheet" href="theme.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="nav.js"></script>
+<script src="icons.js"></script>
+<script src="lights_data.js"></script>
+<style>
+  :root{
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --text: var(--tg-theme-text-color, #fff);
+    --hint: var(--tg-theme-hint-color, #8a9aa9);
+    --card: var(--tg-theme-secondary-bg-color, #232e3c);
+    --accent: var(--tg-theme-button-color, #50a8eb);
+    --accent-text: var(--tg-theme-button-text-color, #fff);
+    --border: rgba(255,255,255,.10);
+    --ok:#4caf72; --bad:#e5544b;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg: var(--tg-theme-bg-color, #ffffff);
+      --text: var(--tg-theme-text-color, #1a1a1a);
+      --hint: var(--tg-theme-hint-color, #7d8a99);
+      --card: var(--tg-theme-secondary-bg-color, #f1f3f5);
+      --accent: var(--tg-theme-button-color, #3390ec);
+      --accent-text: var(--tg-theme-button-text-color, #ffffff);
+      --border: rgba(0,0,0,.10);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0; padding:14px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.5; -webkit-tap-highlight-color:transparent}
+  h1{font-size:19px; margin:0 0 2px}
+  .sub{color:var(--hint); font-size:13px; margin:0 0 14px}
+  .hidden{display:none !important}
+
+  /* сцена: тёмное «море и ночь» + судно на canvas */
+  .scene{ position:relative; width:100%; aspect-ratio:3/4; max-height:420px; border-radius:16px;
+    overflow:hidden; border:1px solid var(--border);
+    background:linear-gradient(#02060c 0%, #04101d 55%, #061626 100%) }
+  #ship{ position:absolute; inset:0; width:100%; height:100% }
+  .scene-cap{ position:absolute; left:0; right:0; bottom:8px; text-align:center; font-size:12px;
+    color:#9fb4c8; text-shadow:0 1px 3px #000 }
+
+  .big{width:100%; padding:15px; margin-bottom:10px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); border-radius:14px; cursor:pointer;
+    font-size:16px; font-weight:600; text-align:left; display:flex; align-items:center; gap:12px}
+  .big .bic{flex:0 0 auto; color:var(--accent)}
+  .big small{display:block; font-weight:400; font-size:13px; opacity:.85; margin-top:2px}
+  a.big{text-decoration:none}
+
+  .row{display:flex; gap:8px; margin-top:12px}
+  .btn{flex:1; padding:13px; border:none; border-radius:12px; background:var(--accent);
+    color:var(--accent-text); font-weight:600; font-size:15px; cursor:pointer}
+  .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--border)}
+  .btn:disabled{opacity:.5}
+
+  /* справочник: список типов */
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px }
+  .chip{ flex:0 0 auto; padding:6px 11px; font-size:12px; color:var(--text); background:var(--card);
+    border:1px solid var(--border); border-radius:999px; cursor:pointer }
+  .chip.on{ border-color:var(--accent); color:var(--accent) }
+  .vlist{ display:flex; flex-direction:column; gap:8px }
+  .vcard{ display:flex; align-items:center; gap:10px; padding:12px 14px; border:1px solid var(--border);
+    background:var(--card); border-radius:12px; cursor:pointer; font-size:15px; text-align:left; width:100%; color:var(--text) }
+  .vcard .r{ font-size:11px; color:var(--hint) }
+
+  /* карточка разбора */
+  .info{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-top:12px }
+  .info .t{ font-weight:700; margin-bottom:4px }
+  .info .rule{ font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:.03em }
+  .info .h{ font-size:13px; color:var(--hint); margin-top:8px }
+
+  /* тест */
+  .opt{display:flex; gap:10px; align-items:flex-start; padding:12px; border:1px solid var(--border);
+    border-radius:11px; margin-bottom:8px; font-size:15px; cursor:pointer}
+  .opt:active{transform:scale(.99)}
+  .opt.ok{background:rgba(76,175,114,.15); border-color:var(--ok)}
+  .opt.bad{background:rgba(229,84,75,.15); border-color:var(--bad)}
+  .opt.lock{cursor:default}
+  .score{ color:var(--hint); font-size:13px; text-align:center; margin-top:6px }
+
+  .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px}
+</style>
+</head>
+<body>
+  <!-- ── МЕНЮ ── -->
+  <section id="menu">
+    <h1>🚢 Огни судов ночью</h1>
+    <p class="sub">Навигационные огни по COLREG (МППСС-72). Учись распознавать тип судна и ракурс.</p>
+    <div class="scene" style="margin-bottom:14px">
+      <canvas id="shipMenu"></canvas>
+      <div class="scene-cap">что это за судно?</div>
+    </div>
+    <button class="big" id="toLearn">
+      <span class="bic" data-icon="book-open"></span>
+      <span>Справочник<small>все типы судов и их огни, с разбором</small></span>
+    </button>
+    <button class="big" id="toQuiz">
+      <span class="bic" data-icon="target"></span>
+      <span>Тест «Что за судно?»<small>показываем огни — угадай тип и ракурс</small></span>
+    </button>
+    <p class="foot">Учебный материал по открытому тексту COLREG-72. Не заменяет официальные правила.</p>
+  </section>
+
+  <!-- ── СПРАВОЧНИК ── -->
+  <section id="learn" class="hidden">
+    <div class="row" style="margin:0 0 12px">
+      <button class="btn ghost" id="learnBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Меню</button>
+      <div style="flex:1"></div>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="vlist" id="vlist"></div>
+  </section>
+
+  <!-- ── ПРОСМОТР ТИПА (из справочника) ── -->
+  <section id="view" class="hidden">
+    <div class="row" style="margin:0 0 12px">
+      <button class="btn ghost" id="viewBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Список</button>
+      <div style="flex:1"></div>
+    </div>
+    <div class="scene">
+      <canvas id="shipView"></canvas>
+      <div class="scene-cap" id="viewCap"></div>
+    </div>
+    <div class="info">
+      <div class="rule" id="viewRule"></div>
+      <div class="t" id="viewTitle"></div>
+      <div id="viewAnswer"></div>
+      <div class="h" id="viewHint"></div>
+    </div>
+  </section>
+
+  <!-- ── ТЕСТ ── -->
+  <section id="quiz" class="hidden">
+    <div class="row" style="margin:0 0 12px">
+      <button class="btn ghost" id="quizBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Меню</button>
+      <div style="flex:1; text-align:right; color:var(--hint); font-size:13px" id="quizCounter"></div>
+    </div>
+    <div class="scene">
+      <canvas id="shipQuiz"></canvas>
+    </div>
+    <div style="margin-top:12px; font-weight:600" id="quizQ"></div>
+    <div id="quizOpts" style="margin-top:10px"></div>
+    <div class="info hidden" id="quizExpl">
+      <div class="rule" id="qeRule"></div>
+      <div id="qeText"></div>
+    </div>
+    <div class="row" id="quizCtrl" style="display:none">
+      <button class="btn" id="quizNext">Следующее →</button>
+    </div>
+    <div class="score" id="quizScore"></div>
+  </section>
+
+<script>
+"use strict";
+const tg = window.Telegram?.WebApp;
+if (tg){ tg.ready(); tg.expand(); }
+const $ = id => document.getElementById(id);
+const show = id => $(id).classList.remove("hidden");
+const hide = id => $(id).classList.add("hidden");
+if (window.Icons) Icons.hydrate();
+
+const DATA = window.LIGHTS_DATA || { vessels:[], categories:[] };
+const COLORS = { W:"#ffffff", R:"#ff3b30", G:"#34c759", Y:"#ffd60a", B:"#0a84ff" };
+
+// ─────────────────────── Отрисовка судна с огнями ───────────────────────
+// Тёмный силуэт корпуса + светящиеся огни с ореолом и бликами на «воде».
+function drawShip(canvas, v){
+  const dpr = window.devicePixelRatio || 1;
+  const r = canvas.getBoundingClientRect();
+  const W = r.width, H = r.height;
+  if (!W || !H) return;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+
+  const waterY = H*0.72;                 // линия воды
+  const cx = W/2;
+  const shipW = Math.min(W*0.62, 260);   // ширина силуэта
+  const shipTop = H*0.18;                // верх мачты
+  const deckY = waterY - H*0.02;         // палуба чуть выше воды
+
+  // — вода: лёгкие горизонтальные блики —
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  for (let i=0;i<4;i++){
+    ctx.fillStyle = "rgba(40,70,110,"+(0.10-i*0.02)+")";
+    ctx.fillRect(0, waterY + i*8, W, 3);
+  }
+  ctx.restore();
+
+  // — силуэт корпуса (тёмный, чуть светлее фона) —
+  drawHull(ctx, v.hull || "motor", cx, deckY, shipW, shipTop, waterY);
+
+  // — огни: ореол + ядро + блик на воде —
+  (v.lights||[]).forEach(function(l){
+    const lx = cx + l.x * (shipW*0.5);
+    const ly = shipTop + l.y * (deckY - shipTop);
+    const col = COLORS[l.c] || "#fff";
+    const rad = l.r || 4;
+    // ореол (glow)
+    const g = ctx.createRadialGradient(lx, ly, 0, lx, ly, rad*6);
+    g.addColorStop(0, col);
+    g.addColorStop(0.25, hexA(col, 0.55));
+    g.addColorStop(1, hexA(col, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(lx, ly, rad*6, 0, Math.PI*2); ctx.fill();
+    // ядро огня
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(lx, ly, rad*0.5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = col;
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath(); ctx.arc(lx, ly, rad*0.85, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+    // блик-отражение на воде (вертикальная размытая полоса)
+    if (ly < waterY){
+      const refY = waterY + (waterY - ly)*0.25;
+      const rg = ctx.createLinearGradient(lx, waterY, lx, refY);
+      rg.addColorStop(0, hexA(col, 0.5));
+      rg.addColorStop(1, hexA(col, 0));
+      ctx.fillStyle = rg;
+      ctx.fillRect(lx - rad*1.2, waterY, rad*2.4, refY - waterY);
+    }
+  });
+}
+
+// Силуэт корпуса разных типов. Рисуем как тёмную заливку.
+function drawHull(ctx, hull, cx, deckY, w, top, waterY){
+  ctx.fillStyle = "#0c1622";
+  ctx.strokeStyle = "rgba(120,150,180,.35)";
+  ctx.lineWidth = 1.2;
+  const hw = w*0.5;
+  // корпус (трапеция)
+  ctx.beginPath();
+  ctx.moveTo(cx-hw, deckY);
+  ctx.lineTo(cx+hw, deckY);
+  ctx.lineTo(cx+hw*0.8, waterY);
+  ctx.lineTo(cx-hw*0.8, waterY);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  // надстройка
+  ctx.fillStyle = "#0e1a28";
+  const sw = hw*0.5, sh = (deckY-top)*0.28;
+  ctx.fillRect(cx-sw, deckY-sh, sw*2, sh);
+  ctx.strokeRect(cx-sw, deckY-sh, sw*2, sh);
+  // мачта(ы)
+  ctx.strokeStyle = "rgba(120,150,180,.5)";
+  ctx.beginPath(); ctx.moveTo(cx, deckY-sh); ctx.lineTo(cx, top); ctx.stroke();
+  if (hull === "sail"){
+    // парусная: высокая мачта + намёк на парус
+    ctx.strokeStyle = "rgba(120,150,180,.35)";
+    ctx.beginPath();
+    ctx.moveTo(cx, top+6); ctx.lineTo(cx+w*0.22, deckY-sh*0.4); ctx.lineTo(cx, deckY-sh*0.4);
+    ctx.closePath(); ctx.stroke();
+  }
+}
+
+// hex → rgba строка с альфой
+function hexA(hex, a){
+  const n = parseInt(hex.slice(1),16);
+  return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";
+}
+
+// ─────────────────────── Меню ───────────────────────
+// на превью в меню — случайное красивое судно (моторное с носа)
+function renderMenu(){
+  const demo = DATA.vessels.find(v=>v.id==="power_head") || DATA.vessels[0];
+  requestAnimationFrame(()=> drawShip($("shipMenu"), demo));
+}
+
+// ─────────────────────── Справочник ───────────────────────
+let curCat = "all";
+function renderChips(){
+  const box = $("chips");
+  const cats = [{key:"all",name:"Все"}].concat(DATA.categories||[]);
+  box.innerHTML = cats.map(c=>
+    '<span class="chip'+(c.key===curCat?' on':'')+'" data-cat="'+c.key+'">'+c.name+'</span>'
+  ).join("");
+  Array.prototype.forEach.call(box.querySelectorAll(".chip"), ch=>{
+    ch.onclick = ()=>{ curCat = ch.dataset.cat; renderChips(); renderVList(); };
+  });
+}
+function renderVList(){
+  const box = $("vlist");
+  const list = DATA.vessels.filter(v=> curCat==="all" || v.cat===curCat);
+  box.innerHTML = list.map(v=>
+    '<button class="vcard" data-id="'+v.id+'">'
+    + '<span class="bic" data-icon="ship" style="color:var(--accent)"></span>'
+    + '<span>'+esc(v.title)+'<br><span class="r">'+esc(v.rule)+'</span></span></button>'
+  ).join("");
+  if (window.Icons) Icons.hydrate(box);
+  Array.prototype.forEach.call(box.querySelectorAll(".vcard"), b=>{
+    b.onclick = ()=> openView(b.dataset.id);
+  });
+}
+function openView(id){
+  const v = DATA.vessels.find(x=>x.id===id); if(!v) return;
+  hide("learn"); show("view");
+  $("viewRule").textContent = v.rule;
+  $("viewTitle").textContent = v.title;
+  $("viewAnswer").textContent = v.answer;
+  $("viewHint").textContent = v.hint;
+  $("viewCap").textContent = v.title;
+  requestAnimationFrame(()=> drawShip($("shipView"), v));
+}
+
+// ─────────────────────── Тест ───────────────────────
+let qQueue = [], qIdx = 0, qScore = 0, qAnswered = false;
+function startQuiz(){
+  qQueue = shuffle(DATA.vessels.slice());
+  qIdx = 0; qScore = 0;
+  hide("menu"); show("quiz");
+  renderQuiz();
+}
+function renderQuiz(){
+  qAnswered = false;
+  const v = qQueue[qIdx];
+  $("quizCounter").textContent = (qIdx+1)+" / "+qQueue.length;
+  $("quizQ").textContent = questionText(v);
+  requestAnimationFrame(()=> drawShip($("shipQuiz"), v));
+  const opts = v.quiz.options;
+  $("quizOpts").innerHTML = opts.map((o,i)=>
+    '<div class="opt" data-i="'+i+'">'+esc(o)+'</div>'
+  ).join("");
+  Array.prototype.forEach.call($("quizOpts").querySelectorAll(".opt"), el=>{
+    el.onclick = ()=> answerQuiz(+el.dataset.i);
+  });
+  hide("quizExpl");
+  $("quizCtrl").style.display = "none";
+  $("quizScore").textContent = "";
+}
+function questionText(v){
+  switch(v.quiz.type){
+    case "size":   return "Судно какой длины показано?";
+    case "aspect": return "Каков ракурс судна?";
+    case "side":   return "Какой борт вы видите?";
+    default:       return "Что это за судно?";
+  }
+}
+function answerQuiz(i){
+  if (qAnswered) return;
+  qAnswered = true;
+  const v = qQueue[qIdx];
+  const correct = v.quiz.correct;
+  const els = $("quizOpts").querySelectorAll(".opt");
+  els.forEach((el,k)=>{
+    el.classList.add("lock");
+    if (k===correct) el.classList.add("ok");
+    else if (k===i) el.classList.add("bad");
+  });
+  if (i===correct){ qScore++; haptic("success"); } else haptic("error");
+  // разбор
+  $("qeRule").textContent = v.rule;
+  $("qeText").textContent = v.answer + ". " + v.hint;
+  show("quizExpl");
+  $("quizScore").textContent = "Верно: " + qScore + " из " + (qIdx+1);
+  $("quizCtrl").style.display = "flex";
+  $("quizNext").textContent = (qIdx < qQueue.length-1) ? "Следующее →" : "Завершить";
+}
+$("quizNext").onclick = ()=>{
+  if (qIdx < qQueue.length-1){ qIdx++; renderQuiz(); }
+  else { toMenu(); }
+};
+
+// ─────────────────────── Навигация экранов ───────────────────────
+function toMenu(){ hide("learn"); hide("view"); hide("quiz"); show("menu"); renderMenu(); }
+$("toLearn").onclick = ()=>{ hide("menu"); show("learn"); renderChips(); renderVList(); };
+$("toQuiz").onclick = startQuiz;
+$("learnBack").onclick = toMenu;
+$("viewBack").onclick = ()=>{ hide("view"); show("learn"); };
+$("quizBack").onclick = toMenu;
+
+// системная «Назад» Telegram
+window.__navBack = () => {
+  if (!$("view").classList.contains("hidden")){ hide("view"); show("learn"); return true; }
+  if (!$("learn").classList.contains("hidden")){ toMenu(); return true; }
+  if (!$("quiz").classList.contains("hidden")){ toMenu(); return true; }
+  return false;
+};
+
+// утилиты
+function esc(s){ return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function haptic(t){ try{ tg?.HapticFeedback?.notificationOccurred(t); }catch(e){} }
+
+// перерисовка при повороте/ресайзе
+window.addEventListener("resize", ()=>{
+  if (!$("menu").classList.contains("hidden")) renderMenu();
+  else if (!$("view").classList.contains("hidden")){ const id=$("viewTitle"); }
+});
+
+renderMenu();
+</script>
+</body>
+</html>
