@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Погода</title>
 <link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
 <script src="icons.js"></script>
+<script src="vendor/leaflet/leaflet.js"></script>
 <style>
   /* — поиск/выбор точки — */
   .searchbar{ display:flex; gap:var(--sp-2); margin-bottom:var(--sp-2) }
@@ -71,6 +73,24 @@
   .spot-chip .x{ font-size:15px; line-height:1; color:var(--hint); margin-left:2px }
   .spots-empty{ font-size:var(--fs-xs); color:var(--hint); padding:2px 0 var(--sp-2) }
   .save-row{ margin-top:10px; text-align:right }
+
+  /* — карта ветра (Leaflet + CARTO dark, стрелки на canvas) — */
+  .map-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px }
+  .map-head .h2{ margin:0 }
+  .map-wrap{ position:relative; width:100%; height:320px; border-radius:var(--r-md);
+    overflow:hidden; border:1px solid var(--border); background:#0b1a2b }
+  #windMap{ position:absolute; inset:0; z-index:1; background:#0b1a2b }
+  #windCanvas{ position:absolute; inset:0; z-index:2; pointer-events:none }
+  .map-hint{ font-size:11px; color:var(--hint); margin-top:8px; line-height:1.5 }
+  /* компактная атрибуция (лицензионное требование CARTO/OSM) */
+  .leaflet-control-attribution{ font-size:9px !important; background:rgba(0,0,0,.5) !important;
+    color:var(--hint) !important }
+  .leaflet-control-attribution a{ color:var(--hint) !important }
+  /* легенда силы ветра */
+  .wind-legend{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;
+    font-size:var(--fs-xs); color:var(--hint) }
+  .wind-legend i{ display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle;
+    margin-right:4px }
 </style>
 </head>
 <body>
@@ -146,6 +166,22 @@
     <div class="muted" style="font-size:11px; margin-top:8px">
       Прокрути вбок. Жёлтым — часы с порывами выше 18 узлов.
     </div>
+  </div>
+
+  <!-- карта ветра (Windy-стиль): карта берегов + стрелки ветра по сетке -->
+  <div class="card hidden" id="mapCard" style="margin-bottom:12px">
+    <div class="map-head">
+      <div class="h2">Карта ветра</div>
+      <button class="btn ghost sm" id="mapRefresh" style="width:auto; padding:8px 10px"
+        title="Обновить стрелки"><span class="emi" data-icon="refresh-cw"></span></button>
+    </div>
+    <div class="map-wrap">
+      <div id="windMap"></div>
+      <canvas id="windCanvas"></canvas>
+    </div>
+    <div class="wind-legend" id="windLegend"></div>
+    <div class="map-hint">Стрелки показывают направление и силу ветра по сетке.
+      Двигай и масштабируй карту — стрелки пересчитываются. Данные Open-Meteo, карта © OpenStreetMap © CARTO.</div>
   </div>
 
   <p class="foot">Открытые модели погоды Open-Meteo (ECMWF/GFS · Marine).
@@ -340,6 +376,7 @@ function loadForecast(spot){
   hideState();
   $("nowCard").classList.add("hidden");
   $("hourlyCard").classList.add("hidden");
+  $("mapCard").classList.add("hidden");
   showState("Загружаю прогноз…");
 
   // Ветер/температура — Forecast API; всё в м/с, конвертируем в узлы на клиенте.
@@ -364,6 +401,7 @@ function loadForecast(spot){
     lastData = { spot:spot, f:f, m:m };   // запоминаем для смены единиц без нового запроса
     renderNow(spot, f, m);
     renderHourly(f);
+    showWindMap(spot);
     hideState();
   }).catch(function(){
     showState("Сеть недоступна или сервис не отвечает. Проверь соединение и обнови.");
@@ -448,6 +486,126 @@ function renderHourly(f){
   $("hourlyCard").classList.remove("hidden");
 }
 
+// ─────────────────────────── Карта ветра (Windy-стиль) ───────────────────────────
+// Карта берегов — Leaflet + CARTO dark-тайлы. Стрелки ветра рисуем сами на
+// canvas-слое поверх карты: тянем сетку N×N точек из Open-Meteo (1 запрос),
+// цвет/длину стрелки задаёт сила ветра, поворот — направление «куда дует».
+var wmap = null, windCanvas = null, windGrid = null, gridBusy = false;
+var GRID_N = 7;   // 7×7 = 49 точек на один запрос
+
+// цвет стрелки по силе ветра (узлы) — от спокойного к штормовому
+function windColor(kn){
+  if (kn < 6)  return "#8ecae6";   // слабый
+  if (kn < 12) return "#95d5b2";   // умеренный
+  if (kn < 18) return "#e9c46a";   // свежий
+  if (kn < 25) return "#f4a261";   // сильный
+  return "#e5544b";                // штормовой
+}
+
+function showWindMap(spot){
+  $("mapCard").classList.remove("hidden");
+  if (!window.L){ $("mapCard").classList.add("hidden"); return; }   // Leaflet не загрузился
+
+  if (!wmap){
+    wmap = L.map("windMap", { zoomControl:true, attributionControl:true,
+      scrollWheelZoom:true }).setView([spot.lat, spot.lon], 8);
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom:18, subdomains:"abcd",
+      attribution:'&copy; OpenStreetMap &copy; CARTO'
+    }).addTo(wmap);
+    windCanvas = $("windCanvas");
+    // перерисовывать стрелки при движении/зуме; сетку тянуть после окончания
+    wmap.on("move zoom", drawArrows);
+    wmap.on("moveend zoomend", function(){ fetchWindGrid(); });
+    // корректный размер после появления карточки
+    setTimeout(function(){ wmap.invalidateSize(); wmap.setView([spot.lat, spot.lon], 8); fetchWindGrid(); }, 60);
+  } else {
+    wmap.setView([spot.lat, spot.lon], 8);
+    setTimeout(function(){ wmap.invalidateSize(); fetchWindGrid(); }, 60);
+  }
+  renderLegend();
+}
+
+// Подтянуть сетку ветра по текущим границам карты (декартова N×N).
+function fetchWindGrid(){
+  if (!wmap || gridBusy) return;
+  gridBusy = true;
+  var b = wmap.getBounds();
+  var s = b.getSouth(), n = b.getNorth(), w = b.getWest(), e = b.getEast();
+  var lats = [], lons = [];
+  for (var i=0;i<GRID_N;i++){
+    for (var j=0;j<GRID_N;j++){
+      lats.push((s + (n-s)*(i/(GRID_N-1))).toFixed(3));
+      lons.push((w + (e-w)*(j/(GRID_N-1))).toFixed(3));
+    }
+  }
+  var url = "https://api.open-meteo.com/v1/forecast?latitude="+lats.join(",")
+    + "&longitude="+lons.join(",")
+    + "&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&timezone=auto";
+  var reqCenter = wmap.getCenter(), reqZoom = wmap.getZoom();
+  fetch(url).then(function(r){ return r.json(); }).then(function(arr){
+    gridBusy = false;
+    if (Array.isArray(arr)){
+      windGrid = arr.map(function(p){
+        return { lat:p.latitude, lon:p.longitude,
+          ms:(p.current&&p.current.wind_speed_10m)||0,
+          dir:(p.current&&p.current.wind_direction_10m)||0 };
+      });
+      drawArrows();
+    }
+    // карту успели подвигать, пока летел запрос → дотянуть сетку под новый вид
+    var c = wmap.getCenter();
+    if (wmap.getZoom() !== reqZoom || c.distanceTo(reqCenter) > 1000) fetchWindGrid();
+  }).catch(function(){ gridBusy = false; });
+}
+
+// Нарисовать стрелки на canvas по текущей проекции карты.
+function drawArrows(){
+  if (!wmap || !windCanvas) return;
+  var size = wmap.getSize();
+  var dpr = window.devicePixelRatio || 1;
+  if (windCanvas.width !== size.x*dpr || windCanvas.height !== size.y*dpr){
+    windCanvas.width = size.x*dpr; windCanvas.height = size.y*dpr;
+    windCanvas.style.width = size.x+"px"; windCanvas.style.height = size.y+"px";
+  }
+  var ctx = windCanvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,size.x,size.y);
+  if (!windGrid) return;
+
+  windGrid.forEach(function(g){
+    var pt = wmap.latLngToContainerPoint([g.lat, g.lon]);
+    if (pt.x < -20 || pt.y < -20 || pt.x > size.x+20 || pt.y > size.y+20) return;
+    var kn = knots(g.ms);
+    var col = windColor(kn);
+    // длина стрелки растёт с силой (12–26 px), поворот — «куда дует» (dir = откуда)
+    var len = Math.min(26, 12 + kn*0.7);
+    var ang = (g.dir + 180) * Math.PI/180;   // направление движения потока
+    var dx = Math.sin(ang), dy = -Math.cos(ang);
+    var x0 = pt.x - dx*len/2, y0 = pt.y - dy*len/2;
+    var x1 = pt.x + dx*len/2, y1 = pt.y + dy*len/2;
+    ctx.strokeStyle = col; ctx.fillStyle = col;
+    ctx.lineWidth = 2; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+    // наконечник
+    var ah = 5, aa = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - (dx*Math.cos(aa)-dy*Math.sin(aa))*ah, y1 - (dy*Math.cos(aa)+dx*Math.sin(aa))*ah);
+    ctx.lineTo(x1 - (dx*Math.cos(-aa)-dy*Math.sin(-aa))*ah, y1 - (dy*Math.cos(-aa)+dx*Math.sin(-aa))*ah);
+    ctx.closePath(); ctx.fill();
+  });
+}
+
+function renderLegend(){
+  var box = $("windLegend"); if (!box) return;
+  var steps = [["<6","#8ecae6"],["6–12","#95d5b2"],["12–18","#e9c46a"],
+    ["18–25","#f4a261"],["25+","#e5544b"]];
+  box.innerHTML = "Ветер, узлы: " + steps.map(function(s){
+    return '<span><i style="background:'+s[1]+'"></i>'+s[0]+'</span>';
+  }).join("");
+}
+
 // ─────────────────────────── Обработчики UI ───────────────────────────
 $("q").addEventListener("input", function(){
   var v = this.value.trim();
@@ -469,6 +627,9 @@ $("q").addEventListener("keydown", function(e){
 });
 $("geoBtn").onclick = useGeo;
 $("refreshBtn").onclick = function(){ if (lastSpot) loadForecast(lastSpot); };
+$("mapRefresh").onclick = function(){ fetchWindGrid(); };
+// смена единиц должна перекрасить и стрелки на карте (длина зависит от узлов)
+
 $("saveBtn").onclick = function(){
   if (!lastSpot) return;
   if (isSaved(lastSpot)) removeSpot(lastSpot); else addSpot(lastSpot);
@@ -479,6 +640,7 @@ $("unitToggle").onclick = function(e){
   this.textContent = useKnots ? "Показать в м/с" : "Показать в узлах";
   // единицы клиентские — перерисовываем из уже загруженных данных, без сети
   if (lastData){ renderNow(lastData.spot, lastData.f, lastData.m); renderHourly(lastData.f); }
+  drawArrows();   // стрелки: длина считается в узлах, перекрасить не нужно, но перерисуем
 };
 
 // старт: подтянуть «Мои точки» и восстановить последнюю открытую точку
