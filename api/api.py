@@ -102,6 +102,9 @@ def get_db() -> Iterator[sqlite3.Connection]:
     всегда; commit — при успешном выходе, rollback — при исключении.
     """
     conn = sqlite3.connect(DB_PATH)
+    # busy_timeout: при «database is locked» SQLite ждёт до 3 с вместо немедленной
+    # OperationalError (иначе конкурентная запись → неперехваченный HTTP 500).
+    conn.execute("PRAGMA busy_timeout=3000")
     try:
         yield conn
         conn.commit()
@@ -195,6 +198,50 @@ def save_state(user_id: int, state: dict) -> None:
         )
 
 
+def merge_and_save_state(user_id: int, incoming: dict) -> dict:
+    """Read-merge-write в ОДНОЙ транзакции (BEGIN IMMEDIATE) — атомарно.
+
+    Иначе два устройства, синхронизирующихся одновременно, читают одно и то же
+    состояние и второй writer затирает первого (lost update). BEGIN IMMEDIATE
+    берёт write-lock сразу, конкурент ждёт (busy_timeout) и читает уже слитое.
+    """
+    now = int(time.time())
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA busy_timeout=3000")
+    try:
+        conn.execute("BEGIN IMMEDIATE")          # эксклюзивная блокировка записи
+        row = conn.execute(
+            "SELECT srs, progress FROM state WHERE user_id=?", (user_id,)
+        ).fetchone()
+        if row:
+            try:
+                server = {"srs": json.loads(row[0] or "{}"),
+                          "progress": json.loads(row[1] or "{}")}
+            except json.JSONDecodeError:
+                server = {"srs": {}, "progress": {}}
+        else:
+            server = {"srs": {}, "progress": {}}
+        merged = merge_state(server, {"srs": incoming.get("srs"),
+                                      "progress": incoming.get("progress")})
+        conn.execute(
+            """INSERT INTO state(user_id, srs, progress, schema_version, created_at, updated_at)
+               VALUES(?,?,?,?,?,?)
+               ON CONFLICT(user_id) DO UPDATE SET
+                 srs=excluded.srs, progress=excluded.progress,
+                 schema_version=excluded.schema_version, updated_at=excluded.updated_at""",
+            (user_id, json.dumps(merged.get("srs", {}), ensure_ascii=False),
+             json.dumps(merged.get("progress", {}), ensure_ascii=False),
+             SCHEMA_VERSION, now, now),
+        )
+        conn.commit()
+        return merged
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()          # схема создаётся один раз при старте, а не на каждый запрос
@@ -285,9 +332,8 @@ async def post_state(
     if not isinstance(incoming, dict):
         raise HTTPException(400, "expected object")
 
-    server = load_state(user_id)
-    merged = merge_state(server, {"srs": incoming.get("srs"), "progress": incoming.get("progress")})
-    save_state(user_id, merged)
+    # атомарный read-merge-write — без гонки потерянного обновления между устройствами
+    merged = merge_and_save_state(user_id, incoming)
     return {"ok": True, "state": merged}
 
 

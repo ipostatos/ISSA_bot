@@ -233,6 +233,31 @@ def test_rate_limit():
     os.environ.pop("ISSA_RATE_WINDOW", None)
 
 
+def test_concurrent_state():
+    """API-1: параллельные POST /api/state не теряют SRS-записи (атомарный merge)."""
+    try:
+        import importlib, threading
+        import api as apimod
+    except Exception:
+        return
+    tmp = tempfile.mkdtemp()
+    os.environ["ISSA_API_DB"] = str(Path(tmp) / "c.db")
+    os.environ["BOT_TOKEN"] = TOKEN
+    importlib.reload(apimod)
+    apimod.init_db()
+    uid = 555
+    # 10 потоков, каждый добавляет свой уникальный SRS-ключ
+    def worker(i):
+        apimod.merge_and_save_state(uid, {"srs": {f"q{i}": {"box": 1, "due": i}}, "progress": {}})
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(10)]
+    for t in threads: t.start()
+    for t in threads: t.join()
+    final = apimod.load_state(uid)
+    # все 10 ключей должны сохраниться — ни один не затёрт гонкой
+    check("concurrent: все 10 SRS-записей сохранены (нет lost update)",
+          len(final["srs"]) == 10)
+
+
 if __name__ == "__main__":
     test_auth()
     test_merge_srs()
@@ -240,6 +265,7 @@ if __name__ == "__main__":
     test_endpoints()
     test_attempts()
     test_rate_limit()
+    test_concurrent_state()
     if fails:
         print(f"\nAPI TESTS: {fails} провал(ов)")
         sys.exit(1)
