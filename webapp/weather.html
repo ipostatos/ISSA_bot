@@ -197,6 +197,7 @@
       <span class="layer-chip on" data-layer="arrows"><span class="emi" data-icon="navigation"></span>Стрелки</span>
       <span class="layer-chip on" data-layer="particles"><span class="emi" data-icon="wind"></span>Частицы</span>
       <span class="layer-chip" data-layer="waves"><span class="emi" data-icon="waves"></span>Волны</span>
+      <span class="layer-chip" data-layer="rain"><span class="emi" data-icon="cloud-rain"></span>Осадки</span>
     </div>
     <!-- таймлайн по часам прогноза -->
     <div class="tl-row" id="tlRow" style="display:none">
@@ -520,7 +521,7 @@ var gridBusy = false, gridBounds = null;
 var GRID_N = 7;           // 7×7 = 49 точек на один запрос
 var HOURS = 24;           // сколько часов прогноза тянем/листаем
 var hourIdx = 0;          // текущий час на таймлайне (0 = сейчас)
-var layers = { arrows:true, particles:true, waves:false };
+var layers = { arrows:true, particles:true, waves:false, rain:false };
 var particles = [], partRAF = null, partTime = null;
 
 // цвет по силе ветра (узлы) — от спокойного к штормовому
@@ -538,6 +539,14 @@ function waveColor(m){
   if (m < 2.0) return "rgba(233,196,106,0.36)";
   if (m < 3.0) return "rgba(244,162,97,0.40)";
   return "rgba(229,84,75,0.44)";
+}
+// цвет по интенсивности осадков (мм/ч) — сине-фиолетовая шкала
+function rainColor(mm){
+  if (mm < 0.1) return null;                    // сухо — не рисуем
+  if (mm < 0.5) return "rgba(120,170,230,0.30)"; // морось
+  if (mm < 2.0) return "rgba(70,130,220,0.38)";  // слабый
+  if (mm < 5.0) return "rgba(50,90,210,0.46)";   // умеренный
+  return "rgba(110,60,200,0.52)";                // сильный ливень
 }
 
 function showWindMap(spot){
@@ -584,7 +593,7 @@ function fetchWindGrid(){
   }
   var LA = lats.join(","), LO = lons.join(",");
   var fUrl = "https://api.open-meteo.com/v1/forecast?latitude="+LA+"&longitude="+LO
-    + "&hourly=wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&forecast_days=2&timezone=auto";
+    + "&hourly=wind_speed_10m,wind_direction_10m,precipitation&wind_speed_unit=ms&forecast_days=2&timezone=auto";
   var mUrl = "https://marine-api.open-meteo.com/v1/marine?latitude="+LA+"&longitude="+LO
     + "&hourly=wave_height&forecast_days=2&timezone=auto";
   var reqCenter = wmap.getCenter(), reqZoom = wmap.getZoom();
@@ -598,16 +607,18 @@ function fetchWindGrid(){
     if (Array.isArray(wind)){
       windGrid = wind.map(function(p, idx){
         var h = (p.hourly) || {};
-        var spd = h.wind_speed_10m || [], dr = h.wind_direction_10m || [];
-        var hrs = [];
-        for (var t=0; t<Math.min(HOURS, spd.length); t++)
+        var spd = h.wind_speed_10m || [], dr = h.wind_direction_10m || [], pr = h.precipitation || [];
+        var hrs = [], rain = [];
+        for (var t=0; t<Math.min(HOURS, spd.length); t++){
           hrs.push({ ms: spd[t]||0, dir: dr[t]||0 });
+          rain.push(pr[t]);           // мм/ч на этот час (может быть 0/undefined)
+        }
         // волну берём из marine по тому же индексу точки (порядок пар совпадает)
         var wave = [];
         var mp = Array.isArray(marine) ? marine[idx] : null;
         var wh = (mp && mp.hourly && mp.hourly.wave_height) || [];
         for (var t2=0; t2<Math.min(HOURS, hrs.length); t2++) wave.push(wh[t2]);
-        return { lat:p.latitude, lon:p.longitude, hrs:hrs, wave:wave };
+        return { lat:p.latitude, lon:p.longitude, hrs:hrs, wave:wave, rain:rain };
       });
       gridBounds = b;
       updateTimelineMax();
@@ -667,6 +678,19 @@ function drawOverlay(){
   var ctx = fitCanvas(windCanvas);
   ctx.clearRect(0,0,size.x,size.y);
   if (!windGrid) return;
+
+  // — слой осадков: пятна по сетке, цвет/яркость по интенсивности (мм/ч) —
+  if (layers.rain){
+    windGrid.forEach(function(g){
+      var mm = g.rain ? g.rain[Math.min(hourIdx, g.rain.length-1)] : null;
+      var col = (mm != null) ? rainColor(mm) : null;
+      if (!col) return;                       // сухо → не рисуем
+      var pt = wmap.latLngToContainerPoint([g.lat, g.lon]);
+      if (pt.x<-40||pt.y<-40||pt.x>size.x+40||pt.y>size.y+40) return;
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 34, 0, Math.PI*2); ctx.fill();
+    });
+  }
 
   // — слой волн: круги-пятна по сетке, цвет по высоте волны —
   if (layers.waves){
@@ -803,6 +827,13 @@ function updateTimeLabel(){
 
 function renderLegend(){
   var box = $("windLegend"); if (!box) return;
+  if (layers.rain){
+    var rsteps = [["<0.5","rgba(120,170,230,0.7)"],["0.5–2","rgba(70,130,220,0.8)"],
+      ["2–5","rgba(50,90,210,0.85)"],["5+","rgba(110,60,200,0.9)"]];
+    box.innerHTML = "Осадки, мм/ч: " + rsteps.map(function(s){
+      return '<span><i style="background:'+s[1]+'"></i>'+s[0]+'</span>'; }).join("");
+    return;
+  }
   if (layers.waves){
     var wsteps = [["<0.5","rgba(80,180,220,0.6)"],["0.5–1","rgba(90,200,150,0.6)"],
       ["1–2","rgba(233,196,106,0.7)"],["2–3","rgba(244,162,97,0.75)"],["3+","rgba(229,84,75,0.8)"]];
