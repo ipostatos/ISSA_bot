@@ -192,6 +192,7 @@ function isLit(pattern, t){
 let animRAF = null, animBuoy = null, animCanvas = null, animStart = null;
 function startBuoyAnim(canvas, buoy){
   stopBuoyAnim();
+  if (!canvas || !buoy || !buoy.light) return;   // защита от пустых данных
   animCanvas = canvas; animBuoy = buoy;
   const pat = buildPattern(buoy.light.pattern);
   function frame(ts){
@@ -328,6 +329,13 @@ function hexA(hex,a){ const n=parseInt(hex.slice(1),16);
 // ─────────────────────── Меню ───────────────────────
 function renderMenu(){
   const demo = DATA.buoys.find(b=>b.id==="north") || DATA.buoys[0];
+  if (!demo){    // данные не загрузились — не падаем, показываем подсказку
+    $("menu").insertAdjacentHTML("afterbegin",
+      '<div class="info" style="margin-bottom:12px">Не удалось загрузить данные буёв.<br>'
+      + 'Файл <code>buoys_data.js</code> не найден на сервере. Запусти '
+      + '<code>bash deploy/update_webapp.sh</code>.</div>');
+    return;
+  }
   startBuoyAnim($("buoyMenu"), demo);
 }
 
