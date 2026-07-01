@@ -192,15 +192,22 @@ let S = null;     // {mode, queue, idx, answers, timerEnd, tick}
 
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
 
+// перемешанный порядок ВАРИАНТОВ на каждый вопрос (как в quiz.html) —
+// иначе правильный ответ всегда стоит на своём месте. Храним исходные индексы:
+// data-i/проверка ответа остаются в исходной нумерации, меняется только показ.
+function optionOrders(queue){ return queue.map(q => shuffle(q.options.map((_,k)=>k))); }
+
 function startExam(){
   const queue = shuffle(ALL).slice(0, Math.min(D.examSize, ALL.length));
-  S = { mode:"exam", queue, idx:0, answers:new Array(queue.length).fill(null),
+  S = { mode:"exam", queue, order: optionOrders(queue), idx:0,
+        answers:new Array(queue.length).fill(null),
         timerEnd: Date.now() + D.examMinutes*60*1000, tick:null };
   enterRun();
   S.tick = setInterval(updateTimer, 1000); updateTimer();
 }
 function startTrain(){
-  S = { mode:"train", queue: shuffle(ALL), idx:0, answers:[], timerEnd:null, tick:null };
+  const queue = shuffle(ALL);
+  S = { mode:"train", queue, order: optionOrders(queue), idx:0, answers:[], timerEnd:null, tick:null };
   enterRun();
 }
 
@@ -229,16 +236,20 @@ function render(){
   $("signWrap").innerHTML = q.image ? `<img class="sign" src="${q.image}" alt="знак">` : "";
 
   const chosen = S.mode==="exam" ? S.answers[S.idx] : (S._trainPicked ?? null);
-  $("opts").innerHTML = q.options.map((o,i)=>{
+  // pos — позиция показа (буква a/b/c), orig — исходный индекс варианта
+  // (data-i, проверка ответа и подсветка правильного — по orig).
+  const order = (S.order && S.order[S.idx]) || q.options.map((_,k)=>k);
+  $("opts").innerHTML = order.map((orig, pos)=>{
+    const o = q.options[orig];
     let cls="opt";
     if (S.mode==="exam"){
-      if (chosen===i) cls+=" chosen";
+      if (chosen===orig) cls+=" chosen";
     } else if (S._trainPicked!=null){
       cls+=" lock";
-      if (i===q.answer) cls+=" ok";
-      else if (i===S._trainPicked) cls+=" bad";
+      if (orig===q.answer) cls+=" ok";
+      else if (orig===S._trainPicked) cls+=" bad";
     }
-    return `<div class="${cls}" data-i="${i}"><span class="lt">${"abcde"[i]}</span><span>${esc(o)}</span></div>`;
+    return `<div class="${cls}" data-i="${orig}"><span class="lt">${"abcde"[pos]}</span><span>${esc(o)}</span></div>`;
   }).join("");
   renderLamp(q);
   renderControls(chosen);
