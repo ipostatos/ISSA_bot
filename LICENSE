@@ -1,28 +1,34 @@
-MIT License
+Copyright (c) 2026 ipostatos. All rights reserved.
 
-Copyright (c) 2026 ipostatos
+ISSA Trainer — учебный тренажёр (Telegram-бот + Mini Apps) для подготовки к
+экзаменам по яхтингу. Настоящая лицензия применяется к ОРИГИНАЛЬНЫМ материалам
+проекта: исходному коду приложения и бота, банкам вопросов, конспектам, словарю,
+задачам и прочему авторскому контенту в этом репозитории.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+РАЗРЕШЕНО без отдельного согласия:
+  • личное некоммерческое использование тренажёра по прямому назначению
+    (подготовка к экзамену);
+  • изучение исходного кода в ознакомительных целях.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+ЗАПРЕЩЕНО без письменного разрешения правообладателя:
+  • любое коммерческое использование, продажа, платный доступ, перепродажа;
+  • копирование, публикация или распространение банков вопросов, конспектов и
+    иного учебного контента (полностью или частично);
+  • использование любых материалов репозитория (кода и контента) для обучения,
+    дообучения, оценки или наполнения наборов данных систем машинного обучения
+    и искусственного интеллекта (см. AI-POLICY.md);
+  • создание производных продуктов и сервисов на основе этих материалов.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Сторонние компоненты в каталоге webapp/vendor/ (Leaflet, pdf.js и др.)
+распространяются под собственными лицензиями их авторов; настоящая лицензия на
+них не распространяется. Картографические тайлы — © OpenStreetMap, © CARTO;
+данные погоды — Open-Meteo. Они используются на условиях их провайдеров.
 
----
+Учебные материалы — авторский пересказ по открытым источникам (COLREG/МППСС-72,
+IALA MBS, GMDSS/SRC, программа PZŻ/PYA и др.). Они НЕ являются официальным
+учебником ISSA, PZŻ или какой-либо школы и НЕ содержат экзаменационных ключей.
 
-Учебные материалы (вопросы, конспект, словарь) — авторский пересказ по
-открытым источникам (COLREG/МППСС-72, IALA MBS, GMDSS/SRC и др.). Они не
-являются официальным учебником ISSA или какой-либо школы и не содержат
-экзаменационных ключей.
+МАТЕРИАЛЫ ПРЕДОСТАВЛЯЮТСЯ «КАК ЕСТЬ», БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ. АВТОР НЕ НЕСЁТ
+ОТВЕТСТВЕННОСТИ ЗА ЛЮБОЙ УЩЕРБ, СВЯЗАННЫЙ С ИСПОЛЬЗОВАНИЕМ МАТЕРИАЛОВ.
+
+По вопросам лицензирования и разрешений: @ipostatos (Telegram).
