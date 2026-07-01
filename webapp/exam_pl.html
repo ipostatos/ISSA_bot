@@ -10,6 +10,7 @@
 <script src="icons.js"></script>
 <script src="zeglarz_data.js"></script>
 <script src="sternik_data.js"></script>
+<script src="konspekt_pl_data.js"></script>
 <style>
   :root{
     --bg: var(--tg-theme-bg-color, #17212b);
@@ -46,6 +47,7 @@
   .big.accent{background:var(--accent); color:var(--accent-text); border-color:var(--accent)}
   .big.accent .bic{color:var(--accent-text)}
   .big small{display:block; font-weight:400; font-size:13px; opacity:.85; margin-top:2px}
+  a.big{text-decoration:none}   /* ссылка-плитка выглядит как кнопка */
 
   .top{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; color:var(--hint); font-size:13px}
   .timer{font-family:ui-monospace,Menlo,Consolas,monospace; font-weight:800; font-size:15px}
@@ -64,6 +66,13 @@
   .opt.ok{background:rgba(76,175,114,.15); border-color:var(--ok)} .opt.ok .lt{color:var(--ok)}
   .opt.bad{background:rgba(229,84,75,.15); border-color:var(--bad)} .opt.bad .lt{color:var(--bad)}
   .opt.lock{cursor:default}
+
+  /* «лампочка-источник»: ссылка на разбор темы в конспекте (режим тренировки) */
+  .lamp{display:flex; align-items:center; gap:8px; margin-top:12px; padding:11px 13px;
+    border:1px solid var(--border); border-radius:11px; background:transparent;
+    color:var(--accent); font-size:14px; font-weight:600; text-decoration:none; cursor:pointer}
+  .lamp .lic{flex:0 0 auto}
+  .lamp small{display:block; color:var(--hint); font-weight:400; font-size:12px}
 
   .row{display:flex; gap:8px; margin-top:12px}
   .btn{flex:1; padding:13px; border:none; border-radius:12px; background:var(--accent);
@@ -105,8 +114,12 @@
     </button>
     <button class="big" id="startTrain">
       <span class="bic" data-icon="target"></span>
-      <span>Тренировка<small>все вопросы подряд · сразу видно правильный</small></span>
+      <span>Тренировка<small>все вопросы подряд · сразу видно правильный · разбор в конспекте</small></span>
     </button>
+    <a class="big" id="openKonspekt" href="konspekt_pl.html">
+      <span class="bic" data-icon="book-open"></span>
+      <span>Конспект PL<small>7 тем PL/RU · почему ответ правильный</small></span>
+    </a>
     <button class="btn ghost" id="changeLic" style="width:100%; margin-top:4px">← Сменить лицензию</button>
     <p class="foot" id="bankInfo"></p>
   </section>
@@ -122,6 +135,7 @@
       <div class="q" id="q">…</div>
       <div id="signWrap"></div>
       <div id="opts"></div>
+      <div id="lamp"></div>
       <div class="row" id="controls"></div>
     </div>
     <button class="btn ghost" id="quit" style="width:100%">Выйти</button>
@@ -150,6 +164,8 @@ const BANKS = {
   zeglarz: window.ZEGLARZ_DATA,
   sternik: window.STERNIK_DATA,
 };
+// карта «id вопроса -> ключ темы конспекта» для «лампочки-источника»
+const Q2TOPIC = (window.KONSPEKT_PL_DATA && window.KONSPEKT_PL_DATA.q2topic) || {};
 let D = null, ALL = [];   // выбранная лицензия
 
 function pickLicense(lic){
@@ -221,9 +237,23 @@ function render(){
     }
     return `<div class="${cls}" data-i="${i}"><span class="lt">${"abcde"[i]}</span><span>${esc(o)}</span></div>`;
   }).join("");
+  renderLamp(q);
   renderControls(chosen);
 }
 function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+// «лампочка-источник»: в тренировке после ответа — ссылка на разбор темы.
+function renderLamp(q){
+  const box = $("lamp");
+  const topic = q && Q2TOPIC[q.id];
+  // показываем только в тренировке, после выбора варианта, если тема найдена
+  if (S.mode!=="train" || S._trainPicked==null || !topic){ box.innerHTML=""; return; }
+  box.innerHTML =
+    `<a class="lamp" href="konspekt_pl.html#${encodeURIComponent(topic)}">`
+    + `<span class="lic" data-icon="lightbulb"></span>`
+    + `<span>Разбор в конспекте<small>почему этот ответ правильный</small></span></a>`;
+  if (window.Icons) Icons.hydrate(box);
+}
 
 function renderControls(chosen){
   const last = S.idx===S.queue.length-1;

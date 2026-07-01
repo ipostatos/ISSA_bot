@@ -121,6 +121,16 @@ jobs:
           fi
           echo "OK: польские банки актуальны"
 
+      - name: Polish konspekt data is up to date (Żeglarz + Sternik)
+        run: |
+          python webapp/build_konspekt_pl_data.py
+          if ! git diff --quiet -- webapp/konspekt_pl_data.js; then
+            echo "::error::konspekt_pl_data.js устарел — перегенерируй: python webapp/build_konspekt_pl_data.py"
+            git --no-pager diff --stat -- webapp/konspekt_pl_data.js
+            exit 1
+          fi
+          echo "OK: польский конспект актуален"
+
       - name: Pre-release audit (questions, images, limits)
         run: python run_audit.py
 
@@ -143,6 +153,7 @@ jobs:
           node webapp/_glossary_check.mjs
           node webapp/_content_check.mjs
           node webapp/_licenses_check.mjs
+          node webapp/_konspekt_pl_check.mjs
 
   secret-scan:
     runs-on: ubuntu-latest
