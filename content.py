@@ -251,7 +251,7 @@ CHEATSHEET_ORDER = ["tvmdc", "colreg", "lights", "sounds", "iala",
 
 # Картинки к шпаргалкам (файлы в bot/images/). Отправляются после текста.
 CHEATSHEET_IMAGES: dict[str, list[str]] = {
-    "tvmdc": ["tmc.png", "deviation.png", "deviation_2.png"],
+    "tvmdc": ["tmc.png", "deviation.png"],
     "lights": ["dayshapes.png"],
     "sounds": ["sound_signals.png"],
     "iala": ["iala_signs.jpg", "lighthouses.png", "iala_regions.png"],
