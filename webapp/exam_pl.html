@@ -110,6 +110,11 @@
   <section id="menu" class="hidden">
     <h1 id="mTitle">Польские лицензии</h1>
     <p class="sub" id="mSub">Гибридные вопросы PL/RU как на экзаменационном листе.</p>
+    <div class="card hidden" id="resumeCard" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px">
+      <div style="flex:1 1 100%; font-size:14px"><span class="bic" data-icon="pause"></span> Есть незавершённый тест: <b><span id="resumeInfo"></span></b></div>
+      <button class="btn" id="resumeBtn" style="flex:1; min-width:130px"><span class="bic" style="color:var(--warn)" data-icon="play"></span> Продолжить</button>
+      <button class="btn ghost" id="resumeDrop" style="flex:1; min-width:130px; margin:0"><span class="bic" data-icon="refresh-cw"></span> Начать заново</button>
+    </div>
     <button class="big accent" id="startExam">
       <span class="bic" data-icon="file-check"></span>
       <span>Экзамен<small id="examSub"></small></span>
@@ -168,12 +173,13 @@ const BANKS = {
 };
 // карта «id вопроса -> ключ темы конспекта» для «лампочки-источника»
 const Q2TOPIC = (window.KONSPEKT_PL_DATA && window.KONSPEKT_PL_DATA.q2topic) || {};
-let D = null, ALL = [], curLic = null;   // выбранная лицензия (ключ + данные)
+let D = null, ALL = [], curLic = null, byId = {};   // выбранная лицензия (ключ + данные)
 
 function pickLicense(lic){
   curLic = lic;
   D = BANKS[lic] || {questions:[], examSize:75, examPass:65, examMinutes:90, title:"—"};
   ALL = D.questions || [];
+  byId = {}; ALL.forEach(q => { byId[q.id] = q; });   // для восстановления сессии
   $("pick").classList.add("hidden");
   $("menu").classList.remove("hidden");
   $("mTitle").textContent = D.title || "Польские лицензии";
@@ -181,6 +187,7 @@ function pickLicense(lic){
     ` ${Math.min(D.examSize, ALL.length)} вопросов · ${D.examMinutes} мин · сдать ${D.examPass}`;
   $("bankInfo").textContent =
     `Банк: ${ALL.length} вопросов (${D.meta?.withImage||0} со знаками). Не является официальным материалом.`;
+  renderResumeBanner();   // если для этой лицензии есть незавершённый тест — предложить продолжить
 }
 $("pick").addEventListener("click", e=>{
   const b = e.target.closest("button[data-lic]"); if(!b) return;
@@ -188,9 +195,35 @@ $("pick").addEventListener("click", e=>{
 });
 
 // ── состояние сессии ──
-let S = null;     // {mode, queue, idx, answers, timerEnd, tick}
+let S = null;     // {mode, queue, order, idx, answers, timerEnd, tick}
 
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+// ── незавершённый тест (локально, по образцу quiz.html) ──
+// Чтобы при случайном закрытии Mini App не терять длинный тест. Храним id
+// вопросов, порядок вариантов (S.order из F-06), ответы и абсолютный timerEnd.
+const LS_SESSION = "issa_pl_exam_session_v1";
+function saveSession(){
+  if (!S || !curLic) return;
+  try {
+    localStorage.setItem(LS_SESSION, JSON.stringify({
+      lic: curLic, mode: S.mode, idx: S.idx,
+      ids: S.queue.map(q => q.id), order: S.order, answers: S.answers,
+      timerEnd: S.timerEnd, ts: Date.now(),
+    }));
+  } catch (e) {}
+}
+function clearSession(){ try { localStorage.removeItem(LS_SESSION); } catch (e) {} }
+function loadSession(){
+  try {
+    const raw = localStorage.getItem(LS_SESSION); if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (s.lic !== curLic) return null;   // сессия другой лицензии — не показываем здесь
+    const queue = (s.ids || []).map(id => byId[id]);
+    if (!queue.length || queue.some(q => !q)) { clearSession(); return null; }
+    return { ...s, queue };
+  } catch (e) { return null; }
+}
 
 // перемешанный порядок ВАРИАНТОВ на каждый вопрос (как в quiz.html) —
 // иначе правильный ответ всегда стоит на своём месте. Храним исходные индексы:
@@ -203,11 +236,13 @@ function startExam(){
         answers:new Array(queue.length).fill(null),
         timerEnd: Date.now() + D.examMinutes*60*1000, tick:null };
   enterRun();
+  saveSession();   // сразу сохраняем новый экзамен (перезаписывая любой старый)
   S.tick = setInterval(updateTimer, 1000); updateTimer();
 }
 function startTrain(){
   const queue = shuffle(ALL);
   S = { mode:"train", queue, order: optionOrders(queue), idx:0, answers:[], timerEnd:null, tick:null };
+  clearSession();   // тренировку не возобновляем — старую сессию экзамена сбрасываем
   enterRun();
 }
 
@@ -275,8 +310,8 @@ function renderControls(chosen){
     $("controls").innerHTML =
       `${S.idx>0?'<button class="btn ghost" id="prev">Назад</button>':''}
        <button class="btn" id="next">${last?"Завершить":"Далее →"}</button>`;
-    $("next").onclick = ()=>{ if(last) finishExam(); else { S.idx++; render(); } };
-    if ($("prev")) $("prev").onclick = ()=>{ S.idx--; render(); };
+    $("next").onclick = ()=>{ if(last) finishExam(); else { S.idx++; render(); saveSession(); } };
+    if ($("prev")) $("prev").onclick = ()=>{ S.idx--; render(); saveSession(); };
   } else {
     // тренировка: после выбора показываем «Далее»
     if (S._trainPicked!=null){
@@ -293,7 +328,7 @@ $("opts").addEventListener("click", e=>{
   const el = e.target.closest(".opt"); if(!el) return;
   const i = +el.dataset.i;
   if (S.mode==="exam"){
-    S.answers[S.idx] = i; render();
+    S.answers[S.idx] = i; render(); saveSession();
     haptic("light");
   } else {
     if (S._trainPicked!=null) return;   // уже отвечено
@@ -309,6 +344,7 @@ $("opts").addEventListener("click", e=>{
 
 function finishExam(){
   if (S.tick) clearInterval(S.tick);
+  clearSession();   // тест завершён — сохранённую сессию убираем
   let correct=0;
   S.queue.forEach((q,i)=>{
     const ok = S.answers[i]===q.answer;
@@ -331,11 +367,37 @@ function finishExam(){
 
 function toMenu(){
   if (S?.tick) clearInterval(S.tick);
+  clearSession();   // выход в меню = отказ от текущего теста
   S=null;
   $("run").classList.add("hidden");
   $("result").classList.add("hidden");
   $("menu").classList.remove("hidden");
+  renderResumeBanner();
 }
+
+// ── возобновление незавершённого экзамена ──
+function resumeExam(){
+  const s = loadSession();
+  if (!s) { renderResumeBanner(); return; }
+  S = { mode: s.mode, queue: s.queue, order: s.order, idx: s.idx,
+        answers: s.answers, timerEnd: s.timerEnd, tick: null };
+  enterRun();
+  if (s.mode === "exam" && s.timerEnd != null){
+    if (Date.now() >= s.timerEnd){ finishExam(); return; }
+    S.tick = setInterval(updateTimer, 1000); updateTimer();
+  }
+}
+function renderResumeBanner(){
+  const card = $("resumeCard");
+  const s = loadSession();
+  if (!s){ card.classList.add("hidden"); return; }
+  const done = s.answers.filter(a => a !== null).length;
+  $("resumeInfo").textContent = `Экзамен · ${done}/${s.ids.length}`;
+  card.classList.remove("hidden");   // .hidden = display:none !important — управляем классом
+  if (window.Icons) Icons.hydrate(card);
+}
+$("resumeBtn").onclick = resumeExam;
+$("resumeDrop").onclick = ()=>{ clearSession(); renderResumeBanner(); };
 
 $("startExam").onclick = startExam;
 $("startTrain").onclick = startTrain;
