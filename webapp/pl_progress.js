@@ -45,6 +45,7 @@
         var L = lic(s, license);
         L.solved[qid] = 1;
         save(s);
+        if (global.Sync) global.Sync.schedulePush();   // синхрон между устройствами
       }
       if (global.Progress && typeof global.Progress.recordAnswer === "function") {
         global.Progress.recordAnswer();
@@ -70,6 +71,7 @@
         L.bestCorrect = correct; L.bestTotal = total;
       }
       save(s);
+      if (global.Sync) global.Sync.schedulePush();   // синхрон между устройствами
     },
 
     bestExam: function (license) {

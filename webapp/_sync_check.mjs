@@ -8,7 +8,7 @@ const fake = { Telegram: { WebApp: { initData: "" } }, fetch: undefined,
   addEventListener: () => {}, document: {} };
 const mod = { exports: {} };
 new Function("window", "module", "globalThis", src)(fake, mod, fake);
-const { mergeSrs, mergeProgress } = mod.exports;
+const { mergeSrs, mergeProgress, mergePlProgress } = mod.exports;
 
 let fails = 0;
 const eq = (got, exp, msg) => {
@@ -48,6 +48,28 @@ eq([!!mFlags.flags.examPass, !!mFlags.flags.flawless], [true, true],
    "progress: flags объединяются (бейджи не теряются)");
 eq(!!mergeProgress({ flags: { examPass: true } }, {}).flags.examPass, true,
    "progress: flag из server сохранён при пустом incoming");
+
+// польский прогресс: union solved, max bestCorrect, bestTotal следует за лучшим
+const mPL = mergePlProgress(
+  { zeglarz: { solved: { "zj-1": 1, "zj-2": 1 }, bestCorrect: 40, bestTotal: 50 },
+    sternik: { solved: { "st-1": 1 }, bestCorrect: 20, bestTotal: 50 } },
+  { zeglarz: { solved: { "zj-2": 1, "zj-3": 1 }, bestCorrect: 35, bestTotal: 45 } }
+);
+eq(Object.keys(mPL.zeglarz.solved).sort(), ["zj-1", "zj-2", "zj-3"], "pl: solved union");
+eq([mPL.zeglarz.bestCorrect, mPL.zeglarz.bestTotal], [40, 50], "pl: лучший best со своим total");
+eq([mPL.sternik.bestCorrect, mPL.sternik.solved["st-1"]], [20, 1], "pl: server-only лицензия сохранена");
+eq(mergePlProgress(null, null), {}, "pl: None → {}");
+eq(mergePlProgress({ zeglarz: { solved: { a: 1 } } }, {}).zeglarz.bestCorrect, null,
+   "pl: solved без экзамена → bestCorrect null");
+// incoming с бОльшим best забирает и свой total (не max по total)
+eq([mergePlProgress(
+     { zeglarz: { bestCorrect: 30, bestTotal: 50 } },
+     { zeglarz: { bestCorrect: 44, bestTotal: 45 } }
+   ).zeglarz.bestCorrect,
+   mergePlProgress(
+     { zeglarz: { bestCorrect: 30, bestTotal: 50 } },
+     { zeglarz: { bestCorrect: 44, bestTotal: 45 } }
+   ).zeglarz.bestTotal], [44, 45], "pl: total идёт за лучшим correct, а не max");
 
 if (fails) { console.log(`\nSYNC CHECK: ${fails} провал(ов)`); process.exit(1); }
 console.log("\nSYNC CHECK OK (JS-merge совпадает с серверным)");

@@ -25,6 +25,7 @@
 
   var SRS_KEY = "issa_srs_v1";
   var PROG_KEY = "issa_progress_v1";
+  var PL_PROG_KEY = "issa_pl_progress_v1";  // прогресс польских лицензий
   var API = "/api/state";                 // тот же домен, путь /api/* за Caddy
   var POST_DEBOUNCE_MS = 4000;
   // Лимит дней heatmap. ОБЯЗАН совпадать с MAX_HEATMAP_DAYS в api/merge.py
@@ -94,13 +95,50 @@
     if (Object.keys(flags).length) out.flags = flags;
     return out;
   }
+  // Польский прогресс: { lic: {solved:{qid:1}, bestCorrect, bestTotal} }.
+  // solved — объединение; bestCorrect — max; bestTotal берём У источника с
+  // лучшим bestCorrect (иначе total разъедется). Идентично merge_pl_progress.
+  function mergePlProgress(a, b) {
+    a = a || {}; b = b || {};
+    var out = {}, lics = {};
+    Object.keys(a).forEach(function (k) { lics[k] = 1; });
+    Object.keys(b).forEach(function (k) { lics[k] = 1; });
+    Object.keys(lics).forEach(function (lic) {
+      var x = (a[lic] && typeof a[lic] === "object") ? a[lic] : {};
+      var y = (b[lic] && typeof b[lic] === "object") ? b[lic] : {};
+      var solved = {};
+      [x.solved || {}, y.solved || {}].forEach(function (src) {
+        if (src && typeof src === "object") {
+          Object.keys(src).forEach(function (qid) { solved[qid] = 1; });
+        }
+      });
+      var bestPair = function (d) {
+        var c = parseInt(d.bestCorrect, 10);
+        if (isNaN(c)) return null;
+        var t = parseInt(d.bestTotal, 10);
+        return { c: c, t: isNaN(t) ? null : t };
+      };
+      var bx = bestPair(x), by = bestPair(y), best = null;
+      if (bx && by) best = (by.c > bx.c) ? by : bx;
+      else best = bx || by;
+      if (Object.keys(solved).length || best) {
+        out[lic] = {
+          solved: solved,
+          bestCorrect: best ? best.c : null,
+          bestTotal: best ? best.t : null,
+        };
+      }
+    });
+    return out;
+  }
 
   function localState() {
-    return { srs: lsGet(SRS_KEY), progress: lsGet(PROG_KEY) };
+    return { srs: lsGet(SRS_KEY), progress: lsGet(PROG_KEY), pl_progress: lsGet(PL_PROG_KEY) };
   }
   function applyMerged(state) {
     if (state.srs) lsSet(SRS_KEY, state.srs);
     if (state.progress) lsSet(PROG_KEY, state.progress);
+    if (state.pl_progress) lsSet(PL_PROG_KEY, state.pl_progress);
   }
 
   var Sync = {
@@ -117,6 +155,7 @@
           applyMerged({
             srs: mergeSrs(loc.srs, j.state.srs),
             progress: mergeProgress(loc.progress, j.state.progress),
+            pl_progress: mergePlProgress(loc.pl_progress, j.state.pl_progress),
           });
           return true;
         })
@@ -175,6 +214,7 @@
 
   global.Sync = Sync;
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { mergeSrs: mergeSrs, mergeProgress: mergeProgress };
+    module.exports = { mergeSrs: mergeSrs, mergeProgress: mergeProgress,
+                       mergePlProgress: mergePlProgress };
   }
 })(typeof window !== "undefined" ? window : globalThis);

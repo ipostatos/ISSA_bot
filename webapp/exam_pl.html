@@ -13,6 +13,8 @@
 <script src="zeglarz_data.js"></script>
 <script src="sternik_data.js"></script>
 <script src="konspekt_pl_data.js"></script>
+<script src="sync.js"></script>   <!-- после pl_progress.js: PLProgress вызывает Sync -->
+
 <style>
   :root{
     --bg: var(--tg-theme-bg-color, #17212b);
@@ -407,6 +409,11 @@ $("rMenu").onclick = toMenu;
 $("rAgain").onclick = ()=> S?.mode==="train" ? startTrain() : startExam();
 
 if (window.Icons) Icons.hydrate();
+
+// Синхронизация польского прогресса между устройствами: подтянуть серверное
+// состояние в локальный стор. Merge non-destructive (union solved, max best) —
+// пустой сервер НЕ затирает локальный прогресс. Тихо no-op вне Telegram/офлайн.
+if (window.Sync) Sync.pull();
 </script>
 </body>
 </html>

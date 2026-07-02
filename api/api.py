@@ -70,11 +70,18 @@ def init_db() -> None:
                  user_id        INTEGER PRIMARY KEY,
                  srs            TEXT NOT NULL DEFAULT '{}',
                  progress       TEXT NOT NULL DEFAULT '{}',
+                 pl_progress    TEXT NOT NULL DEFAULT '{}',
                  schema_version INTEGER NOT NULL DEFAULT 1,
                  created_at     INTEGER NOT NULL,
                  updated_at     INTEGER NOT NULL
                )"""
         )
+        # Миграция боевой БД: у существующей таблицы state колонки pl_progress
+        # ещё нет. ADD COLUMN идемпотентен через проверку — на второй запуск уже
+        # не сработает (колонка есть), поэтому глушим только «duplicate column».
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(state)")}
+        if "pl_progress" not in cols:
+            conn.execute("ALTER TABLE state ADD COLUMN pl_progress TEXT NOT NULL DEFAULT '{}'")
         # История прохождений (append-only). Отдельно от state — не мёрджится.
         conn.execute(
             """CREATE TABLE IF NOT EXISTS attempts(
@@ -173,28 +180,31 @@ def list_attempts(user_id: int, limit: int = HISTORY_LIMIT) -> list:
 def load_state(user_id: int) -> dict:
     with get_db() as conn:
         row = conn.execute(
-            "SELECT srs, progress FROM state WHERE user_id=?", (user_id,)
+            "SELECT srs, progress, pl_progress FROM state WHERE user_id=?", (user_id,)
         ).fetchone()
     if not row:
-        return {"srs": {}, "progress": {}}
+        return {"srs": {}, "progress": {}, "pl_progress": {}}
     try:
-        return {"srs": json.loads(row[0] or "{}"), "progress": json.loads(row[1] or "{}")}
+        return {"srs": json.loads(row[0] or "{}"),
+                "progress": json.loads(row[1] or "{}"),
+                "pl_progress": json.loads(row[2] or "{}")}
     except json.JSONDecodeError:
-        return {"srs": {}, "progress": {}}
+        return {"srs": {}, "progress": {}, "pl_progress": {}}
 
 
 def save_state(user_id: int, state: dict) -> None:
     now = int(time.time())
     srs = json.dumps(state.get("srs", {}), ensure_ascii=False)
     prog = json.dumps(state.get("progress", {}), ensure_ascii=False)
+    pl = json.dumps(state.get("pl_progress", {}), ensure_ascii=False)
     with get_db() as conn:
         conn.execute(
-            """INSERT INTO state(user_id, srs, progress, schema_version, created_at, updated_at)
-               VALUES(?,?,?,?,?,?)
+            """INSERT INTO state(user_id, srs, progress, pl_progress, schema_version, created_at, updated_at)
+               VALUES(?,?,?,?,?,?,?)
                ON CONFLICT(user_id) DO UPDATE SET
-                 srs=excluded.srs, progress=excluded.progress,
+                 srs=excluded.srs, progress=excluded.progress, pl_progress=excluded.pl_progress,
                  schema_version=excluded.schema_version, updated_at=excluded.updated_at""",
-            (user_id, srs, prog, SCHEMA_VERSION, now, now),
+            (user_id, srs, prog, pl, SCHEMA_VERSION, now, now),
         )
 
 
@@ -211,26 +221,29 @@ def merge_and_save_state(user_id: int, incoming: dict) -> dict:
     try:
         conn.execute("BEGIN IMMEDIATE")          # эксклюзивная блокировка записи
         row = conn.execute(
-            "SELECT srs, progress FROM state WHERE user_id=?", (user_id,)
+            "SELECT srs, progress, pl_progress FROM state WHERE user_id=?", (user_id,)
         ).fetchone()
         if row:
             try:
                 server = {"srs": json.loads(row[0] or "{}"),
-                          "progress": json.loads(row[1] or "{}")}
+                          "progress": json.loads(row[1] or "{}"),
+                          "pl_progress": json.loads(row[2] or "{}")}
             except json.JSONDecodeError:
-                server = {"srs": {}, "progress": {}}
+                server = {"srs": {}, "progress": {}, "pl_progress": {}}
         else:
-            server = {"srs": {}, "progress": {}}
+            server = {"srs": {}, "progress": {}, "pl_progress": {}}
         merged = merge_state(server, {"srs": incoming.get("srs"),
-                                      "progress": incoming.get("progress")})
+                                      "progress": incoming.get("progress"),
+                                      "pl_progress": incoming.get("pl_progress")})
         conn.execute(
-            """INSERT INTO state(user_id, srs, progress, schema_version, created_at, updated_at)
-               VALUES(?,?,?,?,?,?)
+            """INSERT INTO state(user_id, srs, progress, pl_progress, schema_version, created_at, updated_at)
+               VALUES(?,?,?,?,?,?,?)
                ON CONFLICT(user_id) DO UPDATE SET
-                 srs=excluded.srs, progress=excluded.progress,
+                 srs=excluded.srs, progress=excluded.progress, pl_progress=excluded.pl_progress,
                  schema_version=excluded.schema_version, updated_at=excluded.updated_at""",
             (user_id, json.dumps(merged.get("srs", {}), ensure_ascii=False),
              json.dumps(merged.get("progress", {}), ensure_ascii=False),
+             json.dumps(merged.get("pl_progress", {}), ensure_ascii=False),
              SCHEMA_VERSION, now, now),
         )
         conn.commit()

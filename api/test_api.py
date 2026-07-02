@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from auth import verify_init_data, build_init_data, InitDataError
-from merge import merge_srs, merge_progress, merge_state
+from merge import merge_srs, merge_progress, merge_pl_progress, merge_state
 
 TOKEN = "123456:TEST-TOKEN-abcdef"
 fails = 0
@@ -104,6 +104,30 @@ def test_merge_progress():
           "day-0000" not in mover["days"] and "day-0499" in mover["days"])
 
 
+def test_merge_pl_progress():
+    # ТЕ ЖЕ кейсы, что в webapp/_sync_check.mjs — паритет JS↔Python.
+    server = {"zeglarz": {"solved": {"zj-1": 1, "zj-2": 1}, "bestCorrect": 40, "bestTotal": 50},
+              "sternik": {"solved": {"st-1": 1}, "bestCorrect": 20, "bestTotal": 50}}
+    incoming = {"zeglarz": {"solved": {"zj-2": 1, "zj-3": 1}, "bestCorrect": 35, "bestTotal": 45}}
+    m = merge_pl_progress(server, incoming)
+    check("pl: solved union", sorted(m["zeglarz"]["solved"]) == ["zj-1", "zj-2", "zj-3"])
+    check("pl: лучший best со своим total",
+          m["zeglarz"]["bestCorrect"] == 40 and m["zeglarz"]["bestTotal"] == 50)
+    check("pl: server-only лицензия сохранена",
+          m["sternik"]["bestCorrect"] == 20 and m["sternik"]["solved"].get("st-1") == 1)
+    check("pl: None → {}", merge_pl_progress(None, None) == {})
+    check("pl: solved без экзамена → bestCorrect None",
+          merge_pl_progress({"zeglarz": {"solved": {"a": 1}}}, {})["zeglarz"]["bestCorrect"] is None)
+    # incoming с бОльшим best забирает и свой total (не max по total)
+    mt = merge_pl_progress({"zeglarz": {"bestCorrect": 30, "bestTotal": 50}},
+                           {"zeglarz": {"bestCorrect": 44, "bestTotal": 45}})
+    check("pl: total идёт за лучшим correct, а не max",
+          mt["zeglarz"]["bestCorrect"] == 44 and mt["zeglarz"]["bestTotal"] == 45)
+    # обратная совместимость: пустой сервер НЕ затирает локальные solved
+    keep = merge_pl_progress({}, {"zeglarz": {"solved": {"zj-9": 1}}})
+    check("pl: пустой сервер не теряет incoming solved", keep["zeglarz"]["solved"].get("zj-9") == 1)
+
+
 # ── эндпоинты (если есть fastapi) ──
 def test_endpoints():
     try:
@@ -129,20 +153,38 @@ def test_endpoints():
 
         # пустое состояние
         r = client.get("/api/state", headers=h).json()
-        check("новое состояние пустое", r["state"]["srs"] == {} and r["state"]["progress"] == {})
+        check("новое состояние пустое",
+              r["state"]["srs"] == {} and r["state"]["progress"] == {}
+              and r["state"].get("pl_progress") == {})
 
-        # POST мёрджит и возвращает merged
-        body = {"srs": {"q1": {"box": 2, "due": 500}}, "progress": {"streak": 4, "best": 4, "days": {"2026-06-25": 6}, "lastDay": "2026-06-25"}}
+        # POST мёрджит и возвращает merged (включая польский прогресс)
+        body = {"srs": {"q1": {"box": 2, "due": 500}},
+                "progress": {"streak": 4, "best": 4, "days": {"2026-06-25": 6}, "lastDay": "2026-06-25"},
+                "pl_progress": {"zeglarz": {"solved": {"zj-1": 1}, "bestCorrect": 30, "bestTotal": 50}}}
         r = client.post("/api/state", headers=h, content=json.dumps(body)).json()
         check("POST вернул merged srs", r["state"]["srs"]["q1"]["box"] == 2)
+        check("POST вернул merged pl_progress", r["state"]["pl_progress"]["zeglarz"]["solved"]["zj-1"] == 1)
 
         # второй POST с другого «устройства» — мёрдж, не перезапись
-        body2 = {"srs": {"q1": {"box": 1, "due": 9999}, "q2": {"box": 0, "due": 1}}, "progress": {"streak": 2, "best": 2, "days": {"2026-06-26": 3}, "lastDay": "2026-06-26"}}
+        body2 = {"srs": {"q1": {"box": 1, "due": 9999}, "q2": {"box": 0, "due": 1}},
+                 "progress": {"streak": 2, "best": 2, "days": {"2026-06-26": 3}, "lastDay": "2026-06-26"},
+                 "pl_progress": {"zeglarz": {"solved": {"zj-2": 1}, "bestCorrect": 44, "bestTotal": 50},
+                                 "sternik": {"solved": {"st-9": 1}}}}
         r = client.post("/api/state", headers=h, content=json.dumps(body2)).json()
         check("merge: q1 сохранил box=2 (не затёрт)", r["state"]["srs"]["q1"]["box"] == 2)
         check("merge: q2 добавлен", r["state"]["srs"]["q2"]["box"] == 0)
         check("merge: streak=max(4,2)=4", r["state"]["progress"]["streak"] == 4)
         check("merge: days объединены", set(r["state"]["progress"]["days"]) == {"2026-06-25", "2026-06-26"})
+        pl = r["state"]["pl_progress"]
+        check("merge pl: zeglarz.solved union", set(pl["zeglarz"]["solved"]) == {"zj-1", "zj-2"})
+        check("merge pl: zeglarz.best=max(30,44)=44", pl["zeglarz"]["bestCorrect"] == 44)
+        check("merge pl: sternik добавлен новой лицензией", pl["sternik"]["solved"]["st-9"] == 1)
+
+        # обратная совместимость: пустой incoming.pl_progress НЕ затирает серверный
+        r = client.post("/api/state", headers=h,
+                        content=json.dumps({"srs": {}, "progress": {}})).json()
+        check("pl: POST без pl_progress не теряет серверный прогресс",
+              r["state"]["pl_progress"]["zeglarz"]["solved"].get("zj-1") == 1)
 
         # лимит тела
         big = client.post("/api/state", headers=h, content=b"x" * (300 * 1024))
@@ -262,6 +304,7 @@ if __name__ == "__main__":
     test_auth()
     test_merge_srs()
     test_merge_progress()
+    test_merge_pl_progress()
     test_endpoints()
     test_attempts()
     test_rate_limit()

@@ -7,10 +7,11 @@
 максимум; для дней активности — объединение. Агрегированную статистику здесь
 НЕ суммируем (двойной счёт), оставляем серверную как есть.
 
-Синхронизируем только два пространства:
-  srs       — issa_srs_v1:      { qid: {box, due} }
-  progress  — issa_progress_v1: { goal, days:{ "YYYY-MM-DD": n }, streak, best,
-                                   lastDay, frozenUsed }
+Синхронизируем три пространства:
+  srs         — issa_srs_v1:         { qid: {box, due} }
+  progress    — issa_progress_v1:    { goal, days:{ "YYYY-MM-DD": n }, streak,
+                                       best, lastDay, frozenUsed, flags }
+  pl_progress — issa_pl_progress_v1: { lic: {solved:{qid:1}, bestCorrect, bestTotal} }
 """
 from __future__ import annotations
 
@@ -111,13 +112,69 @@ def merge_progress(server: dict | None, incoming: dict | None) -> dict:
     return out
 
 
+def merge_pl_progress(server: dict | None, incoming: dict | None) -> dict:
+    """Слить прогресс польских лицензий: { lic: {solved, bestCorrect, bestTotal} }.
+
+    У польских банков нет SRS — только «решено верно хотя бы раз» и лучший
+    результат экзамена. Поэтому:
+      solved      — объединение множеств (union), чтобы не терять решённое;
+      bestCorrect — максимум; bestTotal берём У ТОГО источника, что дал лучший
+                    bestCorrect (иначе total разъедется с correct).
+    Лицензии не хардкодим — идём по всем ключам из обоих источников.
+    """
+    server = server or {}
+    incoming = incoming or {}
+    out: dict = {}
+    for license in set(server) | set(incoming):
+        s_lic = server.get(license) or {}
+        i_lic = incoming.get(license) or {}
+        if not isinstance(s_lic, dict):
+            s_lic = {}
+        if not isinstance(i_lic, dict):
+            i_lic = {}
+
+        solved: dict = {}
+        for src in (s_lic.get("solved") or {}, i_lic.get("solved") or {}):
+            if isinstance(src, dict):
+                for qid in src:
+                    solved[qid] = 1
+
+        def best_pair(d):
+            try:
+                c = int(d["bestCorrect"])
+            except (KeyError, TypeError, ValueError):
+                return None
+            try:
+                t = int(d.get("bestTotal"))
+            except (TypeError, ValueError):
+                t = None
+            return (c, t)
+
+        s_best = best_pair(s_lic)
+        i_best = best_pair(i_lic)
+        best = None
+        if s_best and i_best:
+            best = i_best if i_best[0] > s_best[0] else s_best
+        else:
+            best = s_best or i_best
+
+        if solved or best:
+            out[license] = {
+                "solved": solved,
+                "bestCorrect": best[0] if best else None,
+                "bestTotal": best[1] if best else None,
+            }
+    return out
+
+
 def merge_state(server: dict | None, incoming: dict | None) -> dict:
-    """Слить целое состояние {srs, progress}."""
+    """Слить целое состояние {srs, progress, pl_progress}."""
     server = server or {}
     incoming = incoming or {}
     return {
         "srs": merge_srs(server.get("srs"), incoming.get("srs")),
         "progress": merge_progress(server.get("progress"), incoming.get("progress")),
+        "pl_progress": merge_pl_progress(server.get("pl_progress"), incoming.get("pl_progress")),
     }
 
 
