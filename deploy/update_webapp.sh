@@ -52,6 +52,7 @@ cp -f "$SRC/lights.html"     "$DST/lights.html"   # бонус: огни суд�
 cp -f "$SRC/buoys.html"      "$DST/buoys.html"    # бонус: буи IALA (проблески)
 cp -f "$SRC/nav.js"          "$DST/nav.js"        # общая навигация (BackButton)
 cp -f "$SRC/lightbox.js"     "$DST/lightbox.js"   # зум картинок
+cp -f "$SRC/migration.js"    "$DST/migration.js"  # версионирование localStorage (грузится первым)
 cp -f "$SRC/srs.js"          "$DST/srs.js"        # интервальное повторение (SRS)
 cp -f "$SRC/progress.js"     "$DST/progress.js"   # мотивация: готовность/цель/streak
 cp -f "$SRC/pl_progress.js"  "$DST/pl_progress.js" # прогресс польских лицензий (Żeglarz/Sternik)
