@@ -3,11 +3,11 @@
   "id": "st-001",
   "license": "sternik",
   "topic": "Рулевой моторной лодки",
-  "q": "Łódź motorowa typu RIB\nпарусная 2. на веслах 3. моторная $",
+  "q": "Łódź motorowa typu RIB to:\nМоторная лодка типа RIB — это:",
   "options": [
    "łódź motorowa do połowu ryb\nскоростная лодка для ловли рыбы",
    "łódź motorowa o konstrukcji hybrydowej stanowiące połączenie  sztywnej i elastycznej\nмоторная лодка гибридной конструкции, представляющая собой сочетание жесткой и гибкой конструкции (баллонов плавучести)",
-   "łódź motorowa o napędzie strugowodnym\n1. на веслах 2. парусная 3. моторная"
+   "łódź motorowa o napędzie strugowodnym\nмоторная лодка с водомётным движителем"
   ],
   "answer": 1,
   "ref": "Sternik motorowodny — 460 pytań (PL/RU)"
@@ -5875,7 +5875,7 @@
   "id": "st-443",
   "license": "sternik",
   "topic": "Новости метеорологии",
-  "q": "Dwie czarne kule w pionie są znakiem dziennym oznaczającym:.\nДва черных шара по вертикали - это дневной знак, обозначающий:",
+  "q": "Dwie czarne kule w pionie są znakiem dziennym oznaczającym:\nДва черных шара по вертикали - это дневной знак, обозначающий:",
   "options": [
    "statek ograniczony swoim zanurzeniem\nсудно ограничено своей осадкой",
    "statek nieodpowiadający za swoje ruchy\nсудно, не отвечающее за свои маневры",

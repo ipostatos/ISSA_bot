@@ -82,8 +82,8 @@
   "q": "Jacht płynący pod żaglami i na silniku jest uważany za:\nЯхта, идущая под парусами и на моторе считается:",
   "options": [
    "statek żaglowy,\nсудном парусным,",
-   "statek mechaniczny,\nсудном моторным, с. судном моторным, но только когда двигатель работает на передаче.",
-   "statek mechaniczny tylko wtedy gdy silnik pracuje na biegu."
+   "statek mechaniczny,\nсудном моторным,",
+   "statek mechaniczny tylko wtedy gdy silnik pracuje na biegu.\nсудном моторным, но только когда двигатель работает на передаче."
   ],
   "answer": 1,
   "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
@@ -1105,9 +1105,9 @@
  {
   "id": "zj-092",
   "license": "zeglarz",
-  "q": "Prawą stroną szlaku żeglownego na rzece jest:\nПравая сторона судоходного пути по реке это: а. та, которая находится справа от судна, идущего вниз по реке (от истока к устью),",
+  "q": "Prawą stroną szlaku żeglownego na rzece jest:\nПравая сторона судоходного пути по реке это:",
   "options": [
-   "ta, która znajduje się na prawo od statku płynącego w dół rzeki (od źródła do ujścia),",
+   "ta, która znajduje się na prawo od statku płynącego w dół rzeki (od źródła do ujścia),\nта, которая находится справа от судна, идущего вниз по реке (от истока к устью),",
    "ta, która znajduje się na prawo od statku płynącego w górę rzeki (od ujścia do źródła),\nта, которая находится справа от судна, идущего вверх по реке (от устья к истоку),",
    "ta, która znajduje się północnym lub wschodnim brzegu.\nта, которая находится на северном или восточном берегу."
   ],
