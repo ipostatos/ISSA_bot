@@ -1,5 +1,6 @@
 .env
 progress/
+sessions/
 api/state.db
 api/state.db-*
 api/__pycache__/

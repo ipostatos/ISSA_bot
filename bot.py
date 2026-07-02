@@ -24,6 +24,7 @@ import json
 import logging
 import os
 import random
+import time
 from pathlib import Path
 
 from aiogram import Bot, Dispatcher, F
@@ -58,6 +59,10 @@ BASE_DIR = Path(__file__).parent
 QUESTIONS_FILE = BASE_DIR / "questions.json"
 PROGRESS_DIR = BASE_DIR / "progress"
 PROGRESS_DIR.mkdir(exist_ok=True)
+# Сессии живущих в памяти опросов/экзаменов — чтобы они пережили рестарт бота
+# (systemd-перезапуск, деплой). Без этого активный чат-экзамен «сиротеет».
+SESSIONS_DIR = BASE_DIR / "sessions"
+SESSIONS_DIR.mkdir(exist_ok=True)
 IMAGES_DIR = BASE_DIR / "images"
 
 # Дисклеймер: бот неофициальный, без экзаменационных ключей.
@@ -323,6 +328,68 @@ ACTIVE_POLLS: dict[str, dict] = {}
 # Состояние идущего экзамена: user_id -> {"queue": [qid,...], "idx", "correct", "results": [...]}
 EXAMS: dict[int, dict] = {}
 
+# ── персистентность сессий (переживают рестарт бота) ──
+# Храним EXAMS и ACTIVE_POLLS в JSON, чтобы активный чат-экзамен не «сиротел»
+# при перезапуске (systemd/деплой). Запись атомарная (tmp + os.replace), как у
+# save_progress. Атомарность read-modify-write гарантирует однопоточный
+# event-loop: между мутацией dict и записью нет await. Каждая запись мелкая
+# (экзамен ≤100 qid; активные опросы транзиентны) — для long-polling незаметно.
+_EXAMS_FILE = SESSIONS_DIR / "exams.json"
+_POLLS_FILE = SESSIONS_DIR / "active_polls.json"
+# Записи старше этого возраста при загрузке отбрасываем как заведомо мёртвые
+# (ответ на опрос через сутки — это уже не «продолжение», а мусор).
+_SESSION_TTL_SEC = 24 * 3600
+
+
+def _atomic_write_json(path: Path, data: dict) -> None:
+    tmp = path.with_suffix(f".{os.getpid()}.{random.randrange(1 << 32):08x}.tmp")
+    try:
+        tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+        os.replace(tmp, path)
+    except OSError as e:  # диск/права — не роняем бот из-за сохранения сессии
+        log.warning("Не удалось сохранить сессии в %s: %s", path.name, e)
+        with contextlib.suppress(OSError):
+            tmp.unlink()
+
+
+def _save_exams() -> None:
+    # user_id-ключи int → JSON-строки; при загрузке приводим обратно к int.
+    _atomic_write_json(_EXAMS_FILE, {str(uid): ex for uid, ex in EXAMS.items()})
+
+
+def _save_polls() -> None:
+    _atomic_write_json(_POLLS_FILE, ACTIVE_POLLS)
+
+
+def _load_sessions() -> None:
+    """Восстановить EXAMS и ACTIVE_POLLS при старте, отбросив протухшее.
+
+    Также сбрасываем «сирот»: опрос без своего экзамена (для exam-опросов) и
+    экзамен без единого связанного опроса не имеют смысла после рестарта.
+    """
+    now = int(time.time())
+    exams: dict[int, dict] = {}
+    polls: dict[str, dict] = {}
+    with contextlib.suppress(OSError, json.JSONDecodeError):
+        if _EXAMS_FILE.exists():
+            raw = json.loads(_EXAMS_FILE.read_text(encoding="utf-8"))
+            for uid, ex in raw.items():
+                if now - int(ex.get("ts", now)) <= _SESSION_TTL_SEC:
+                    exams[int(uid)] = ex
+    with contextlib.suppress(OSError, json.JSONDecodeError):
+        if _POLLS_FILE.exists():
+            raw = json.loads(_POLLS_FILE.read_text(encoding="utf-8"))
+            for pid, info in raw.items():
+                if now - int(info.get("ts", now)) <= _SESSION_TTL_SEC:
+                    polls[pid] = info
+    EXAMS.clear(); EXAMS.update(exams)
+    ACTIVE_POLLS.clear(); ACTIVE_POLLS.update(polls)
+    if exams or polls:
+        log.info("Восстановлено сессий: экзаменов=%d, активных опросов=%d",
+                 len(exams), len(polls))
+        _save_exams(); _save_polls()   # перезаписываем уже без протухших
+
+
 # Текущая задача T-V-M-D-C, на которую пользователь вводит ответ: user_id -> task_id
 ACTIVE_TASK: dict[int, str] = {}
 
@@ -455,7 +522,9 @@ async def send_quiz(
         "qid": question["id"],
         "mode": mode,
         "exam": is_exam,
+        "ts": int(time.time()),   # для TTL-очистки при загрузке
     }
+    _save_polls()
     mark_seen(user_id, question["id"])
 
 
@@ -835,7 +904,9 @@ async def cb_exam_start(cb: CallbackQuery) -> None:
         "idx": 0,
         "correct": 0,
         "results": [],  # список (qid, correct: bool)
+        "ts": int(time.time()),   # для TTL-очистки при загрузке
     }
+    _save_exams()
     await cb.message.answer(
         f"📝 <b>Экзамен начат</b>\n"
         f"Вопросов: {len(chosen)} · Проходной балл: {EXAM_PASS_PERCENT}%\n"
@@ -863,6 +934,7 @@ async def finish_exam(bot: Bot, chat_id: int, user_id: int) -> None:
     exam = EXAMS.pop(user_id, None)
     if not exam:
         return
+    _save_exams()   # экзамен завершён — убираем из персистентного стора
     total = len(exam["queue"])
     correct = exam["correct"]
     pct = round(correct / total * 100) if total else 0
@@ -911,12 +983,13 @@ async def finish_exam(bot: Bot, chat_id: int, user_id: int) -> None:
 async def on_poll_answer(poll_answer: PollAnswer) -> None:
     info = ACTIVE_POLLS.pop(poll_answer.poll_id, None)
     if not info:
-        # Ответ на «потерянный» опрос: бот перезапускали, либо опрос старый.
-        # Молча игнорируем (прогресс при перезапуске не теряется, теряется
-        # только привязка незавершённых опросов), но фиксируем в логе.
+        # Ответ на «потерянный» опрос: опрос старше TTL, либо уже отвеченный.
+        # Активные опросы переживают рестарт (см. _load_sessions), так что это
+        # уже действительно мусор — молча игнорируем, но фиксируем в логе.
         log.info("stale poll_answer: poll_id=%s user=%s",
                  poll_answer.poll_id, getattr(poll_answer.user, "id", "?"))
         return
+    _save_polls()   # опрос отвечен — снимаем привязку из персистентного стора
     user_id = info["user_id"]
     question = QUESTIONS_BY_ID.get(info["qid"])
     if not question:
@@ -932,6 +1005,8 @@ async def on_poll_answer(poll_answer: PollAnswer) -> None:
             if is_correct:
                 exam["correct"] += 1
             exam["idx"] += 1
+            exam["ts"] = int(time.time())   # экзамен активен — обновляем TTL
+            _save_exams()   # сохраняем прогресс до следующего вопроса (переживёт рестарт)
             # Небольшая пауза, чтобы пользователь увидел подсветку ответа.
             await asyncio.sleep(1.0)
             # chat_id == user_id для приватных чатов
@@ -1881,6 +1956,7 @@ async def main() -> None:
     bot = Bot(token=token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     me = await bot.get_me()
     log.info("Бот запущен: @%s | вопросов в банке: %d | тем: %d", me.username, len(QUESTIONS), len(TOPICS))
+    _load_sessions()   # восстановить активные экзамены/опросы после рестарта
     # Кнопка-меню слева от поля ввода → открывает Mini App (главный вход в продукт).
     # Так пользователь сразу видит, что «вкусное» — в приложении, а не в чат-диалоге.
     if WEBAPP_HOME_URL:

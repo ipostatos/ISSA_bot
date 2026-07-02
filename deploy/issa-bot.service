@@ -17,10 +17,10 @@ User=issa
 Group=issa
 
 # ── sandbox / hardening ──
-# Вся ФС только для чтения, пишем ТОЛЬКО в каталог прогресса.
-# Если меняли WorkingDirectory — поправьте путь в ReadWritePaths.
+# Вся ФС только для чтения, пишем ТОЛЬКО в каталоги прогресса и сессий.
+# Если меняли WorkingDirectory — поправьте пути в ReadWritePaths.
 ProtectSystem=strict
-ReadWritePaths=/opt/issa-bot/progress
+ReadWritePaths=/opt/issa-bot/progress /opt/issa-bot/sessions
 ProtectHome=true
 PrivateTmp=true
 NoNewPrivileges=true
