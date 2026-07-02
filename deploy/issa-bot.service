@@ -20,7 +20,11 @@ Group=issa
 # Вся ФС только для чтения, пишем ТОЛЬКО в каталоги прогресса и сессий.
 # Если меняли WorkingDirectory — поправьте пути в ReadWritePaths.
 ProtectSystem=strict
-ReadWritePaths=/opt/issa-bot/progress /opt/issa-bot/sessions
+# Ведущий «-»: не падать с 226/NAMESPACE, если каталога ещё нет. progress/ и
+# sessions/ в .gitignore (git их не приносит), а сам bot.py создаёт их при
+# старте — но namespace строится ДО запуска Python. update_webapp.sh создаёт
+# оба каталога заранее; «-» — запасная страховка на чистый деплой.
+ReadWritePaths=-/opt/issa-bot/progress -/opt/issa-bot/sessions
 ProtectHome=true
 PrivateTmp=true
 NoNewPrivileges=true

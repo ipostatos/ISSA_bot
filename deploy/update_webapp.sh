@@ -18,6 +18,12 @@ DST=/opt/issa-bot/miniapp        # каталог, который раздаёт
 echo "→ обновляем код из git"
 sudo -u issa git -C "$APP_DIR" pull --ff-only || git -C "$APP_DIR" pull --ff-only
 
+# Каталоги рантайм-состояния бота (в .gitignore, git их не приносит). Создаём
+# заранее с владельцем issa: иначе ReadWritePaths в issa-bot.service указывает
+# на несуществующий путь → systemd падает с 226/NAMESPACE при чистом деплое.
+echo "→ гарантируем каталоги состояния бота (progress/, sessions/)"
+sudo -u issa mkdir -p "$APP_DIR/progress" "$APP_DIR/sessions"
+
 echo "→ перегенерируем данные (вопросы, конспект, задачи, словарь)"
 "$APP_DIR/.venv/bin/python" "$SRC/build_quiz_data.py"
 "$APP_DIR/.venv/bin/python" "$SRC/build_konspekt_data.py"
