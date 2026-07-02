@@ -78,10 +78,7 @@ def solve(src: str, dst: str, course: float,
     steps: list[Step] = []
     for k in order:
         a, b = POINTS[k], POINTS[k + 1] if going_down else POINTS[k - 1]
-        if going_down:
-            seg = (a, b)
-        else:
-            seg = (a, b)
+        seg = (a, b)
         steps.append(_apply(seg, cur, var, vd, dev, dd, going_down))
         cur = steps[-1].result
 

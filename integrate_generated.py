@@ -1,4 +1,4 @@
- """
+"""
 Интеграция сгенерированных+проверенных вопросов в questions.json.
 
 Берёт JSON-файл вида {"kept":[{topic,q,options,answer,expl,...}], ...}
@@ -12,9 +12,7 @@
 
 import argparse
 import json
-import re
 import sys
-import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
