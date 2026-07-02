@@ -81,21 +81,34 @@ check("4a. Нет точных дублей текста", not dup_exact, f"{len
 # почти-дубли внутри темы. ИСТИННЫЙ дубль = похож текст вопроса И совпадает
 # правильный ответ. Похожие по шаблону вопросы с РАЗНЫМ ответом (East/South/West
 # cardinal, OVER/OUT, разные числа) — это нормальные разные вопросы, не дубли.
+#
+# Perf: norm() предвычисляем ОДИН раз на вопрос (а не O(n²) внутри циклов), и
+# перед дорогим ratio() отсекаем пары дешёвыми real_quick_ratio()/quick_ratio()
+# (верхние оценки: если они < порога, полный ratio точно ниже — результат тот же).
+NEAR_THRESHOLD = 0.92
 near = []
 by_topic = {}
 for q in QUESTIONS:
-    by_topic.setdefault(q["topic"], []).append(q)
+    nq = norm(q["q"])
+    ans = q.get("answer")
+    opts = q.get("options", [])
+    nans = norm(opts[ans]) if isinstance(ans, int) and 0 <= ans < len(opts) else None
+    by_topic.setdefault(q["topic"], []).append((q["id"], nq, nans))
 for topic, lst in by_topic.items():
     for i in range(len(lst)):
+        id_i, ni, ai = lst[i]
         for j in range(i + 1, len(lst)):
-            qi, qj = lst[i], lst[j]
-            ni, nj = norm(qi["q"]), norm(qj["q"])
+            id_j, nj, aj = lst[j]
             if ni == nj:
                 continue
-            if SequenceMatcher(None, ni, nj).ratio() >= 0.92:
+            sm = SequenceMatcher(None, ni, nj)
+            # дешёвые верхние оценки ratio() — отсекают заведомо непохожие пары
+            if sm.real_quick_ratio() < NEAR_THRESHOLD or sm.quick_ratio() < NEAR_THRESHOLD:
+                continue
+            if sm.ratio() >= NEAR_THRESHOLD:
                 # совпадает ли правильный ответ по тексту?
-                if norm(qi["options"][qi["answer"]]) == norm(qj["options"][qj["answer"]]):
-                    near.append((qi["id"], qj["id"]))
+                if ai is not None and ai == aj:
+                    near.append((id_i, id_j))
 check("4b. Нет почти-дублей с тем же ответом", not near, f"{near[:5]}" if near else "")
 
 # дубли id
