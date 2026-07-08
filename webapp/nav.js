@@ -31,6 +31,18 @@
     } catch (e) {}
   };
 
+  // Подтверждение закрытия Mini App: включать, пока идёт тест/тренировка, чтобы
+  // случайный свайп-закрытие (или системный жест) не оборвал сессию без спроса.
+  // Фичедетект — на старых клиентах методов может не быть. Вызывать
+  // setBusy(true) в начале активной сессии и setBusy(false) в конце.
+  window.setBusy = function (on) {
+    try {
+      if (!tg) return;
+      if (on) { tg.enableClosingConfirmation && tg.enableClosingConfirmation(); }
+      else { tg.disableClosingConfirmation && tg.disableClosingConfirmation(); }
+    } catch (e) {}
+  };
+
   if (!tg) return;
   try { tg.ready(); tg.expand(); } catch (e) {}
 
@@ -40,7 +52,15 @@
   var bb = tg.BackButton;
   if (!bb) return;
 
+  // Гард от двойного срабатывания: мы подписываемся И на bb.onClick, И на
+  // tg.onEvent("backButtonClicked") — на части клиентов приходят ОБА за один тап,
+  // и без гарда __navBack срабатывал бы дважды (перескок на два экрана назад).
+  // Схлопываем повторные вызовы в пределах одного тика.
+  var _navBusy = false;
   function goBack() {
+    if (_navBusy) return;
+    _navBusy = true;
+    setTimeout(function () { _navBusy = false; }, 0);
     // Сперва даём странице шанс обработать «назад» у себя (например, конспект из
     // режима чтения вернётся к списку тем). Если страница вернула true — она
     // справилась сама, окно/страницу не трогаем.

@@ -469,15 +469,26 @@ document.getElementById("tGo").addEventListener("click", () => {
 });
 
 // ── переключение вкладок ──
-document.getElementById("tabs").addEventListener("click", e => {
-  const b = e.target.closest("button"); if(!b) return;
-  [...e.currentTarget.children].forEach(x=>x.classList.remove("active"));
-  b.classList.add("active");
-  const tab = b.dataset.tab;
+function switchTab(tab){
+  const kids = document.getElementById("tabs").children;
+  [...kids].forEach(x=>x.classList.toggle("active", x.dataset.tab===tab));
   document.getElementById("panel-compass").classList.toggle("hidden", tab!=="compass");
   document.getElementById("panel-marine").classList.toggle("hidden", tab!=="marine");
   document.getElementById("panel-tide").classList.toggle("hidden", tab!=="tide");
+}
+document.getElementById("tabs").addEventListener("click", e => {
+  const b = e.target.closest("button"); if(!b) return;
+  switchTab(b.dataset.tab);
 });
+
+// Системная «Назад»: с неосновного таба возвращаемся на «Поправки» (compass),
+// и только со стартового таба отдаём управление nav.js (→ дашборд).
+window.__navBack = function(){
+  if (document.getElementById("panel-compass").classList.contains("hidden")){
+    switchTab("compass"); return true;
+  }
+  return false;
+};
 
 // заменить data-icon на SVG-иконки (вкладки, заголовок)
 if (window.Icons) Icons.hydrate();

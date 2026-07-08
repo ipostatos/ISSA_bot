@@ -389,14 +389,23 @@ window.tvmdcCompass = function (trueCourse, varSigned, devSigned) {
 })();
 
 // переключение главных табов: Задачи / Компас
-$("tabs").addEventListener("click", function(e){
-  var b = e.target.closest("button"); if (!b) return;
-  [].forEach.call(e.currentTarget.children, function(x){ x.classList.remove("active"); });
-  b.classList.add("active");
-  var t = b.dataset.t;
+function switchTab(t){
+  var kids = $("tabs").children;
+  [].forEach.call(kids, function(x){ x.classList.toggle("active", x.dataset.t === t); });
   $("tasksPanel").classList.toggle("hidden", t !== "tasks");
   $("compassPanel").classList.toggle("hidden", t !== "compass");
+}
+$("tabs").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if (!b) return;
+  switchTab(b.dataset.t);
 });
+
+// Системная «Назад»: с неосновного таба сперва возвращаемся на «Задачи»,
+// и только со стартового таба отдаём управление nav.js (→ дашборд).
+window.__navBack = function(){
+  if ($("compassPanel").classList.contains("hidden")) return false;  // уже на «Задачи»
+  switchTab("tasks"); return true;
+};
 
 pick();
 

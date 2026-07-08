@@ -254,6 +254,7 @@ function enterRun(){
   $("result").classList.add("hidden");
   $("run").classList.remove("hidden");
   $("timer").classList.toggle("hidden", S.mode!=="exam");
+  if (window.setBusy) setBusy(true);   // предупреждать при случайном закрытии
   render();
 }
 
@@ -347,6 +348,7 @@ $("opts").addEventListener("click", e=>{
 
 function finishExam(){
   if (S.tick) clearInterval(S.tick);
+  if (window.setBusy) setBusy(false);
   clearSession();   // тест завершён — сохранённую сессию убираем
   let correct=0;
   S.queue.forEach((q,i)=>{
@@ -370,6 +372,7 @@ function finishExam(){
 
 function toMenu(){
   if (S?.tick) clearInterval(S.tick);
+  if (window.setBusy) setBusy(false);
   clearSession();   // выход в меню = отказ от текущего теста
   S=null;
   $("run").classList.add("hidden");
@@ -408,6 +411,37 @@ $("changeLic").onclick = ()=>{ $("menu").classList.add("hidden"); $("pick").clas
 $("quit").onclick = ()=>{ if(confirm("Выйти? Прогресс не сохранится.")) toMenu(); };
 $("rMenu").onclick = toMenu;
 $("rAgain").onclick = ()=> S?.mode==="train" ? startTrain() : startExam();
+
+// Уйти из прохождения в меню, НЕ стирая сессию экзамена (чтобы работал resume).
+// Для тренировки сессии нет — просто в меню.
+function leaveRunToMenu(){
+  if (S?.tick) clearInterval(S.tick);
+  if (window.setBusy) setBusy(false);
+  S=null;
+  $("run").classList.add("hidden");
+  $("result").classList.add("hidden");
+  $("menu").classList.remove("hidden");
+  renderResumeBanner();
+}
+
+// Системная кнопка «Назад» Telegram (через nav.js). Детерминированно ведём
+// между внутренними экранами вместо закрытия/ухода на дашборд (был баг: без
+// __navBack «назад» на любом экране выкидывал на главную, теряя экзамен).
+window.__navBack = function(){
+  if (!$("result").classList.contains("hidden")){ toMenu(); return true; }
+  if (!$("run").classList.contains("hidden")){
+    // активное прохождение: подтверждаем выход; экзамен остаётся в resume
+    if (confirm("Выйти в меню? Экзамен можно будет продолжить, тренировку — нет.")){
+      leaveRunToMenu();
+    }
+    return true;   // в любом случае не уходим с экрана по системной «назад»
+  }
+  if (!$("menu").classList.contains("hidden")){
+    $("menu").classList.add("hidden"); $("pick").classList.remove("hidden"); return true;
+  }
+  // на экране выбора лицензии (pick) — отдаём управление nav.js → на дашборд
+  return false;
+};
 
 if (window.Icons) Icons.hydrate();
 

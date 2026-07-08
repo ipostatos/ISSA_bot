@@ -373,6 +373,7 @@ function startQuiz(mode, isExam, queue){
   document.getElementById("examNav").classList.toggle("hidden", !isExam);
   document.getElementById("liveScore").innerHTML = isExam ? "" : `${Icons.svg("check")} 0`;
   if (isExam){ tickTimer(); S.timerH = setInterval(tickTimer, 1000); }
+  if (window.setBusy) setBusy(true);   // предупреждать при случайном закрытии
   renderQ();
 }
 
@@ -595,6 +596,7 @@ function renderFeedback(pct){
 function finish(){
   if (S.timerH){ clearInterval(S.timerH); S.timerH=null; }
   S.finished = true; clearSession();   // тест завершён — сохранённую сессию убираем
+  if (window.setBusy) setBusy(false);
   hide("quiz"); show("result");
   document.getElementById("progBar").style.width = "100%";
   // итог считаем из answers (неотвеченные = ошибки)
@@ -983,6 +985,7 @@ function maybeBadgeToast(){
 function toMenu(){
   if (S && S.timerH) clearInterval(S.timerH);
   clearSession();   // явный выход в меню = отказ от теста, сохранять нечего
+  if (window.setBusy) setBusy(false);
   S = null;
   hide("quiz"); hide("result"); hide("path"); show("home");
   document.getElementById("topicCard").classList.add("hidden");
@@ -1017,6 +1020,7 @@ function resumeQuiz(){
   document.getElementById("liveScore").innerHTML = s.isExam ? ""
     : `${Icons.svg("check")} ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
   if (s.isExam){ tickTimer(); S.timerH = setInterval(tickTimer, 1000); }
+  if (window.setBusy) setBusy(true);   // возобновили тест — снова предупреждаем о закрытии
   renderQ();
 }
 
