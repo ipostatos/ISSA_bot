@@ -368,7 +368,11 @@ function startQuiz(mode, isExam, queue){
         answers: new Array(queue.length).fill(null),  // хранит ИСХОДНЫЙ индекс ответа
         locked: new Array(queue.length).fill(false),
         startTs:Date.now(), timerH:null };
-  hide("home"); hide("result"); show("quiz");
+  // ВАЖНО: прячем и "path" (Путь обучения). Раньше при старте из «Пути обучения»
+  // секция path оставалась видимой, а quiz показывался соседним блоком — тест
+  // «открывался внизу», и казалось, что клик по уровню ничего не сделал.
+  hide("home"); hide("path"); hide("result"); show("quiz");
+  window.scrollTo(0, 0);   // тест — в начале экрана, а не там, где был скролл списка
   document.getElementById("timer").classList.toggle("hidden", !isExam);
   document.getElementById("examNav").classList.toggle("hidden", !isExam);
   document.getElementById("liveScore").innerHTML = isExam ? "" : `${Icons.svg("check")} 0`;
@@ -598,6 +602,7 @@ function finish(){
   S.finished = true; clearSession();   // тест завершён — сохранённую сессию убираем
   if (window.setBusy) setBusy(false);
   hide("quiz"); show("result");
+  window.scrollTo(0, 0);   // показать результат с начала, а не там, где был скролл теста
   document.getElementById("progBar").style.width = "100%";
   // итог считаем из answers (неотвеченные = ошибки)
   S.results = S.queue.map((q,i)=> [q.id, S.answers[i] === q.answer ? 1 : 0]);
@@ -1014,7 +1019,8 @@ function resumeQuiz(){
   S = { mode:s.mode, isExam:s.isExam, queue:s.queue, idx:s.idx,
         order:s.order, answers:s.answers, locked:s.locked,
         startTs:s.startTs, timerH:null };
-  hide("home"); hide("result"); show("quiz");
+  hide("home"); hide("path"); hide("result"); show("quiz");
+  window.scrollTo(0, 0);
   document.getElementById("timer").classList.toggle("hidden", !s.isExam);
   document.getElementById("examNav").classList.toggle("hidden", !s.isExam);
   document.getElementById("liveScore").innerHTML = s.isExam ? ""
