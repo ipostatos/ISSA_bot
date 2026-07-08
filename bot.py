@@ -406,28 +406,20 @@ CALC_STATE: dict[int, dict] = {}
 # ──────────────────────────── Клавиатуры ────────────────────────────
 
 def main_menu_kb() -> InlineKeyboardMarkup:
-    # Если развёрнут Mini App — ведём кнопкой «Открыть приложение», а контентные
-    # разделы (есть в приложении) в чат-меню не дублируем. В чате остаётся то,
-    # что завязано на прогресс/quiz-поллы. Без URL — полное меню (как было).
+    # Лаунчер-режим (Mini App подключён): приложение — ЕДИНСТВЕННЫЙ интерфейс.
+    # Никаких чат-режимов/чат-тестов в меню — только запуск приложения. Весь
+    # функционал (тесты с разбором, конспект, калькуляторы, повторение, прогресс,
+    # статистика) живёт внутри Mini App.
     if WEBAPP_HOME_URL:
-        # Лаунчер-режим: приложение — основной интерфейс, в чате только
-        # большая кнопка запуска + быстрый доступ к самому ходовому (без
-        # дублирования всего: конспект/шпаргалки/словарь/калькулятор — внутри Mini App).
         rows = [
-            [InlineKeyboardButton(text="🚀 Открыть приложение",
+            [InlineKeyboardButton(text="🚀 Открыть тренажёр",
                                   web_app=WebAppInfo(url=WEBAPP_HOME_URL))],
         ]
         if WEBAPP_LICENSES_URL:
             rows.append([InlineKeyboardButton(text="🇵🇱 Польские лицензии (Żeglarz / Sternik)",
                                               web_app=WebAppInfo(url=WEBAPP_LICENSES_URL))])
-        rows += [
-            [InlineKeyboardButton(text="Случайный вопрос", callback_data="mode:random")],
-            [InlineKeyboardButton(text=f"Экзамен ({EXAM_SIZE} вопросов)", callback_data="mode:exam")],
-            [InlineKeyboardButton(text="Работа над ошибками", callback_data="mode:mistakes")],
-            [InlineKeyboardButton(text="Моя статистика", callback_data="mode:stats")],
-            [InlineKeyboardButton(text="Сбросить прогресс", callback_data="mode:reset")],
-        ]
         return InlineKeyboardMarkup(inline_keyboard=rows)
+    # Fallback без Mini App (URL не задан) — полное чат-меню, как было.
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="🎯 Случайный вопрос", callback_data="mode:random")],
@@ -635,20 +627,12 @@ async def cmd_start(message: Message, command: CommandObject | None = None) -> N
     # первым сообщением. Весь тренажёр (тесты с разбором, конспект, калькуляторы,
     # повторение, прогресс) удобнее в приложении; чат-режимы — как быстрый доступ.
     if WEBAPP_HOME_URL:
-        kb = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="🚀 Открыть тренажёр",
-                                 web_app=WebAppInfo(url=WEBAPP_HOME_URL))
-        ]])
         await message.answer(
             "⚓ <b>ISSA Trainer</b> — подготовка к экзамену Inshore Skipper + SRC\n\n"
             f"<b>{len(QUESTIONS)} вопросов</b> с разбором и источниками, конспект по "
             "учебнику, морские калькуляторы, интервальное повторение, пробный экзамен "
             "и отслеживание готовности.\n\n"
             "👉 <b>Всё это — в приложении.</b> Нажми «Открыть тренажёр»:",
-            reply_markup=kb,
-        )
-        await message.answer(
-            "Или быстрые режимы прямо в чате:",
             reply_markup=main_menu_kb(),
         )
         return
@@ -694,7 +678,9 @@ async def cmd_tests(message: Message) -> None:
 
 @dp.message(Command("menu"))
 async def cmd_menu(message: Message) -> None:
-    await message.answer("Главное меню:", reply_markup=main_menu_kb())
+    text = ("👉 Открой тренажёр — весь функционал внутри приложения:"
+            if WEBAPP_HOME_URL else "Главное меню:")
+    await message.answer(text, reply_markup=main_menu_kb())
 
 
 @dp.message(Command("stats"))
