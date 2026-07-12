@@ -124,5 +124,6 @@ sudo cp /opt/issa-bot/webapp/index.html /opt/issa-bot/webapp/quiz.html \
 ```bash
 node webapp/_solver_check.mjs    # калькулятор: "JS MATH OK"
 node webapp/_quiz_check.mjs      # тесты: "QUIZ DATA OK"
+node webapp/_buoys_check.mjs     # буи IALA: "BUOYS DATA OK" (ритмы огней = периоды из char)
 python webapp/build_quiz_data.py # перегенерировать quiz_data.js из банка
 ```

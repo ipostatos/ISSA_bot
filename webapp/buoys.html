@@ -38,13 +38,13 @@
   .sub{color:var(--hint); font-size:13px; margin:0 0 14px}
   .hidden{display:none !important}
 
-  /* сцена: море + буй */
-  .scene{ position:relative; width:100%; aspect-ratio:1/1; max-height:300px; border-radius:16px;
+  /* сцена: сумерки на море + буй (canvas рисует всё сам) */
+  .scene{ position:relative; width:100%; aspect-ratio:1/1; max-height:320px; border-radius:16px;
     overflow:hidden; border:1px solid var(--border);
-    background:linear-gradient(#0a2438 0%, #0d3350 45%, #0a2a44 100%) }
+    background:linear-gradient(#071224 0%, #10304d 45%, #061c2e 100%) }
   .scene canvas{ position:absolute; inset:0; width:100%; height:100%; display:block }
   .scene-cap{ position:absolute; left:0; right:0; bottom:8px; text-align:center; font-size:12px;
-    color:#9fc4e0; text-shadow:0 1px 3px #000 }
+    color:#9fc4e0; text-shadow:0 1px 3px #000; pointer-events:none }
 
   .big{width:100%; padding:15px; margin-bottom:10px; border:1px solid var(--border);
     background:var(--card); color:var(--text); border-radius:14px; cursor:pointer;
@@ -71,6 +71,15 @@
   .info .t{ font-weight:700; margin-bottom:4px }
   .info .lp{ font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:.03em }
   .info .h{ font-size:13px; color:var(--hint); margin-top:8px }
+
+  /* характеристика огня: бейдж «как на карте» + расшифровка + шкала ритма */
+  .charline{ display:flex; align-items:center; gap:9px; margin-top:7px; flex-wrap:wrap }
+  .charbadge{ font:700 13px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    letter-spacing:.02em; padding:6px 9px; border-radius:8px; background:#0d1622;
+    border:1px solid rgba(255,255,255,.14); white-space:nowrap }
+  .charru{ font-size:13px; color:var(--hint) }
+  .rythm{ margin-top:10px }
+  .rythm canvas{ width:100%; height:46px; display:block }
 
   .opt{display:flex; gap:10px; align-items:flex-start; padding:12px; border:1px solid var(--border);
     border-radius:11px; margin-bottom:8px; font-size:15px; cursor:pointer}
@@ -100,7 +109,7 @@
       <span class="bic" data-icon="target"></span>
       <span>Тест «Куда обходить?»<small>показываем буй — определи знак и сторону</small></span>
     </button>
-    <p class="foot">Учебный материал по IALA MBS (Region A). Не заменяет официальные карты и лоции.</p>
+    <p class="foot">Учебный материал по IALA MBS (Region A); ритмы огней — по IALA R0110 (E-110). Не заменяет официальные карты и лоции.</p>
   </section>
 
   <!-- ── СПРАВОЧНИК ── -->
@@ -124,8 +133,13 @@
       <div class="scene-cap" id="viewCap"></div>
     </div>
     <div class="info">
-      <div class="lp" id="viewLP"></div>
-      <div class="t" id="viewTitle"></div>
+      <div class="lp">Характер огня</div>
+      <div class="charline">
+        <span class="charbadge" id="viewChar"></span>
+        <span class="charru" id="viewRhythm"></span>
+      </div>
+      <div class="rythm"><canvas id="rhythmView"></canvas></div>
+      <div class="t" id="viewTitle" style="margin-top:12px"></div>
       <div id="viewAnswer"></div>
       <div class="h" id="viewHint"></div>
     </div>
@@ -143,8 +157,12 @@
     <div style="margin-top:12px; font-weight:600" id="quizQ"></div>
     <div id="quizOpts" style="margin-top:10px"></div>
     <div class="info hidden" id="quizExpl">
-      <div class="lp" id="qeLP"></div>
-      <div id="qeText"></div>
+      <div class="charline" style="margin-top:0">
+        <span class="charbadge" id="qeChar"></span>
+        <span class="charru" id="qeRhythm"></span>
+      </div>
+      <div class="rythm"><canvas id="rhythmQuiz"></canvas></div>
+      <div id="qeText" style="margin-top:10px"></div>
     </div>
     <div class="row" id="quizCtrl" style="display:none">
       <button class="btn" id="quizNext">Следующий →</button>
@@ -162,228 +180,618 @@ const hide = id => $(id).classList.add("hidden");
 if (window.Icons) Icons.hydrate();
 
 const DATA = window.BUOYS_DATA || { buoys:[], categories:[] };
-const COL = {
-  red:"#e33", green:"#2c2", yellow:"#f2c200", black:"#181818", white:"#f4f4f4"
+
+// ─────────────────────── Палитры ───────────────────────
+// BODY — «краска» корпуса в сумерках (приглушена, но узнаваема),
+// GLOW — цвет источника света (ярче краски).
+const BODY = {
+  red:"#c8382e", green:"#1f9d52", yellow:"#eebb2d",
+  black:"#23282e", white:"#dde4ea", blue:"#2f5fb0",
 };
+const GLOW = {
+  red:"#ff5a4e", green:"#46e584", yellow:"#ffd84f",
+  white:"#fff3d0", blue:"#58aaff",
+};
+const RU_LIGHT = { red:"красный", green:"зелёный", yellow:"жёлтый", white:"белый", blue:"синий" };
 
-// ─────────────────────── Анимация проблесков ───────────────────────
-// pattern: массив [вкл, выкл, вкл, выкл...] в мс (циклично) ИЛИ строка
-// "VQ"/"VQ3"/"VQ6"/"VQ9" — очень частые проблески (кардинальные ритмы).
-function buildPattern(p){
-  if (Array.isArray(p)) return p.slice();
-  // VQ = very quick (непрерывно ~120/мин): вкл 120 / выкл 180
-  const on=120, off=180;
-  const seq=[];
-  const groups = { "VQ":0, "VQ3":3, "VQ6":6, "VQ9":9 };
-  const n = groups[p] || 0;
-  if (n===0){ return [on, off]; }                 // непрерывные (север)
-  for (let i=0;i<n;i++){ seq.push(on, off); }
-  seq[seq.length-1] = 1400;                        // пауза между группами
-  return seq;
+// ─────────────────────── Движок огня ───────────────────────
+// pattern = [вкл,выкл,...] мс (сумма = период характеристики);
+// colors[] — цвета проблесков по кругу (перемежающиеся огни, Al Bu/Y).
+// Легаси-строки ("VQ","VQ3"...) поддержаны на случай кэша старых данных.
+const LEGACY_PATTERNS = {
+  "VQ":  [150,350],
+  "VQ3": [150,350,150,350,150,3850],
+  "VQ6": [150,350,150,350,150,350,150,350,150,350,150,500,2000,4850],
+  "VQ9": [150,350,150,350,150,350,150,350,150,350,150,350,150,350,150,350,150,5850],
+};
+function normalizeLight(l){
+  let pat = l.pattern;
+  if (typeof pat === "string") pat = LEGACY_PATTERNS[pat] || [500,1500];
+  if (!Array.isArray(pat) || pat.length < 2) pat = [500,1500];
+  return { color:l.color||"white", colors:l.colors||null, char:l.char||"", rhythm:l.rhythm||"", pattern:pat };
 }
-function isLit(pattern, t){
-  const cyc = pattern.reduce((a,b)=>a+b,0);
-  let x = t % cyc, on = true;
-  for (let i=0;i<pattern.length;i++){ if (x < pattern[i]) return on; x -= pattern[i]; on = !on; }
-  return false;
-}
-
-// ─────────────────────── Отрисовка буя ───────────────────────
-let animRAF = null, animBuoy = null, animCanvas = null, animStart = null;
-function startBuoyAnim(canvas, buoy){
-  stopBuoyAnim();
-  if (!canvas || !buoy || !buoy.light) return;   // защита от пустых данных
-  animCanvas = canvas; animBuoy = buoy;
-  const pat = buildPattern(buoy.light.pattern);
-  function frame(ts){
-    animRAF = requestAnimationFrame(frame);
-    if (animStart===null) animStart = ts;
-    const lit = isLit(pat, ts - animStart);
-    drawBuoy(canvas, buoy, lit);
+// компиляция: светящиеся отрезки [{a,b,c}] внутри периода
+function compileLight(light){
+  const l = normalizeLight(light);
+  const segs = []; let t = 0, on = true, k = 0;
+  for (const d of l.pattern){
+    if (on) segs.push({ a:t, b:t+d, c: l.colors ? l.colors[k++ % l.colors.length] : l.color });
+    t += d; on = !on;
   }
-  animStart = null;
-  animRAF = requestAnimationFrame(frame);
+  return { period:t, segs, light:l };
 }
-function stopBuoyAnim(){ if (animRAF){ cancelAnimationFrame(animRAF); animRAF=null; } animStart=null; }
-
-function drawBuoy(canvas, b, lit){
-  const dpr = window.devicePixelRatio||1;
-  const r = canvas.getBoundingClientRect(); const W=r.width, H=r.height;
-  if (!W||!H) return;
-  canvas.width=W*dpr; canvas.height=H*dpr;
-  const ctx=canvas.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
-
-  const waterY = H*0.82, cx = W/2;             // линия воды ниже — больше места сверху
-  const bodyW = Math.min(W*0.16, 62);          // ширина корпуса
-  const bodyTop = H*0.50;                       // верх корпуса опущен (топмарка не режется)
-  const bodyBot = waterY;                       // низ у воды
-
-  // вода
-  ctx.save(); ctx.globalAlpha=.5;
-  for (let i=0;i<4;i++){ ctx.fillStyle="rgba(60,120,170,"+(0.14-i*0.03)+")"; ctx.fillRect(0,waterY+i*9,W,3); }
-  ctx.restore();
-
-  // мачта под топмаркой
-  ctx.strokeStyle="rgba(200,210,220,.6)"; ctx.lineWidth=2.5;
-  const lightY = bodyTop - H*0.10;              // где горит огонь
-  const topmarkY = bodyTop - H*0.19;            // топовая фигура
-  ctx.beginPath(); ctx.moveTo(cx, bodyTop); ctx.lineTo(cx, topmarkY); ctx.stroke();
-
-  // корпус буя по форме
-  drawBody(ctx, b, cx, bodyTop, bodyBot, bodyW);
-
-  // топовая фигура
-  drawTopmark(ctx, b.topmark, cx, topmarkY, bodyW*0.42);
-
-  // огонь (мигает): ореол только когда lit
-  const lc = COL[b.light.color] || "#fff";
-  if (lit){
-    const g=ctx.createRadialGradient(cx,lightY,0,cx,lightY,bodyW*1.1);
-    g.addColorStop(0,lc); g.addColorStop(0.3,hexA(lc,.6)); g.addColorStop(1,hexA(lc,0));
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,lightY,bodyW*1.1,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(cx,lightY,3,0,Math.PI*2); ctx.fill();
-    // отражение на воде
-    const refY=waterY+(waterY-lightY)*0.3;
-    const rg=ctx.createLinearGradient(cx,waterY,cx,refY);
-    rg.addColorStop(0,hexA(lc,.4)); rg.addColorStop(1,hexA(lc,0));
-    ctx.fillStyle=rg; ctx.fillRect(cx-6,waterY,12,refY-waterY);
-  } else {
-    // погашенный огонь — тусклая точка-фонарь
-    ctx.fillStyle="rgba(120,130,140,.5)"; ctx.beginPath(); ctx.arc(cx,lightY,3,0,Math.PI*2); ctx.fill();
+// состояние лампы в момент t: интенсивность 0..1 с плавным розжигом и
+// послесвечением (как у настоящего фонаря) + цвет текущего проблеска
+function lampAt(cmp, ms){
+  const x = ms % cmp.period;
+  let I = 0, C = cmp.segs.length ? cmp.segs[0].c : "white";
+  for (const s of cmp.segs){
+    const durOn = s.b - s.a;
+    const rise = Math.min(55, durOn*0.35);
+    const fall = Math.min(170, durOn*0.9);
+    for (const xx of [x, x + cmp.period]){   // хвост затухания через границу периода
+      if (xx >= s.a && xx <= s.b + fall){
+        const up = rise > 0 ? Math.min(1, (xx - s.a) / rise) : 1;
+        const dn = xx <= s.b ? 1 : 1 - (xx - s.b) / fall;
+        const i = Math.max(0, Math.min(up, dn));
+        if (i > I){ I = i; C = s.c; }
+      }
+    }
   }
+  return { i:I, c:C };
 }
 
-// корпус: цвет(а) по строке color ("red", "black-yellow", "red-white"...)
-function drawBody(ctx, b, cx, top, bot, w){
-  const hw=w/2, h=bot-top;
-  const bands = colorBands(b.color);
-  ctx.save();
-  ctx.beginPath();
-  if (b.shape==="cone"){                         // конус (вершиной вверх)
-    ctx.moveTo(cx, top); ctx.lineTo(cx+hw, bot); ctx.lineTo(cx-hw, bot); ctx.closePath();
-  } else if (b.shape==="sphere"){                // сфера
-    ctx.arc(cx, top+h*0.55, hw*1.15, 0, Math.PI*2);
-  } else if (b.shape==="pillar"){                // столб (узкий высокий)
-    roundRect(ctx, cx-hw*0.7, top, hw*1.4, h, 6);
-  } else {                                       // can (цилиндр) — по умолчанию
-    roundRect(ctx, cx-hw, top, w, h, 6);
+// ─────────────────────── Утилиты рисования ───────────────────────
+function fitCanvas(cv){
+  const dpr = Math.min(window.devicePixelRatio||1, 2.5);
+  const r = cv.getBoundingClientRect();
+  const W = Math.round(r.width), H = Math.round(r.height);
+  if (!W || !H) return null;
+  if (cv.__w !== W*dpr || cv.__h !== H*dpr){
+    cv.width = cv.__w = W*dpr; cv.height = cv.__h = H*dpr; cv.__bg = null;
   }
-  ctx.clip();
-  // горизонтальные цветные полосы
-  let y=top; const bh=h/bands.length;
-  bands.forEach(c=>{ ctx.fillStyle=COL[c]||c; ctx.fillRect(cx-hw*1.3, y, w*1.6, bh+0.6); y+=bh; });
-  ctx.restore();
-  // контур
-  ctx.strokeStyle="rgba(255,255,255,.25)"; ctx.lineWidth=1.5;
-  ctx.beginPath();
-  if (b.shape==="cone"){ ctx.moveTo(cx,top); ctx.lineTo(cx+hw,bot); ctx.lineTo(cx-hw,bot); ctx.closePath(); }
-  else if (b.shape==="sphere"){ ctx.arc(cx,top+h*0.55,hw*1.15,0,Math.PI*2); }
-  else if (b.shape==="pillar"){ roundRect(ctx,cx-hw*0.7,top,hw*1.4,h,6); }
-  else { roundRect(ctx,cx-hw,top,w,h,6); }
-  ctx.stroke();
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return { ctx, W, H };
 }
-
-// цвет строки → массив полос сверху вниз
-function colorBands(c){
-  const map = {
-    "red":["red"], "green":["green"], "yellow":["yellow"], "black":["black"],
-    "black-yellow":["black","yellow"],
-    "yellow-black":["yellow","black"],
-    "black-yellow-black":["black","yellow","black"],
-    "yellow-black-yellow":["yellow","black","yellow"],
-    "black-red-black":["black","red","black"],
-    "red-green-red":["red","green","red"],
-    "red-white":["red","white","red","white"],   // верт. полосы упрощаем в гориз.
-  };
-  return map[c] || [c];
-}
-
-// топовая фигура
-function drawTopmark(ctx, tm, cx, y, s){
-  ctx.fillStyle="#111"; ctx.strokeStyle="rgba(255,255,255,.3)"; ctx.lineWidth=1;
-  const cone=(dir,yy)=>{ ctx.beginPath();
-    if(dir>0){ ctx.moveTo(cx,yy-s); ctx.lineTo(cx+s*0.7,yy); ctx.lineTo(cx-s*0.7,yy); }
-    else { ctx.moveTo(cx,yy+s); ctx.lineTo(cx+s*0.7,yy); ctx.lineTo(cx-s*0.7,yy); }
-    ctx.closePath(); ctx.fill(); ctx.stroke(); };
-  const ball=(yy,rr)=>{ ctx.beginPath(); ctx.arc(cx,yy,rr||s*0.6,0,Math.PI*2); ctx.fill(); ctx.stroke(); };
-
-  if (tm==="cones-up"){ cone(1,y); cone(1,y-s*1.4); }               // ▲▲ вверх (север)
-  else if (tm==="cones-down"){ cone(-1,y); cone(-1,y-s*1.4); }      // ▼▼ вниз (юг)
-  else if (tm==="cones-base"){ cone(-1,y-s*0.7); cone(1,y-s*0.7+s*1.4); } // основаниями (восток)
-  else if (tm==="cones-point"){ cone(1,y-s*0.1); cone(-1,y-s*1.5); }// вершинами (запад)
-  else if (tm==="balls-two"){ ball(y); ball(y-s*1.5); }            // 2 шара (опасность)
-  else if (tm==="ball-red"){ ctx.fillStyle=COL.red; ball(y); }     // 1 красный шар (безоп. вода)
-  else if (tm==="cone-green"){ ctx.fillStyle=COL.green; cone(1,y); }
-  else if (tm==="can-red"){ ctx.fillStyle=COL.red; roundRect(ctx,cx-s*0.6,y-s,s*1.2,s,3); ctx.fill(); ctx.stroke(); }
-  else if (tm==="cross-yellow"){ ctx.strokeStyle=COL.yellow; ctx.lineWidth=3;
-    ctx.beginPath(); ctx.moveTo(cx-s*0.6,y-s*0.6); ctx.lineTo(cx+s*0.6,y);
-    ctx.moveTo(cx+s*0.6,y-s*0.6); ctx.lineTo(cx-s*0.6,y); ctx.stroke(); }
-}
-
-function roundRect(ctx,x,y,w,h,r){ ctx.beginPath();
+function rr(ctx,x,y,w,h,r){ r=Math.min(r,w/2,h/2);
   ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
   ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 function hexA(hex,a){ const n=parseInt(hex.slice(1),16);
   return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")"; }
+function mixC(hex,to,k){ const n=parseInt(hex.slice(1),16);
+  const r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  const m=(a,z)=>Math.round(a+(z-a)*k);
+  return "rgb("+m(r,to[0])+","+m(g,to[1])+","+m(b,to[2])+")"; }
+const lighten=(h,k)=>mixC(h,[255,255,255],k);
+const darken =(h,k)=>mixC(h,[6,10,14],k);
+function frac(x){ return x - Math.floor(x); }
+
+// ─────────────────────── Фон: сумерки на море ───────────────────────
+function drawBackdrop(ctx,W,H){
+  let bg = ctx.canvas.__bg;
+  if (!bg){
+    bg = document.createElement("canvas");
+    bg.width = W; bg.height = H;
+    const c = bg.getContext("2d");
+    const horizon = H*0.42;
+    const sky = c.createLinearGradient(0,0,0,horizon);
+    sky.addColorStop(0,"#071224"); sky.addColorStop(0.55,"#10304d");
+    sky.addColorStop(0.85,"#1b4869"); sky.addColorStop(1,"#28597b");
+    c.fillStyle = sky; c.fillRect(0,0,W,horizon+1);
+    const warm = c.createLinearGradient(0,horizon-H*0.11,0,horizon);
+    warm.addColorStop(0,"rgba(242,176,116,0)"); warm.addColorStop(1,"rgba(242,176,116,.18)");
+    c.fillStyle = warm; c.fillRect(0,horizon-H*0.11,W,H*0.11);
+    const sea = c.createLinearGradient(0,horizon,0,H);
+    sea.addColorStop(0,"#175074"); sea.addColorStop(0.16,"#0f3d5c");
+    sea.addColorStop(0.55,"#0a2c44"); sea.addColorStop(1,"#061c2e");
+    c.fillStyle = sea; c.fillRect(0,horizon,W,H-horizon);
+    ctx.canvas.__bg = bg;
+  }
+  ctx.drawImage(bg,0,0,W,H);
+}
+function drawStars(ctx,W,H,ts){
+  const horizon = H*0.42;
+  ctx.save();
+  ctx.fillStyle = "#cfe4f5";
+  for (let i=0;i<26;i++){
+    const x = frac(Math.sin(i*127.1)*43758.5453)*W;
+    const y = frac(Math.sin(i*311.7)*12543.21)*horizon*0.82;
+    const r = 0.6 + frac(Math.sin(i*74.7)*9631.3)*0.9;
+    const tw = 0.45 + 0.4*Math.sin(ts*0.0016 + i*2.1);
+    ctx.globalAlpha = Math.max(0.05, Math.min(0.7, tw));
+    ctx.fillRect(x,y,r,r);
+  }
+  ctx.restore();
+}
+function drawHorizonSparkle(ctx,W,H,ts){
+  const horizon = H*0.42;
+  ctx.save();
+  ctx.fillStyle = "#bfe0f2";
+  for (let k=0;k<6;k++){
+    const y = horizon + 2 + k*H*0.015;
+    for (let m=0;m<7;m++){
+      const sp = 6 + k*2;
+      const x = frac(Math.sin(m*91.3 + k*17.7)*7351.7 + ts*0.00002*sp)*W;
+      const w = 5 + frac(Math.sin(m*13.3 + k*7.1)*971.3)*9;
+      const a = 0.045 + 0.04*Math.sin(ts*0.0021 + m*1.7 + k);
+      if (a <= 0.012) continue;
+      ctx.globalAlpha = a;
+      ctx.fillRect(x,y,w,1.2);
+    }
+  }
+  ctx.restore();
+}
+
+// ─────────────────────── Корпус буя ───────────────────────
+function bandsOf(color){
+  const M = {
+    "black-yellow":        [["black",.5],["yellow",.5]],
+    "yellow-black":        [["yellow",.5],["black",.5]],
+    "black-yellow-black":  [["black",.34],["yellow",.32],["black",.34]],
+    "yellow-black-yellow": [["yellow",.34],["black",.32],["yellow",.34]],
+    "black-red-black":     [["black",.32],["red",.36],["black",.32]],
+    "red-green-red":       [["red",.34],["green",.32],["red",.34]],
+  };
+  return M[color] || [[color,1]];
+}
+function stripesOf(color){
+  const M = { "red-white":["red","white"], "blue-yellow":["blue","yellow"] };
+  return M[color] || null;
+}
+// заливка корпуса: полосы/бэнды + цилиндрический объём + намокание у воды
+function paintHull(ctx, makePath, xL, xR, y0, y1, b, opts){
+  const cyl = !opts || opts.cyl !== false;
+  ctx.save();
+  ctx.beginPath(); makePath(); ctx.clip();
+  const st = b.stripes === "v" ? stripesOf(b.color) : null;
+  if (st){
+    const n = 7, w = (xR-xL)/n;
+    for (let i=0;i<n;i++){ ctx.fillStyle = BODY[st[i%2]]; ctx.fillRect(xL+i*w-0.3, y0-2, w+0.6, (y1-y0)+4); }
+  } else {
+    const bands = bandsOf(b.color); let y = y0; const HH = y1-y0;
+    for (const bd of bands){ const h = HH*bd[1]; ctx.fillStyle = BODY[bd[0]] || bd[0];
+      ctx.fillRect(xL-2, y-0.4, (xR-xL)+4, h+0.8); y += h; }
+  }
+  if (cyl){
+    const g = ctx.createLinearGradient(xL,0,xR,0);
+    g.addColorStop(0,"rgba(0,0,0,.38)");   g.addColorStop(0.16,"rgba(0,0,0,.10)");
+    g.addColorStop(0.34,"rgba(255,255,255,.15)"); g.addColorStop(0.55,"rgba(255,255,255,.03)");
+    g.addColorStop(0.82,"rgba(0,0,0,.20)"); g.addColorStop(1,"rgba(0,0,0,.42)");
+    ctx.fillStyle = g; ctx.fillRect(xL,y0,xR-xL,y1-y0);
+  }
+  const wg = ctx.createLinearGradient(0,y1-6,0,y1);
+  wg.addColorStop(0,"rgba(4,12,20,0)"); wg.addColorStop(1,"rgba(4,12,20,.4)");
+  ctx.fillStyle = wg; ctx.fillRect(xL,y1-6,xR-xL,6);
+  ctx.restore();
+  ctx.beginPath(); makePath();
+  ctx.strokeStyle = "rgba(8,14,20,.55)"; ctx.lineWidth = 1; ctx.stroke();
+}
+function drawMast(ctx,x,yBot,yTop){
+  ctx.strokeStyle = "#454f59"; ctx.lineWidth = 2.6;
+  ctx.beginPath(); ctx.moveTo(x,yBot); ctx.lineTo(x,yTop); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,.16)"; ctx.lineWidth = 0.8;
+  ctx.beginPath(); ctx.moveTo(x-0.9,yBot); ctx.lineTo(x-0.9,yTop); ctx.stroke();
+}
+function drawLantern(ctx,x,y,s,lamp){
+  const col = GLOW[lamp.c] || "#fff";
+  // опорная плита
+  ctx.fillStyle = "#1d242c";
+  ctx.beginPath(); rr(ctx,x-s*1.05,y+s*0.62,s*2.1,s*0.5,1.5); ctx.fill();
+  // стекло
+  ctx.beginPath(); rr(ctx,x-s*0.62,y-s*0.66,s*1.24,s*1.3,2);
+  ctx.fillStyle = lamp.i > 0.02 ? hexA(col, 0.25 + 0.75*lamp.i) : "rgba(186,201,214,.28)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(10,16,22,.6)"; ctx.lineWidth = 1; ctx.stroke();
+  // переплёт стекла
+  ctx.strokeStyle = "rgba(10,16,22,.35)"; ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(x-s*0.21,y-s*0.6); ctx.lineTo(x-s*0.21,y+s*0.58);
+  ctx.moveTo(x+s*0.21,y-s*0.6); ctx.lineTo(x+s*0.21,y+s*0.58);
+  ctx.stroke();
+  // крышка
+  ctx.fillStyle = "#161d24";
+  ctx.beginPath(); rr(ctx,x-s*0.8,y-s*1.02,s*1.6,s*0.44,1.5); ctx.fill();
+}
+// топовые фигуры
+function tmCone(ctx,x,yb,h,hw,dir,base){
+  const g = ctx.createLinearGradient(x-hw,0,x+hw,0);
+  g.addColorStop(0,lighten(base,.38)); g.addColorStop(0.45,base); g.addColorStop(1,darken(base,.45));
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  if (dir > 0){ ctx.moveTo(x,yb-h); ctx.lineTo(x+hw,yb); ctx.lineTo(x-hw,yb); }
+  else        { ctx.moveTo(x,yb+h); ctx.lineTo(x+hw,yb); ctx.lineTo(x-hw,yb); }
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.30)"; ctx.lineWidth = 0.9; ctx.stroke();
+}
+function tmBall(ctx,x,y,r,base){
+  const g = ctx.createRadialGradient(x-r*0.35,y-r*0.38,r*0.15,x,y,r);
+  g.addColorStop(0,lighten(base,.42)); g.addColorStop(0.55,base); g.addColorStop(1,darken(base,.45));
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.28)"; ctx.lineWidth = 0.9; ctx.stroke();
+}
+function tmBars(ctx,x,y,len,th,base,rot){
+  ctx.save(); ctx.translate(x,y); ctx.rotate(rot);
+  const g = ctx.createLinearGradient(-len/2,0,len/2,0);
+  g.addColorStop(0,darken(base,.25)); g.addColorStop(0.4,lighten(base,.2)); g.addColorStop(1,darken(base,.3));
+  ctx.fillStyle = g;
+  ctx.beginPath(); rr(ctx,-len/2,-th/2,len,th,th/2); ctx.fill();
+  ctx.beginPath(); rr(ctx,-th/2,-len/2,th,len,th/2); ctx.fill();
+  ctx.restore();
+}
+function drawTopmark(ctx,kind,x,y,W){
+  const s = W*0.054;
+  const h = s*1.05, hw = s*0.7, gap = s*0.42;
+  const top = y - (2*h+gap)/2;
+  const B = BODY.black;
+  if (kind === "cones-up"){          // ▲▲ север
+    tmCone(ctx,x,top+h,h,hw,1,B); tmCone(ctx,x,top+2*h+gap,h,hw,1,B);
+  } else if (kind === "cones-down"){ // ▼▼ юг
+    tmCone(ctx,x,top,h,hw,-1,B); tmCone(ctx,x,top+h+gap,h,hw,-1,B);
+  } else if (kind === "cones-base"){ // ромб: ▲ над ▼ (восток)
+    tmCone(ctx,x,top+h,h,hw,1,B); tmCone(ctx,x,top+h+gap,h,hw,-1,B);
+  } else if (kind === "cones-point"){// песочные часы: ▼ над ▲ (запад)
+    tmCone(ctx,x,top,h,hw,-1,B); tmCone(ctx,x,top+2*h+gap,h,hw,1,B);
+  } else if (kind === "balls-two"){  // два чёрных шара (опасность)
+    const r = s*0.62; tmBall(ctx,x,y-r-3,r,B); tmBall(ctx,x,y+r+3,r,B);
+  } else if (kind === "ball-red"){   // один красный шар (безопасная вода)
+    tmBall(ctx,x,y,s*0.72,BODY.red);
+  } else if (kind === "can-red"){    // красный цилиндр (левый борт)
+    const w = s*1.2, hh = s*1.05;
+    const g = ctx.createLinearGradient(x-w/2,0,x+w/2,0);
+    g.addColorStop(0,lighten(BODY.red,.25)); g.addColorStop(0.5,BODY.red); g.addColorStop(1,darken(BODY.red,.4));
+    ctx.fillStyle = g;
+    ctx.beginPath(); rr(ctx,x-w/2,y-hh/2,w,hh,1.5); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,.25)";
+    ctx.beginPath(); ctx.ellipse(x,y-hh/2+0.8,w*0.46,w*0.13,0,0,Math.PI*2); ctx.fill();
+  } else if (kind === "cone-green"){ // зелёный конус (правый борт)
+    tmCone(ctx,x,y+s*0.55,s*1.15,s*0.78,1,BODY.green);
+  } else if (kind === "cross-yellow"){      // косой крест ✕ (специальный)
+    tmBars(ctx,x,y,s*1.9,s*0.42,BODY.yellow,Math.PI/4);
+  } else if (kind === "cross-plus-yellow"){ // прямой крест + (затонувшее судно)
+    tmBars(ctx,x,y,s*1.9,s*0.42,BODY.yellow,0);
+  }
+}
+
+// формы корпусов; возвращают {lnY (центр фонаря), maxHalfW}
+function drawBuoyBody(ctx,W,H,b,lamp){
+  const cx = W*0.5, waterY = H*0.78, bot = waterY + H*0.03;
+  const LS = Math.max(5, W*0.024);
+  let lnY, tmY, maxHW;
+
+  if (b.shape === "pillar"){
+    const fw = W*0.155, fh = H*0.075, fy0 = waterY - fh;
+    const cw0 = W*0.062, cw1 = W*0.045, colTop = H*0.315;
+    maxHW = fw; lnY = colTop - H*0.055; tmY = lnY - H*0.135;
+    const path = ()=>{
+      rr(ctx,cx-fw,fy0,fw*2,fh+H*0.03,4);
+      ctx.moveTo(cx-cw0,fy0+1); ctx.lineTo(cx-cw1,colTop);
+      ctx.lineTo(cx+cw1,colTop); ctx.lineTo(cx+cw0,fy0+1); ctx.closePath();
+    };
+    paintHull(ctx,path,cx-fw,cx+fw,colTop,bot,b);
+    // кромка и рёбра поплавка
+    ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx-fw+3,fy0+3.5); ctx.lineTo(cx+fw-3,fy0+3.5); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx-fw*0.5,fy0+2); ctx.lineTo(cx-fw*0.5,waterY-1);
+    ctx.moveTo(cx+fw*0.5,fy0+2); ctx.lineTo(cx+fw*0.5,waterY-1);
+    ctx.stroke();
+    // площадка под фонарём
+    ctx.fillStyle = "#2b333c";
+    ctx.beginPath(); rr(ctx,cx-cw1*1.5,colTop-3,cw1*3,4.5,2); ctx.fill();
+    drawMast(ctx,cx,colTop-3,tmY);
+    drawLantern(ctx,cx,lnY,LS,lamp);
+    drawTopmark(ctx,b.topmark,cx,tmY,W);
+
+  } else if (b.shape === "cone"){
+    const bw = W*0.135, tw = W*0.038, hy0 = waterY - H*0.26;
+    maxHW = bw; lnY = hy0 - H*0.07; tmY = lnY - H*0.12;
+    const path = ()=>{
+      ctx.moveTo(cx-bw,bot); ctx.lineTo(cx-tw,hy0+2);
+      ctx.quadraticCurveTo(cx,hy0-2,cx+tw,hy0+2);
+      ctx.lineTo(cx+bw,bot); ctx.closePath();
+    };
+    paintHull(ctx,path,cx-bw,cx+bw,hy0,bot,b);
+    ctx.fillStyle = "rgba(0,0,0,.22)";
+    ctx.beginPath(); ctx.ellipse(cx,hy0+2,tw*0.85,tw*0.24,0,0,Math.PI*2); ctx.fill();
+    drawMast(ctx,cx,hy0+1,tmY);
+    drawLantern(ctx,cx,lnY,LS,lamp);
+    drawTopmark(ctx,b.topmark,cx,tmY,W);
+
+  } else if (b.shape === "sphere"){
+    const r = W*0.14, cyC = waterY - r*0.58;
+    maxHW = r; lnY = cyC - r - H*0.055; tmY = lnY - H*0.115;
+    const path = ()=>{ ctx.arc(cx,cyC,r,0,Math.PI*2); };
+    paintHull(ctx,path,cx-r,cx+r,cyC-r,cyC+r,b,{cyl:false});
+    // сферический объём
+    let g = ctx.createRadialGradient(cx-r*0.38,cyC-r*0.42,r*0.1,cx-r*0.2,cyC-r*0.2,r*1.25);
+    g.addColorStop(0,"rgba(255,255,255,.20)"); g.addColorStop(0.45,"rgba(255,255,255,.04)"); g.addColorStop(1,"rgba(255,255,255,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx,cyC,r,0,Math.PI*2); ctx.fill();
+    g = ctx.createRadialGradient(cx,cyC,r*0.55,cx,cyC,r);
+    g.addColorStop(0,"rgba(0,0,0,0)"); g.addColorStop(1,"rgba(0,0,0,.36)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx,cyC,r,0,Math.PI*2); ctx.fill();
+    drawMast(ctx,cx,cyC-r+2,tmY);
+    drawLantern(ctx,cx,lnY,LS,lamp);
+    drawTopmark(ctx,b.topmark,cx,tmY,W);
+
+  } else { // can (по умолчанию)
+    const hw = W*0.115, hy0 = waterY - H*0.26;
+    maxHW = hw; lnY = hy0 - H*0.07; tmY = lnY - H*0.12;
+    const path = ()=>{
+      ctx.moveTo(cx-hw,bot); ctx.lineTo(cx-hw*0.93,hy0+hw*0.14);
+      ctx.quadraticCurveTo(cx-hw*0.93,hy0,cx-hw*0.75,hy0);
+      ctx.lineTo(cx+hw*0.75,hy0);
+      ctx.quadraticCurveTo(cx+hw*0.93,hy0,cx+hw*0.93,hy0+hw*0.14);
+      ctx.lineTo(cx+hw,bot); ctx.closePath();
+    };
+    paintHull(ctx,path,cx-hw,cx+hw,hy0,bot,b);
+    // крышка
+    ctx.fillStyle = "rgba(0,0,0,.26)";
+    ctx.beginPath(); ctx.ellipse(cx,hy0+1.5,hw*0.82,hw*0.17,0,0,Math.PI*2); ctx.fill();
+    // сварной стык
+    ctx.strokeStyle = "rgba(0,0,0,.16)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx-hw*0.95,hy0+(bot-hy0)*0.46); ctx.lineTo(cx+hw*0.95,hy0+(bot-hy0)*0.46); ctx.stroke();
+    drawMast(ctx,cx,hy0+1,tmY);
+    drawLantern(ctx,cx,lnY,LS,lamp);
+    drawTopmark(ctx,b.topmark,cx,tmY,W);
+  }
+  return { lnY, maxHalfW:maxHW };
+}
+
+// ─────────────────────── Вода поверх корпуса, ореол, отражение ───────────────────────
+function wavePath(ctx,W,y,amp,ph){
+  const n = 24;
+  ctx.moveTo(0, y + Math.sin(ph)*amp);
+  for (let i=1;i<=n;i++){
+    const x = W*i/n;
+    ctx.lineTo(x, y + Math.sin(ph + i*0.8)*amp);
+  }
+}
+function drawWaterFront(ctx,W,H,ts,cx,hullHW){
+  const waterY = H*0.78;
+  // тень-контакт под корпусом
+  ctx.fillStyle = "rgba(3,10,18,.32)";
+  ctx.beginPath(); ctx.ellipse(cx,waterY+3,hullHW*1.35,H*0.012,0,0,Math.PI*2); ctx.fill();
+  // передняя вода закрывает низ корпуса
+  const g = ctx.createLinearGradient(0,waterY,0,H);
+  g.addColorStop(0,"rgba(10,42,64,.55)"); g.addColorStop(0.3,"rgba(8,30,48,.85)"); g.addColorStop(1,"rgba(5,20,34,.95)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  wavePath(ctx,W,waterY+1.5,H*0.006,ts*0.0012);
+  ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
+  // блики волн
+  const waves = [
+    [waterY+2.5,  H*0.005, 0.14, 0.0012, 0],
+    [waterY+H*0.05, H*0.007, 0.09, 0.0009, 2.1],
+    [waterY+H*0.115, H*0.009, 0.055, 0.0007, 4.2],
+  ];
+  for (const wv of waves){
+    ctx.strokeStyle = "rgba(150,200,235,"+wv[2]+")"; ctx.lineWidth = 1.1;
+    ctx.beginPath(); wavePath(ctx,W,wv[0],wv[1],ts*wv[3]+wv[4]); ctx.stroke();
+  }
+}
+function drawReflection(ctx,W,H,ts,wx,lamp){
+  if (lamp.i <= 0.02) return;
+  const waterY = H*0.78;
+  const col = GLOW[lamp.c] || "#fff";
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  const n = 9;
+  for (let k=0;k<n;k++){
+    const y = waterY + 4 + k*H*0.021;
+    const half = W*0.045*(1 - k/(n+2));
+    const xo = Math.sin(ts*0.0031 + k*1.9)*(1.5 + k*1.1);
+    const a = 0.30*lamp.i*(1 - k/(n-0.5));
+    if (a <= 0.01) continue;
+    const g = ctx.createLinearGradient(wx-half+xo,0,wx+half+xo,0);
+    g.addColorStop(0,hexA(col,0)); g.addColorStop(0.5,hexA(col,a)); g.addColorStop(1,hexA(col,0));
+    ctx.fillStyle = g;
+    ctx.fillRect(wx-half+xo, y, half*2, Math.max(2,H*0.012));
+  }
+  ctx.restore();
+}
+function drawGlow(ctx,W,H,x,y,lamp){
+  const i = lamp.i;
+  if (i <= 0.01) return;
+  const col = GLOW[lamp.c] || "#fff";
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  let g, R;
+  R = W*0.052*(0.7 + 0.4*i);
+  g = ctx.createRadialGradient(x,y,0,x,y,R);
+  g.addColorStop(0,"rgba(255,255,255,"+(0.9*i)+")"); g.addColorStop(0.35,hexA(col,0.75*i)); g.addColorStop(1,hexA(col,0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
+  R = W*0.17*(0.8 + 0.3*i);
+  g = ctx.createRadialGradient(x,y,0,x,y,R);
+  g.addColorStop(0,hexA(col,0.22*i)); g.addColorStop(1,hexA(col,0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
+  R = W*0.40;
+  g = ctx.createRadialGradient(x,y,0,x,y,R);
+  g.addColorStop(0,hexA(col,0.07*i)); g.addColorStop(1,hexA(col,0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
+  // горизонтальный «линзовый» разлёт
+  ctx.translate(x,y); ctx.scale(2.6,0.45);
+  g = ctx.createRadialGradient(0,0,0,0,0,W*0.085);
+  g.addColorStop(0,hexA(col,0.30*i)); g.addColorStop(1,hexA(col,0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0,0,W*0.085,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+// ─────────────────────── Кадр сцены ───────────────────────
+function drawScene(cv,b,lamp,ts){
+  const f = fitCanvas(cv); if (!f) return;
+  const { ctx, W, H } = f;
+  const cx = W*0.5, waterY = H*0.78;
+  drawBackdrop(ctx,W,H);
+  drawStars(ctx,W,H,ts);
+  drawHorizonSparkle(ctx,W,H,ts);
+  // покачивание на волне
+  const bob = Math.sin(ts*0.0011)*H*0.006;
+  const ang = Math.sin(ts*0.0007 + 1.3)*0.035;
+  ctx.save();
+  ctx.translate(cx,waterY+bob); ctx.rotate(ang); ctx.translate(-cx,-waterY);
+  const geo = drawBuoyBody(ctx,W,H,b,lamp);
+  ctx.restore();
+  // мировые координаты фонаря (для ореола и отражения)
+  const dy = geo.lnY - waterY;
+  const wx = cx - Math.sin(ang)*dy;
+  const wy = waterY + bob + Math.cos(ang)*dy;
+  drawWaterFront(ctx,W,H,ts,cx,geo.maxHalfW);
+  drawReflection(ctx,W,H,ts,wx,lamp);
+  drawGlow(ctx,W,H,wx,wy,lamp);
+}
+
+// ─────────────────────── Шкала ритма ───────────────────────
+// Один период характеристики (короткие — тиражируем до ~3 с) с бегунком.
+function drawRhythm(cv,cmp,ms){
+  const f = fitCanvas(cv); if (!f) return;
+  const { ctx, W, H } = f;
+  ctx.clearRect(0,0,W,H);
+  const ACC = (getComputedStyle(document.documentElement).getPropertyValue("--accent") || "#50a8eb").trim();
+  const reps = cmp.period < 2000 ? Math.max(1, Math.round(3000/cmp.period)) : 1;
+  const win = cmp.period*reps;
+  const x0 = 8, x1 = W-8, y = H*0.40;
+  const hSeg = Math.min(14, H*0.30);
+  const X = t => x0 + (x1-x0)*(t/win);
+  // трек
+  ctx.fillStyle = "rgba(134,150,165,.16)";
+  ctx.beginPath(); rr(ctx,x0,y-hSeg/2,x1-x0,hSeg,hSeg/2); ctx.fill();
+  // секундные деления
+  ctx.font = "10px -apple-system,'Segoe UI',Roboto,sans-serif";
+  const secs = Math.round(win/1000);
+  const step = secs > 12 ? 5 : (secs > 6 ? 2 : 1);
+  ctx.strokeStyle = "rgba(134,150,165,.4)"; ctx.lineWidth = 1;
+  for (let sN=0; sN<=secs; sN++){
+    const x = X(sN*1000);
+    ctx.beginPath(); ctx.moveTo(x,y+hSeg/2+2); ctx.lineTo(x,y+hSeg/2+6); ctx.stroke();
+    if (sN % step === 0 || sN === secs){
+      ctx.fillStyle = "rgba(134,150,165,.9)";
+      ctx.textAlign = sN === 0 ? "left" : (sN === secs ? "right" : "center");
+      ctx.fillText(sN === secs ? sN+" с" : String(sN), x, H-4);
+    }
+  }
+  // светящиеся отрезки
+  for (let rI=0; rI<reps; rI++){
+    for (const s of cmp.segs){
+      const col = GLOW[s.c] || "#fff";
+      const sx = X(s.a + rI*cmp.period);
+      const ex = Math.max(X(s.b + rI*cmp.period), sx+3);
+      ctx.fillStyle = col;
+      ctx.beginPath(); rr(ctx,sx,y-hSeg/2+2,ex-sx,hSeg-4,(hSeg-4)/2); ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,.28)"; ctx.lineWidth = 0.7; ctx.stroke();
+    }
+  }
+  // бегунок
+  const px = X(ms % win);
+  ctx.strokeStyle = ACC; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(px,y-hSeg/2-5); ctx.lineTo(px,y+hSeg/2+5); ctx.stroke();
+  ctx.fillStyle = ACC;
+  ctx.beginPath(); ctx.moveTo(px-4,y-hSeg/2-9); ctx.lineTo(px+4,y-hSeg/2-9); ctx.lineTo(px,y-hSeg/2-3);
+  ctx.closePath(); ctx.fill();
+}
+
+// ─────────────────────── Управление анимацией ───────────────────────
+let anim = null;
+function startBuoyAnim(canvas,buoy,rhythmCv){
+  stopBuoyAnim();
+  if (!canvas || !buoy || !buoy.light) return;
+  const cmp = compileLight(buoy.light);
+  const t0 = performance.now();
+  const loop = ts => {
+    anim.raf = requestAnimationFrame(loop);
+    const t = ts - t0;
+    const lamp = lampAt(cmp,t);
+    drawScene(canvas,buoy,lamp,ts);
+    if (rhythmCv && rhythmCv.offsetParent) drawRhythm(rhythmCv,cmp,t);
+  };
+  anim = { raf: requestAnimationFrame(loop) };
+}
+function stopBuoyAnim(){ if (anim){ cancelAnimationFrame(anim.raf); anim = null; } }
 
 // ─────────────────────── Меню ───────────────────────
+let menuTimer = null, menuIdx = -1;
 function renderMenu(){
-  const demo = DATA.buoys.find(b=>b.id==="north") || DATA.buoys[0];
-  if (!demo){    // данные не загрузились — не падаем, показываем подсказку
+  if (!DATA.buoys.length){
     $("menu").insertAdjacentHTML("afterbegin",
       '<div class="info" style="margin-bottom:12px">Не удалось загрузить данные буёв.<br>'
       + 'Файл <code>buoys_data.js</code> не найден на сервере. Запусти '
       + '<code>bash deploy/update_webapp.sh</code>.</div>');
     return;
   }
-  startBuoyAnim($("buoyMenu"), demo);
+  if (menuIdx < 0){
+    const n = DATA.buoys.findIndex(b=>b.id==="north");
+    menuIdx = n >= 0 ? n : 0;
+  }
+  startBuoyAnim($("buoyMenu"), DATA.buoys[menuIdx % DATA.buoys.length]);
+  clearInterval(menuTimer);
+  menuTimer = setInterval(()=>{
+    if ($("menu").classList.contains("hidden")) return;
+    menuIdx++;
+    startBuoyAnim($("buoyMenu"), DATA.buoys[menuIdx % DATA.buoys.length]);
+  }, 8000);
 }
 
 // ─────────────────────── Справочник ───────────────────────
 let curCat = "all";
+function swatchCSS(b){
+  const st = b.stripes === "v" ? stripesOf(b.color) : null;
+  if (st){
+    const n = 7, p = 100/n, stops = [];
+    for (let i=0;i<n;i++) stops.push(BODY[st[i%2]]+" "+(i*p).toFixed(1)+"% "+((i+1)*p).toFixed(1)+"%");
+    return "linear-gradient(90deg,"+stops.join(",")+")";
+  }
+  const bands = bandsOf(b.color); let acc = 0; const stops = [];
+  for (const bd of bands){
+    stops.push((BODY[bd[0]]||bd[0])+" "+(acc*100).toFixed(1)+"% "+((acc+bd[1])*100).toFixed(1)+"%");
+    acc += bd[1];
+  }
+  return "linear-gradient(180deg,"+stops.join(",")+")";
+}
 function renderChips(){
-  const box=$("chips");
-  const cats=[{key:"all",name:"Все"}].concat(DATA.categories||[]);
-  box.innerHTML=cats.map(c=>'<span class="chip'+(c.key===curCat?' on':'')+'" data-cat="'+c.key+'">'+c.name+'</span>').join("");
+  const box = $("chips");
+  const cats = [{key:"all",name:"Все"}].concat(DATA.categories||[]);
+  box.innerHTML = cats.map(c=>'<span class="chip'+(c.key===curCat?' on':'')+'" data-cat="'+c.key+'">'+c.name+'</span>').join("");
   box.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>{curCat=ch.dataset.cat; renderChips(); renderVList();});
 }
 function renderVList(){
-  const box=$("vlist");
-  const list=DATA.buoys.filter(b=>curCat==="all"||b.cat===curCat);
-  box.innerHTML=list.map(b=>{
-    const c = (colorBands(b.color)[0]);
-    return '<button class="vcard" data-id="'+b.id+'">'
-      + '<span class="sw" style="background:'+(COL[c]||c)+'"></span>'
-      + '<span>'+esc(b.title)+'</span></button>';
-  }).join("");
+  const box = $("vlist");
+  const list = DATA.buoys.filter(b=>curCat==="all"||b.cat===curCat);
+  box.innerHTML = list.map(b=>
+    '<button class="vcard" data-id="'+b.id+'">'
+    + '<span class="sw" style="background:'+swatchCSS(b)+'"></span>'
+    + '<span>'+esc(b.title)+'</span></button>'
+  ).join("");
   box.querySelectorAll(".vcard").forEach(bt=>bt.onclick=()=>openView(bt.dataset.id));
 }
+function lightRu(L){
+  const name = L.colors ? L.colors.map(c=>RU_LIGHT[c]||c).join("/") : (RU_LIGHT[L.color]||L.color);
+  return name + (L.rhythm ? " · " + L.rhythm : "");
+}
+function setCharBadge(el, L){
+  el.textContent = L.char || "—";
+  el.style.color = GLOW[L.colors ? L.colors[0] : L.color] || "#fff";
+}
 function openView(id){
-  const b=DATA.buoys.find(x=>x.id===id); if(!b) return;
+  const b = DATA.buoys.find(x=>x.id===id); if (!b) return;
   hide("learn"); show("view");
-  $("viewLP").textContent = lightText(b.light);
+  const L = normalizeLight(b.light);
+  setCharBadge($("viewChar"), L);
+  $("viewRhythm").textContent = lightRu(L);
   $("viewTitle").textContent = b.title;
   $("viewAnswer").textContent = b.answer;
   $("viewHint").textContent = b.hint;
   $("viewCap").textContent = b.title;
-  startBuoyAnim($("buoyView"), b);
-}
-function lightText(l){
-  const cn = {red:"красный",green:"зелёный",yellow:"жёлтый",white:"белый"}[l.color]||l.color;
-  const pat = typeof l.pattern==="string" ? l.pattern : "проблесковый";
-  return "огонь: "+cn+" · "+pat;
+  startBuoyAnim($("buoyView"), b, $("rhythmView"));
 }
 
 // ─────────────────────── Тест ───────────────────────
 let qQueue=[], qIdx=0, qScore=0, qAnswered=false;
-let qOpts=[], qCorrect=0;   // перемешанные варианты и индекс правильного
+let qOpts=[], qCorrect=0;
 function startQuiz(){ qQueue=shuffle(DATA.buoys.slice()); qIdx=0; qScore=0; hide("menu"); show("quiz"); renderQuiz(); }
 function renderQuiz(){
   qAnswered=false; const b=qQueue[qIdx];
   $("quizCounter").textContent=(qIdx+1)+" / "+qQueue.length;
   $("quizQ").textContent=b.quiz.q;
-  startBuoyAnim($("buoyQuiz"), b);
-  // перемешать варианты, чтобы правильный не был всегда первым
+  startBuoyAnim($("buoyQuiz"), b, $("rhythmQuiz"));
   const correctText = b.quiz.options[b.quiz.correct];
   qOpts = shuffle(b.quiz.options.slice());
   qCorrect = qOpts.indexOf(correctText);
@@ -399,7 +807,9 @@ function answerQuiz(i){
     if(k===qCorrect) el.classList.add("ok"); else if(k===i) el.classList.add("bad");
   });
   if(i===qCorrect){ qScore++; haptic("success"); } else haptic("error");
-  $("qeLP").textContent = lightText(b.light);
+  const L = normalizeLight(b.light);
+  setCharBadge($("qeChar"), L);
+  $("qeRhythm").textContent = lightRu(L);
   $("qeText").textContent = b.answer + ". " + b.hint;
   show("quizExpl");
   $("quizScore").textContent="Верно: "+qScore+" из "+(qIdx+1);
