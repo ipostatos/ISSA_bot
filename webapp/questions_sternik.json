@@ -271,8 +271,7 @@
    "Pława, kolumienka lub tyka ze znakiem szczytowym dwa czarne stożki, jeden nad drugim, wierzchołkami skierowanymi w dół\nплавающий знак, столбик или пика с двумя черными конусами, один над другим, вершинами, направленными вниз"
   ],
   "answer": 1,
-  "ref": "Sternik motorowodny — 460 pytań (PL/RU)",
-  "image": "images/st/st-009.png"
+  "ref": "Sternik motorowodny — 460 pytań (PL/RU)"
  },
  {
   "id": "st-022",
@@ -285,8 +284,7 @@
    "Od północy pozostawiając go na południu\nс севера, оставляя его на юге"
   ],
   "answer": 2,
-  "ref": "Sternik motorowodny — 460 pytań (PL/RU)",
-  "image": "images/st/st-009.png"
+  "ref": "Sternik motorowodny — 460 pytań (PL/RU)"
  },
  {
   "id": "st-023",
@@ -2492,8 +2490,7 @@
    "są publikowane przez wydawców map w odrębnych wydawnictwach\nони публикуются издателями карт в отдельных издательствах"
   ],
   "answer": 2,
-  "ref": "Sternik motorowodny — 460 pytań (PL/RU)",
-  "image": "images/st/st-094.png"
+  "ref": "Sternik motorowodny — 460 pytań (PL/RU)"
  },
  {
   "id": "st-191",
@@ -4237,8 +4234,7 @@
    "kontynuować podejście, wszystko jest OK\nпродолжить подход, все в порядке"
   ],
   "answer": 0,
-  "ref": "Sternik motorowodny — 460 pytań (PL/RU)",
-  "image": "images/st/st-302.png"
+  "ref": "Sternik motorowodny — 460 pytań (PL/RU)"
  },
  {
   "id": "st-318",
@@ -4347,7 +4343,7 @@
  {
   "id": "st-326",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Meteorologia to nauka o:\nМетеорология - это наука о:",
   "options": [
    "klimacie\nклимате",
@@ -4360,7 +4356,7 @@
  {
   "id": "st-327",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Na którym kanale VHF są podawane morskie prognozy pogody?\nНа каком канале УКВ даются морские прогнозы погоды?",
   "options": [
    "zawsze na kanale 71\nвсегда на канале 71",
@@ -4373,7 +4369,7 @@
  {
   "id": "st-328",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Chmura sygnalizująca silne wiatry z gwałtownymi szkwałami, której często towarzyszy kołnierz burzowy to:\nОблако, сигнализирующее о сильных ветрах с сильными шквалами, часто сопровождаемое штормовым закручиванием облаков:",
   "options": [
    "altocumulus (Ac)\naltocumulus (Ac)",
@@ -4386,7 +4382,7 @@
  {
   "id": "st-329",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Nimbostratus (Ns) i cumulonimbus (Cb) to chmury przynoszące:\nНимбострат (Ns) и кучево-дождевые облака (Cb) - это облака, приносящие:",
   "options": [
    "deszcz\nдождь",
@@ -4399,7 +4395,7 @@
  {
   "id": "st-330",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Chmury: cirrus (Ci), cirrostratus (Cs), altostratus (As) sygnalizują:\nОблака: cirrus (Ci), cirrostratus (Cs), altostratus (As) сигнализируют:",
   "options": [
    "zbliżenie się frontu chłodnego\nприближение холодного фронта",
@@ -4412,7 +4408,7 @@
  {
   "id": "st-331",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jaki kierunek przyjmuje wiatr?\nКакое направление принимает ветер?",
   "options": [
    "od wyżu do niżu\nот высот до низов",
@@ -4425,7 +4421,7 @@
  {
   "id": "st-332",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Do chmur piętra wysokiego zalicza się:\nК облакам верхнего этажа относятся:",
   "options": [
    "stratus (St), stratocumulus (Sc), nimbostratus (Ns)\nstratus (St), stratocumulus (Sc), nimbostratus (Ns)",
@@ -4438,7 +4434,7 @@
  {
   "id": "st-333",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Do chmur piętra średniego zalicza się:\nК облакам среднего этажа относятся:",
   "options": [
    "stratus (St), stratocumulus (Sc), nimbostratus (Ns)\nstratus (St), stratocumulus (Sc), nimbostratus (Ns)",
@@ -4451,7 +4447,7 @@
  {
   "id": "st-334",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Do chmur piętra niskiego zalicza się:\nК облакам низкого этажа относятся:",
   "options": [
    "stratus (St), stratocumulus (Sc), nimbostratus (Ns)\nstratus (St), stratocumulus (Sc), nimbostratus (Ns)",
@@ -4464,7 +4460,7 @@
  {
   "id": "st-335",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Silne uderzenie wiatru, w kierunku odmiennym niż wiejący w danej chwili wiatr to:\nСильный порыв ветра в направлении, отличном от ветра, дующего в данный момент:",
   "options": [
    "bryza\nБриз",
@@ -4477,7 +4473,7 @@
  {
   "id": "st-336",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Przyrząd służący do pomiaru ciśnienia atmosferycznego to:\nПрибор, используемый для измерения атмосферного давления:",
   "options": [
    "anemometer\nАнемометр",
@@ -4490,7 +4486,7 @@
  {
   "id": "st-337",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Silne świecenie gwiazd zapowiada:\nСильное сияние звезд предвещает:",
   "options": [
    "pogodę bezwietrzną\nбезветренную погоду",
@@ -4503,7 +4499,7 @@
  {
   "id": "st-338",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Wolno zanikające opady w niżu są charakterystyczne dla:\nМедленно исчезающие осадки в низинах характерны для:",
   "options": [
    "strefy podzwrotnikowej\nсубтропической зоны",
@@ -4516,7 +4512,7 @@
  {
   "id": "st-339",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Poranna obfita rosa zapowiada:\nУтренняя обильная роса предвещает:",
   "options": [
    "dobrą pogodę\nхорошую погоду",
@@ -4529,7 +4525,7 @@
  {
   "id": "st-340",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Źródłami profesjonalnych prognoz pogody w morskiej żegludze przybrzeżnej są:\nИсточниками профессиональных прогнозов погоды в морском судоходстве являются:",
   "options": [
    "wyłącznie komunikaty i ostrzeżenia radiowe nadawane na falach VHF i komunikaty dostępne w kapitana tych portów\nтолько радиосообщения и предупреждения, транслируемые на УКВ волнах, и сообщения, доступные у Капитанов этих портов",
@@ -4542,7 +4538,7 @@
  {
   "id": "st-341",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Podczas rejsu morskiego powinniśmy zwrócić największą uwagę na prognozy pogody:\nВо время морского круиза мы должны уделять наибольшее внимание прогнозам погоды:",
   "options": [
    "na najbliższe 3 doby\nна ближайшие 3 дня",
@@ -4555,7 +4551,7 @@
  {
   "id": "st-342",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Najbardziej przydatna informacja uzyskana z regularnych odczytów barometru to:\nНаиболее полезная информация, полученная из регулярных показаний барометра - это:",
   "options": [
    "tendencja zmian ciśnienia w funkcji czasu\nтенденция изменения давления в зависимости от времени",
@@ -4563,13 +4559,12 @@
    "wilgotność\nвлажность"
   ],
   "answer": 0,
-  "ref": "Sternik motorowodny — 460 pytań (PL/RU)",
-  "image": "images/st/st-302.png"
+  "ref": "Sternik motorowodny — 460 pytań (PL/RU)"
  },
  {
   "id": "st-343",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Strefa przejściowa na styku dwóch mas powietrza o różnych właściwościach (temperatura, wilgotność) to:\nПереходная зона на стыке двух воздушных масс с разными свойствами (температура, влажность) - это:",
   "options": [
    "front atmosferyczny\nатмосферный фронт",
@@ -4582,7 +4577,7 @@
  {
   "id": "st-344",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Obok przedstawiono:\nНиже изображен:",
   "options": [
    "front ciepły\nтеплый фронт",
@@ -4596,7 +4591,7 @@
  {
   "id": "st-345",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Powyżej przedstawiono:\nНиже показан:",
   "options": [
    "front ciepły\nтеплый фронт",
@@ -4610,7 +4605,7 @@
  {
   "id": "st-346",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Co to jest tęcza?\nЧто такое радуга?",
   "options": [
    "efekt rozszczepienia promieni słonecznych przez krople deszczu, mgły czy chmury\nэффект прохождения солнечных лучей каплями дождя, туманом или облаками",
@@ -4623,7 +4618,7 @@
  {
   "id": "st-347",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Do pomiaru prędkości wiatru służy:\nДля измерения скорости ветра используется:",
   "options": [
    "anemometr\nанемометр",
@@ -4636,7 +4631,7 @@
  {
   "id": "st-348",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Wywołanie przez radiostację VHF innego statku w celu uzyskania prognozy pogody jest:\nВызов УКВ радиостанций другого судна для получения прогноза погоды:",
   "options": [
    "możliwe, jeśli jest taka konieczność\nвозможно, если это необходимо",
@@ -4649,7 +4644,7 @@
  {
   "id": "st-349",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Instytucją odpowiedzialną za przygotowywanie prognoz pogody i ostrzeżeń meteorologicznych dla polskiego wybrzeża Bałtyku jest:\nУчреждением, ответственным за подготовку прогнозов погоды и метеорологических предупреждений для польского побережья Балтийского моря, является:",
   "options": [
    "Biuro Hydrograficzne Marynarki Wojennej RP\nГидрографическое Бюро ВМФ РП",
@@ -4662,7 +4657,7 @@
  {
   "id": "st-350",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Ostrzeżenie przed niebezpiecznymi, nagłymi zjawiskami meteorologicznymi to silne żółte światła migające z częstotliwością:\nПредупреждение об опасных, внезапных метеорологических явлениях - яркие желтые огни, мигающие с частотой:",
   "options": [
    "ok. 40 błysków na minutę\nоколо 40 вспышек в минуту",
@@ -4675,7 +4670,7 @@
  {
   "id": "st-351",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "O konieczności zwrócenia uwagi na możliwość wystąpienia nagłych zjawisk meteorologicznych informuje silne żółte światła migające z częstotliwością\nО необходимости обратить внимание на возможность возникновения внезапных метеорологических явлений сообщает яркий желтый свет, мигающий с частотой",
   "options": [
    "ok. 40 błysków na minutę\nоколо 40 вспышек в минуту",
@@ -4688,7 +4683,7 @@
  {
   "id": "st-352",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Izobara to:\nИзобара:",
   "options": [
    "linia łącząca miejsca o tych samych głębokościach\nлиния, соединяющая места одинаковой глубины",
@@ -4701,7 +4696,7 @@
  {
   "id": "st-353",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Wiatr wiejący z prędkością 40 węzłów oznacza: A znakomite warunki do żeglugi turystycznej\nВетер, дующий со скоростью 40 узлов, означает:",
   "options": [
    "отличные условия для туристического плавания",
@@ -4714,7 +4709,7 @@
  {
   "id": "st-354",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Flauta (sztil) oznacza:\nFlauta (штиль) означает:",
   "options": [
    "falę posztormową\nштормовая волна",
@@ -4727,7 +4722,7 @@
  {
   "id": "st-355",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Ten symbol na mapie pogodowej oznacza:\nЭтот символ на карте погоды означает (см. рис. ниже):",
   "options": [
    "front ciepły\nтеплый фронт",
@@ -4741,7 +4736,7 @@
  {
   "id": "st-356",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Podczas bryzy nocnej wiatr wieje:\nВо время ночного бриза, ветер дует:",
   "options": [
    "od akwenu w kierunku lądu\nот водоема к суше",
@@ -4754,7 +4749,7 @@
  {
   "id": "st-357",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Ruch powietrza od akwenu do lądu to zjawisko określane jako:\nДвижение воздуха от водоема к суше - это явление, называемое:",
   "options": [
    "bryza nocna\nночной бриз",
@@ -4767,7 +4762,7 @@
  {
   "id": "st-358",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Od ilu stopni w skali Beauforta zaczyna się sztorm?\nНа скольких градусах по шкале Бофорта начинается шторм?",
   "options": [
    "8°B\n8°B",
@@ -4780,7 +4775,7 @@
  {
   "id": "st-359",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Skala Beauforta służy do określania:\nШкала Бофорта используется для определения:",
   "options": [
    "stanu morza\nсостояние моря",
@@ -4793,7 +4788,7 @@
  {
   "id": "st-360",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Wiatr o sile 3°B to wiatr wiejący z prędkością:\nВетер 3°B - это ветер, дующий со скоростью:",
   "options": [
    "7-10 węzłów\n7-10 узлов",
@@ -4806,7 +4801,7 @@
  {
   "id": "st-361",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Wiatr o sile 6°B, jest to wiatr wiejący z prędkością:\nВетер 6°B, это ветер, дующий со скоростью:",
   "options": [
    "7-10 węzłów\n7-10 узлов",
@@ -4819,7 +4814,7 @@
  {
   "id": "st-362",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Wiatr o sile 8°B, jest to wiatr wiejący z prędkością:\nВетер 8°B, это ветер, дующий со скоростью:",
   "options": [
    "7-10 węzłów\n7-10 узлов",
@@ -4832,7 +4827,7 @@
  {
   "id": "st-363",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Cyrkulacja mas powietrza w niżu w kierunku przeciwnym do kierunku ruchu wskazówek zegara jest charakterystyczna dla:\nЦиркуляция воздушных масс в низине против часовой стрелки характерна для:",
   "options": [
    "półkuli północnej\nсеверного полушария",
@@ -4845,7 +4840,7 @@
  {
   "id": "st-364",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Cyrkulacja mas powietrza w niżu w kierunku zgodnym z kierunkiem ruchu wskazówek zegara jest charakterystyczna dla:\nЦиркуляция воздушных масс в низине по часовой стрелке характерна для:",
   "options": [
    "półkuli północnej\nсеверного полушария",
@@ -4858,7 +4853,7 @@
  {
   "id": "st-365",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Aby przystąpić do egzaminu na patent sternika motorowodnego należy\nДля сдачи экзамена на патент на моторную лодку необходимо",
   "options": [
    "mieć ukończone 14 lat\nбыть старше 14 лет",
@@ -4871,7 +4866,7 @@
  {
   "id": "st-366",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Patent sternika motorowodnego uprawnia do:\nПатент на моторную лодку дает право на:",
   "options": [
    "prowadzenie jachtów motorowych bez ograniczeń\nуправление моторными яхтами без ограничений",
@@ -4884,7 +4879,7 @@
  {
   "id": "st-367",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Które stwierdzenie jest prawdziwe?\nКакое утверждение верно?",
   "options": [
    "osoba, która nie ukończyła 18 roku życia, może realizować swoje uprawnienia wyłącznie na jachtach motorowych o mocy silnika do 60 kW\nлицо, не достигшее 18 лет, может управлять моторной яхтой с мощностью двигателя до 60 кВт",
@@ -4897,7 +4892,7 @@
  {
   "id": "st-368",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Osoba bez patentu motorowodnego może prowadzić jacht motorowy z silnikiem o mocy:\nЧеловек без патента на моторную лодку может управлять моторной яхтой с двигателем мощностью:",
   "options": [
    "do 10 kW\nдо 10 кВт",
@@ -4910,7 +4905,7 @@
  {
   "id": "st-369",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Posiadanie dodatkowej licencji jest wymagane przy holowaniu:\nДополнительная лицензия требуется при буксировке:",
   "options": [
    "wyłącznie narciarza wodnego i obiektów latających\nтолько водных лыжников и летающих объектов",
@@ -4923,7 +4918,7 @@
  {
   "id": "st-370",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Za bezpieczeństwo żeglugi odpowiada:\nЗа безопасность судоходства отвечает:",
   "options": [
    "armator\nсудовладелец",
@@ -4936,7 +4931,7 @@
  {
   "id": "st-371",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Przy spotkaniu dwóch jachtów motorowych na przecinających się kursach, ustępuje z drogi:\nПри встрече двух моторных яхт на пересекающихся курсах, уступает путь:",
   "options": [
    "ten jacht, który płynie wolniej\nта яхта, которая плывет медленнее",
@@ -4949,7 +4944,7 @@
  {
   "id": "st-372",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jeżeli dwa statki idą naprzeciwko siebie i istnieje ryzyko zderzenia to obydwa powinny:\nЕсли два судна идут друг против друга и существует риск столкновения, то оба должны:",
   "options": [
    "w wyraźny sposób zmienić kurs w рrawo, a aby minać sie lewymi burtami\nчетко и понятно изменить курс вправо, чтобы пройти левыми бортами",
@@ -4962,7 +4957,7 @@
  {
   "id": "st-373",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Statek żaglowy to:\nПарусное судно:",
   "options": [
    "każdy statek poruszający się za pomocą żagli i maszyny\nлюбое судно, движущееся с помощью парусов и двигателя",
@@ -4975,7 +4970,7 @@
  {
   "id": "st-374",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Mały statek to:\nМаленькое судно - это:",
   "options": [
    "statek, którego długość jest mniejsza niż 12 m i szerokość jest mniejsza niż 3 m\nсудно, длина которого составляет менее 12 м, а ширина-менее 3 м",
@@ -4988,7 +4983,7 @@
  {
   "id": "st-375",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Statek na postoju to wyłącznie:\nСудно на стоянке-это только:",
   "options": [
    "statek, inny obiekt pływający lub scalone materiały pływające, stojące pośrednio lub bezpośrednio na kotwicy\nсудно, другой плавучий объект или объединенные плавучие материалы, стоящие косвенно или непосредственно на якоре",
@@ -5001,7 +4996,7 @@
  {
   "id": "st-376",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Pojęcie “zestaw holowany” definiuje się jako:\nТермин “буксируемая сцепка” определяется как:",
   "options": [
    "formację składającą się z jednego lub więcej statków, innych obiektów pływających, holowanych przez jeden lub więcej statków o napędzie mechanicznym, zwanych holownikiem\nформирование, состоящее из одного или нескольких судов, других плавучих объектов, буксируемых одним или несколькими судами с механическим приводом, называемыми буксиром",
@@ -5014,7 +5009,7 @@
  {
   "id": "st-377",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Pojęcie “prom\" definiuje się jako:\nПонятие “пром\" определяется как :",
   "options": [
    "statek o długości do 12 m mogący przewozić nie więcej niż 12 osób\nсудно длиной до 12 м, способное перевозить не более 12 человек",
@@ -5027,7 +5022,7 @@
  {
   "id": "st-378",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Małe statki o napędzie mechanicznym:\nНебольшие суда с механическим приводом:",
   "options": [
    "ustępują pierwszeństwa małyrn statkom niebędącym statkami o napędzie mechanicznym (np. łodzie wiosłowe), statkom o napędzie żaglowym\nуступают приоритет малым судам, не являющимся судами с механическим приводом (например, гребными лодками), парусным судам",
@@ -5040,7 +5035,7 @@
  {
   "id": "st-379",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Który statek ma pierwszeństwo podczas spotkania w główkach portu?\nКакое судно имеет приоритет при встрече во время входа в порт?",
   "options": [
    "wchodzący do portu\nвход в порт",
@@ -5053,7 +5048,7 @@
  {
   "id": "st-380",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Który statek ma pierwszeństwo na rzece?\nКакое судно имеет приоритет на реке? То, которое:",
   "options": [
    "szybszy\nбыстрее",
@@ -5066,7 +5061,7 @@
  {
   "id": "st-381",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Który jacht ma pierwszeństwo podczas wyprzedzania?\nКакая яхта имеет преимущество при обгоне?",
   "options": [
    "wyprzedzany\nобгоняемая",
@@ -5079,7 +5074,7 @@
  {
   "id": "st-382",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Zakaz wyprzedzania obowiązuje:\nЗапрет на обгон действует:",
   "options": [
    "tylko przed śluzami\nтолько перед глиссированием",
@@ -5092,7 +5087,7 @@
  {
   "id": "st-383",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jakie ograniczenia prędkości obowiązują na śródlądowych drogach wodnych (o ile lokalne nie stanowią inaczej):\nКакие ограничения скорости действуют на внутренних водных путях (если местные знаки не предусматривают иное):",
   "options": [
    "na rzekach 30 km / h, na jeziorach 12 km/h, na kanałach bez ograniczeń\nна реках 30 км / ч, на озерах 12 км / ч, на каналах без ограничений",
@@ -5100,13 +5095,12 @@
    "na rzekach 12 km/h, na jeziorach 30 km/h, na kanałach bez ograniczeń\nна реках 12 км / ч, на озерах 30 км / ч, на каналах без ограничений"
   ],
   "answer": 1,
-  "ref": "Sternik motorowodny — 460 pytań (PL/RU)",
-  "image": "images/st/st-355.png"
+  "ref": "Sternik motorowodny — 460 pytań (PL/RU)"
  },
  {
   "id": "st-384",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak jest traktowany jacht płynący na żaglach i na silniku?\nКаким судном считается, яхта идущая на парусах и на двигателе?",
   "options": [
    "jako statek żaglowy\nкак парусное судно",
@@ -5119,7 +5113,7 @@
  {
   "id": "st-385",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jaka jest prawidłowa kolejność pierwszeństwa jachtów:\nКаков правильный порядок приоритета для яхт:",
   "options": [
    "1. motorowy 2. żeglowny 3. wioślowy\n1. моторная 2. парусная 3. на веслах",
@@ -5132,7 +5126,7 @@
  {
   "id": "st-386",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Która z jednostek ma pierwszeństwo przy spotkaniu windsurfingu z jachtem o napędzie mechanicznym?\nКакое судно имеет приоритет при встрече виндсерфинга с яхтой с механическим приводом?",
   "options": [
    "przepisy tego nie precyzują\nправила этого не уточняют",
@@ -5145,7 +5139,7 @@
  {
   "id": "st-387",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Nieuprzywilejowany statek poruszający się z prędkością powyżej 40 km/h:\nУступающее судно, движущееся со скоростью более 40 км/ч:",
   "options": [
    "powinien pozostawić innym statkom akwen zapewniający im możliwość zachowania kursu oraz swobodę manewrowania\nдолжно предоставить другим судам акваторию, обеспечивающую им возможность сохранять курс и место для маневрирования",
@@ -5158,7 +5152,7 @@
  {
   "id": "st-388",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jeden długi dźwięk trwa:\nОдин длинный звуковой сигнал продолжается:",
   "options": [
    "ok. 4 sekundy\nоколо 4 секунд",
@@ -5171,7 +5165,7 @@
  {
   "id": "st-389",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jeden krótki dźwięk trwa:\nОдин короткий звуковой сигнал продолжается:",
   "options": [
    "ok. 4 sekundy\nоколо 4 секунд",
@@ -5184,7 +5178,7 @@
  {
   "id": "st-390",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sygnał \"wzywam pomocy\" to:\nЗвуковой сигнал \"призываю на помощь\" это:",
   "options": [
    "seria krótkich dźwięków\nсерия коротких звуковых сигналов",
@@ -5197,7 +5191,7 @@
  {
   "id": "st-391",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sygnał \"człowiek za burtą\":\nСигнал \"человек за бортом\" представляет собой:",
   "options": [
    "Seria podwójnych krótkich dźwięków\nсерию двойных коротких звуковых сигналов",
@@ -5210,7 +5204,7 @@
  {
   "id": "st-392",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sygnał \"zmieniam kurs w prawo\" to:\nСигнал \"меняю курс вправо\" это:",
   "options": [
    "dwa krótkie dźwięki\nдва коротких звуковых сигнала",
@@ -5223,7 +5217,7 @@
  {
   "id": "st-393",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sygnał “zmieniam kurs w lewo” to:\nСигнал ”меняю курс влево\" это:",
   "options": [
    "dwa krótkie dźwięki\nдва коротких звуковых сигнала",
@@ -5236,7 +5230,7 @@
  {
   "id": "st-394",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Co oznacza jeden długi dźwięk nadany przez statek?\nЧто означает один длинный звуковой сигнал, данный судном?",
   "options": [
    "uwaga\nвнимание",
@@ -5249,7 +5243,7 @@
  {
   "id": "st-395",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jaki sygnał nadaje prom w czasie mgły?\nКакой звуковой сигнал подает паром во время тумана?",
   "options": [
    "jeden długi i dwa krótkie dźwięki\nодин длинный и два коротких звуковых сигнала",
@@ -5262,7 +5256,7 @@
  {
   "id": "st-396",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sygnał \"moje maszyny pracują wstecz\" to:\nЗвуковой сигнал \"мои двигатели работают в обратном режиме” звучит как:",
   "options": [
    "trzy krótkie dźwięki\nтри коротких звуковых сигнала",
@@ -5275,7 +5269,7 @@
  {
   "id": "st-397",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sygnał “nie mogę manewrować\" to:\nЗвуковой сигнал \"не могу маневрировать\" это:",
   "options": [
    "dwa krótkie dźwięki\nдва коротких звуковых сигнала",
@@ -5288,7 +5282,7 @@
  {
   "id": "st-398",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sygnał dźwiękowy zamierzam Cię wzpryedyic wydluy Twojej prawej burty\" to:\nЗвуковой сигнал \"намерен обойти по правому борту\" - это:",
   "options": [
    "jeden krótki\nодин короткий звуковой сигнал",
@@ -5301,7 +5295,7 @@
  {
   "id": "st-399",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Długi sygnał słyszalny co około minutę we mgle oznacza:\nДлинный сигнал, слышимый около минуты в тумане, означает:",
   "options": [
    "statek na kotwicy\nсудно на якоре",
@@ -5314,7 +5308,7 @@
  {
   "id": "st-400",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sygnał dźwiękowy \"zamierzam Cię wyprzedzić wzdłuż Twojej lewej burty\" to:\nЗвуковой сигнал \"собираюсь обогнать по левому борту\" это:",
   "options": [
    "jeden krótki\nодин короткий звуковой сигнал",
@@ -5327,7 +5321,7 @@
  {
   "id": "st-401",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sygnał dźwiękowy \"zwracam w lewo\" to:\nЗвуковой сигнал \"поворачиваю налево\" это:",
   "options": [
    "jeden długi, dwa krótkie, jeden długi dźwięk\nодин длинный, два коротких, один длинный звуковой сигнал",
@@ -5340,7 +5334,7 @@
  {
   "id": "st-402",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sygnał \"zatrzymajcie natychmiast statek\" to:\nСигнал \"немедленно остановите корабль\" это:",
   "options": [
    "jeden długi, jeden krótki, dwa długie dźwięki\nодин длинный, один короткий, два длинных звуковых сигнала",
@@ -5353,7 +5347,7 @@
  {
   "id": "st-403",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sygnał \"niebezpieczeństwo zderzenia\" to:\nСигнал \"опасность столкновения\" это:",
   "options": [
    "seria bardzo krótkich dźwięków\nсерия очень коротких звуковых сигналов",
@@ -5366,7 +5360,7 @@
  {
   "id": "st-404",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Kilkusekundowy sygnał nadawany dzwonem słyszany co okolo minute we mgle oznacza:\nСигнал в несколько секунд, передаваемый колоколом, слышимым примерно каждую минуту в тумане, означает:",
   "options": [
    "statek zajęty pracami podwodnymi\nсудно занятое подводными работами",
@@ -5379,7 +5373,7 @@
  {
   "id": "st-405",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Co oznacza jeden długi dźwięk i jeden krótki nadany przez statek?\nЧто означает один длинный звук и один короткий, передаваемый судном?",
   "options": [
    "zamierzam wyprzedzać wzdłuż waszej prawej burty.\nсобираюсь обогнать по правому борту.",
@@ -5392,7 +5386,7 @@
  {
   "id": "st-406",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Dwa długie sygnały słyszane co około minutę we mgle oznaczają:\nДва длинных сигнала, услышанных в тумане, означают:",
   "options": [
    "zestaw pchany, sprzężony lub zestaw holowany\nтолкаемый, сцепленный или буксируемая сцепка судов",
@@ -5405,7 +5399,7 @@
  {
   "id": "st-407",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sektor świecenia światła burtowego wynosi:\nСектор освещения бортового света составляет:",
   "options": [
    "112,5°\n112,5°",
@@ -5418,7 +5412,7 @@
  {
   "id": "st-408",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sektor świecenia światła masztowego wynosi\nСектор освещения мачтового света составляет:",
   "options": [
    "225°\n225°",
@@ -5431,7 +5425,7 @@
  {
   "id": "st-409",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Sektor świecenia światła rufowego wynosi:\nСектор освещения кормового света составляет:",
   "options": [
    "145°\n145°",
@@ -5444,7 +5438,7 @@
  {
   "id": "st-410",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jakiego koloru powinno być światło burtowe prawe?\nКакого цвета должен быть правый бортовой огонь?",
   "options": [
    "czerwonego\nкрасного",
@@ -5457,7 +5451,7 @@
  {
   "id": "st-411",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jakiego koloru powinien być światło burtowe lewe?\nКакого цвета должен быть левый бортовой огонь?",
   "options": [
    "czerwonego\nкрасного",
@@ -5470,7 +5464,7 @@
  {
   "id": "st-412",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Światło koloru białego to:\nСвет белого цвета это:",
   "options": [
    "światło rufowe lub światło masztowe pozycyjne lub światło kotwiczne\nкормовой фонарь или позиционный мачтовый фонарь или якорный фонарь",
@@ -5483,7 +5477,7 @@
  {
   "id": "st-413",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak powinien być oznakowany w nocy statek o napędzie mechanicznym o długości do 7 metrów podczas ruchu z prędkością do 10 km/h W nocy?\nКак следует обозначать ночью судно с механическим приводом длиной до 7 метров при движении со скоростью до 10 км/ч?",
   "options": [
    "światło biale widoczne dookoła widnokręgu\nбелый свет, видимый по всему кругу",
@@ -5496,7 +5490,7 @@
  {
   "id": "st-414",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Dodatkowa oznakowanie nocne statku  pojawiającego przez trałowanie to:\nДополнительное ночное обозначение рыболовного судна путем траления осуществляется:",
   "options": [
    "światło zielone nad białym widoczne dookola widnokręgu.\nзеленым светом над белым, виден по кругу",
@@ -5509,7 +5503,7 @@
  {
   "id": "st-415",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Dodatkowe oznakowanie nocne statku pojawiającego metoda inna niż przez trałowanie to:\nДополнительное ночное обозначение рыболовного судна методом, отличным от траления осуществляется:",
   "options": [
    "światło zielone nad białym widoczne dookola widnokręgu\nзеленым светом над белым, виден по всему кругу",
@@ -5522,7 +5516,7 @@
  {
   "id": "st-416",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Dodatkowe oznakowanie nocne statku pelniacego sluzbe pilotowa to:\nДополнительными ночными фонарями для судна, находящегося в лоцманской службе, являются:",
   "options": [
    "światło zielone nad białym widoczne dookola widnokręgu\nзеленый свет над белым, видимый по всему горизонту",
@@ -5535,7 +5529,7 @@
  {
   "id": "st-417",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak w porze nocnej powinien być dodatkowo oznacnakowany statek, który utracił manewrowość?\nКак в ночное время должен быть дополнительно обозначено судно, потерявшее маневренность",
   "options": [
    "dwa zielone światła widoczne widoczne dookoła widnokręgu\nдва зеленых фонаря, видимых по всему кругу",
@@ -5548,7 +5542,7 @@
  {
   "id": "st-418",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak w porze nocnej powinien być oznakowany statek o długości 9 m stojący na kotwicy?\nКак в ночное время должно быть обозначено судно длиной 9 м, стоящее на якоре?",
   "options": [
    "białe światło widoczne dookola widnokręgu\nбелый свет, видимый по всему кругу",
@@ -5561,7 +5555,7 @@
  {
   "id": "st-419",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Oznakowanie promu na wodach śródlądowych, na uwięzi w nocy to:\nМаркировка парома во внутренних водах, пришвартованного ночью:",
   "options": [
    "światło zielone nad białym widoczne dookola widnokręgu\nзеленый свет над белым виден по всему кругу",
@@ -5574,7 +5568,7 @@
  {
   "id": "st-420",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Drugie światło masztowe na morzu oznacza statek o długości:\nВторой флагшток в море означает судно длиной:",
   "options": [
    "25 m i więcej\n25 м и более",
@@ -5587,7 +5581,7 @@
  {
   "id": "st-421",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Drugie światło masztowe na śródlądziu oznacza statek o długości:\nВторой мачтовый свет на внутренней стороне означает судно длиной:",
   "options": [
    "25 m i więcej\n25 м и более",
@@ -5600,7 +5594,7 @@
  {
   "id": "st-422",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jakiego koloru dodatkowe swiatlo w porze nocnej na wodach śródlądowych powinien nieść statek przewożący materiały łatwopalne?\nКакого цвета дополнительный свет в ночное время во внутренних водах должно нести судно, перевозящее легковоспламеняющиеся материалы?",
   "options": [
    "niebieskie\nсиний",
@@ -5613,7 +5607,7 @@
  {
   "id": "st-423",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jakie dodatkowe światła powinien nieść prom przemieszczający się swobodnie w nocy na wodach śródlądowych?\nКакое дополнительное освещение должен нести паром, свободно перемещающийся ночью во внутренних водах?",
   "options": [
    "na przemian światło zielone, białe i zielone widoczne dookola widnokręgu\nчередуйте зеленый, белый и зеленый свет, видимый по всему кругу",
@@ -5626,7 +5620,7 @@
  {
   "id": "st-424",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak dodatkowo w porze nocnej powinien być oznakowany statek o ograniczonej zdolności manewrowej?\nКак дополнительно в ночное время должно быть обозначено судно с ограниченной маневренностью?",
   "options": [
    "pionowo umieszczone trzy czerwone światła, widoczne dookola widnokręgu\nвертикально расположенные три красных фонаря, видимые по всему кругу",
@@ -5639,7 +5633,7 @@
  {
   "id": "st-425",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak powinien być oznakowany w nocy na śródlądziu statek o napędzie mechanicznym o długości większej niż 110 m?\nКак на внутренних водах следует обозначать ночью судно с механическим приводом длиной более 110 м?",
   "options": [
    "czerwone swiatlo na lewej burcie, zielone światło na prawej burcie, białe światło na rufie, dwa białe światła masztowe na dwóch różnych masztach.\nкрасным светом по левому борту, зеленый свет по правому борту, белый свет на корме, два белых фонаря на двух разных мачтах",
@@ -5652,7 +5646,7 @@
  {
   "id": "st-426",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Statek, dodatkowo oznaczony w nocy dwoma czerwonymi światłami ustawionymi w pionie widocznymi  dookola widnokręgu jest statkiem:\nСудно, дополнительно обозначенное ночью двумя вертикальными красными огнями, видимыми по всему кругу, является судном:",
   "options": [
    "nieodpowiadajacym za swoje ruchy\nне отвечающим за свои движения (неуправляемое судно)",
@@ -5665,7 +5659,7 @@
  {
   "id": "st-427",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Z której burty należy minąć statek niosący na prawej burcie światło czerwone, a na lewej dwa zielone ustawione w pionie?\nС какого борта необходимо обойти судно, которое несёт по правому борту красный свет, а по левому два зеленых, расположенных вертикально?",
   "options": [
    "z prawej burty\nс правого борта",
@@ -5678,7 +5672,7 @@
  {
   "id": "st-428",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Statek oznakowany w nocy dodatkowo trzema czerwonymi światłami ustawionymi w pionie widocznymi dookola widnokręgu jest statkiem:\nСудно, обозначенное ночью дополнительно тремя красными огнями, установленными вертикально, видимыми по всему кругу, является судном:",
   "options": [
    "pojawiającym przez trałowanie\nзанимающимся ловлей путем траления",
@@ -5691,7 +5685,7 @@
  {
   "id": "st-429",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak powinien być oznakowany w nocy na morzu statek o napędzie mechanicznym o długości mniejszej niż 50m:\nКак ночью в море следует обозначать судно с механическим приводом длиной менее 50 м:",
   "options": [
    "światło białe nad zielonym  widoczne dookola widnokręgu\nбелый свет над зеленым видимым кругом",
@@ -5704,7 +5698,7 @@
  {
   "id": "st-430",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Z której burty należy minąć statek niosący na lewej burcie czerwona kule a na prawej dwa zielone romby ustawione w pionie?\nС какого борта необходимо обойти судно, которое несёт по левому борту красный шар, а по правому два зеленых ромба, расположенных вертикально?",
   "options": [
    "z prawej burty\nс правого борта",
@@ -5717,7 +5711,7 @@
  {
   "id": "st-431",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Tyka z wiecha na śródlądowym szlaku wodnym oznacza:\nВешка со щеткой на внутренних водах означает:",
   "options": [
    "prawą stronę szlaku żeglownego\nправую сторону судоходного пути",
@@ -5730,7 +5724,7 @@
  {
   "id": "st-432",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Tyka bez wiechy na śródlądowym szlaku wodnym oznacza:\nВешка без щетки на внутренних водах означает:",
   "options": [
    "lewa strona szlaku żeglownego\nлевую сторону судоходного пути",
@@ -5743,7 +5737,7 @@
  {
   "id": "st-433",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak powinien być oznakowany prom z pierwszeństwem przejścia, przemieszczający się swobodnie w dzień na wodach śródlądowych?\nКак должен быть обозначен паром имеющий право дороги, свободно перемещающийся днем во внутренних водах?",
   "options": [
    "zielona kula nad białym walcem\nзеленый шар над белым цилиндром",
@@ -5756,7 +5750,7 @@
  {
   "id": "st-434",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak w porze dziennej powinien być oznakowany statek z pierwszeństwem przejścia?\nКак в дневное время должно быть обозначено судно с правом дороги?",
   "options": [
    "biały proporzec\nбелый вымпел",
@@ -5769,7 +5763,7 @@
  {
   "id": "st-435",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak w porze dziennej powinien być oznakowany prom na uwięzi, na wodach śródlądowych:\nКак в дневное время следует обозначать пришвартованный паром во внутренних водах:",
   "options": [
    "czerwona kula\nкрасный шар",
@@ -5782,7 +5776,7 @@
  {
   "id": "st-436",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak w porze dziennej powinien być oznakowany statek o ograniczonej zdolności manewrowej?\nКак в дневное время должно быть обозначено судно с ограниченной маневренностью?",
   "options": [
    "umieszczone pionowo: dwa czarne walce, a między nimi czarna kula\nрасположенные вертикально: два черных цилиндра, а между ними черный шар",
@@ -5795,7 +5789,7 @@
  {
   "id": "st-437",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak w porze dziennej na wodach śródlądowych powinien byc oznakowany statek przewożący materiały łatwopalne?\nКак в дневное время во внутренних водах должно быть обозначено судно, перевозящее легковоспламеняющиеся материалы?",
   "options": [
    "czarny stożek skierowany wierzchołkiem w górę\nчерный конус, направленный вершиной вверх",
@@ -5808,7 +5802,7 @@
  {
   "id": "st-438",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Statek oznakowany czarnym stożkiem skierowanym wierzczolkiem w dół to:\nСудно, обозначенное черным конусом, направленным вершиной вниз - это:",
   "options": [
    "statek idący wyłącznie na silniku\nсудно, идущее исключительно на двигателе",
@@ -5821,7 +5815,7 @@
  {
   "id": "st-439",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Dwa czarne stożki połączone wierzchołkami oraz stożek skierowany wierzchołkiem w górę to znak dzienny oznaczający:\nДва черных конуса, соединенных вершинами, и конус, обращенный вершиной вверх - это дневной знак, обозначающий:",
   "options": [
    "statek zajęty połowem innym niż trałowanie\nсудно занято рыбной ловлей, кроме траления",
@@ -5829,13 +5823,12 @@
    "statek zajęty połowem przez tralowanie\nсудно занято рыбалкой путем траления"
   ],
   "answer": 0,
-  "ref": "Sternik motorowodny — 460 pytań (PL/RU)",
-  "image": "images/st/st-355.png"
+  "ref": "Sternik motorowodny — 460 pytań (PL/RU)"
  },
  {
   "id": "st-440",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Na wodach morskich statek oznakowany w dzień czarną kulą to:\nВ морских водах судно, отмеченное днем черным шаром:",
   "options": [
    "statek na kotwica\nсудно на якоре",
@@ -5848,7 +5841,7 @@
  {
   "id": "st-441",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak w porze dziennej powinien być oznakowany holownik zajęty holowaniem, na wodach śródlądowych?\nКак в дневное время должен быть обозначен буксир, занятый буксировкой, во внутренних водах?",
   "options": [
    "czarny walec\nчерный цилиндр",
@@ -5861,7 +5854,7 @@
  {
   "id": "st-442",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Oznakowanie promu przemieszczającego się swobodnie za dnia, na wodach śródlądowych to:\nПаром, свободно движущегося днем, во внутренних водах обозначается:",
   "options": [
    "zielona kula nad białym walcem\nзеленым шаром над белым цилиндром",
@@ -5874,7 +5867,7 @@
  {
   "id": "st-443",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Dwie czarne kule w pionie są znakiem dziennym oznaczającym:\nДва черных шара по вертикали - это дневной знак, обозначающий:",
   "options": [
    "statek ograniczony swoim zanurzeniem\nсудно ограничено своей осадкой",
@@ -5882,13 +5875,12 @@
    "statek na mieliźnie\nсудно на мели"
   ],
   "answer": 1,
-  "ref": "Sternik motorowodny — 460 pytań (PL/RU)",
-  "image": "images/st/st-355.png"
+  "ref": "Sternik motorowodny — 460 pytań (PL/RU)"
  },
  {
   "id": "st-444",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Czarny walec pod salingiem jest znakiem dziennym oznaczającym:\nЧерный цилиндр под парусом - это дневной знак, обозначающий:",
   "options": [
    "statek zajęty bołówem\nсудно занятое ловом рыбы",
@@ -5896,13 +5888,12 @@
    "statek na mieliźnie\nсудно на мели"
   ],
   "answer": 1,
-  "ref": "Sternik motorowodny — 460 pytań (PL/RU)",
-  "image": "images/st/st-355.png"
+  "ref": "Sternik motorowodny — 460 pytań (PL/RU)"
  },
  {
   "id": "st-445",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Dwa czarne stożki połączone wierzchołkami to znak dzienny oznaczający:\nДва черных конуса, соединенных вершинами - это дневной знак, обозначающий:",
   "options": [
    "statek zajety połowem przez trałowanie\nсудно занято рыбалкой путем траления",
@@ -5910,13 +5901,12 @@
    "statek na mieliźnie\nсудно на мели"
   ],
   "answer": 0,
-  "ref": "Sternik motorowodny — 460 pytań (PL/RU)",
-  "image": "images/st/st-355.png"
+  "ref": "Sternik motorowodny — 460 pytań (PL/RU)"
  },
  {
   "id": "st-446",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Jak w porze dziennej na wodach śródlądowych powinien być oznakowany statek stojący na kotwicy?\nКак в дневное время во внутренних водах должно быть обозначено судно, стоящее на якоре?",
   "options": [
    "czarna kula\nчерным шаром",
@@ -5929,7 +5919,7 @@
  {
   "id": "st-447",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Powyżej jakiej mocy silników przegląd techniczny jachtu motorowego jest obowiązkowy?\nВыше какой мощности двигателей обязателен технический осмотр моторного судна?",
   "options": [
    "75 KW\n75 кВт",
@@ -5942,7 +5932,7 @@
  {
   "id": "st-448",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Dla jakich jachtów motorowych rejestracja nie jest obowiązkowa?\nДля каких моторных яхт регистрация не является обязательной?",
   "options": [
    "dla jachtów o mocy silnika poniżej 15 kw\nдля яхт с мощностью двигателя менее 15 кВт",
@@ -5955,7 +5945,7 @@
  {
   "id": "st-449",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Z prawej strony masztu podnosimy:\nКакой флаг поднимается с правой стороны мачты:",
   "options": [
    "banderę właściwa dla załogi jachtu\nфлаг, подходящий для экипажа яхты",
@@ -5968,7 +5958,7 @@
  {
   "id": "st-450",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Kiedy światła statku powinny być zapalone?\nВ какое время должны быть включены огни на судне?",
   "options": [
    "od zachodu do wschodu słońca i przy ograniczonej widoczności\nот заката до восхода солнца и при ограниченной видимости Б. от заката до восхода солнца С 18:00 до 06:00.",
@@ -5981,7 +5971,7 @@
  {
   "id": "st-451",
   "license": "sternik",
-  "topic": "Новости метеорологии",
+  "topic": "Метеорологические сведения",
   "q": "Organami uprawnionymi do kontroli dokumentów statku na śródlądziu są:\nОрганами, уполномоченными на контроль над судном во внутренних водах, являются:",
   "options": [
    "policja, WOPR, Urząd Żeglugi Śródlądowej\nполиция, WOPR, управление внутреннего судоходства",

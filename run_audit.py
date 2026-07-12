@@ -26,6 +26,11 @@ from pathlib import Path
 BASE = Path(__file__).parent
 sys.path.insert(0, str(BASE))
 
+# Windows-консоль по умолчанию cp1251 и падает на ✅/❌ в самом конце аудита —
+# все проверки при этом уже пройдены. Печатаем в utf-8 безусловно.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 PASS, FAIL = "✅", "❌"
 problems = []
 
