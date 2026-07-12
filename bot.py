@@ -763,7 +763,9 @@ async def cb_menu(cb: CallbackQuery) -> None:
     GLOSSARY_SEARCH.discard(cb.from_user.id)
     ACTIVE_TASK.pop(cb.from_user.id, None)
     ACTIVE_PTASK.pop(cb.from_user.id, None)
-    await cb.message.answer("Главное меню:", reply_markup=main_menu_kb())
+    text = ("👉 Открой тренажёр — весь функционал внутри приложения:"
+            if WEBAPP_HOME_URL else "Главное меню:")
+    await cb.message.answer(text, reply_markup=main_menu_kb())
     await cb.answer()
 
 

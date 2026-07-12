@@ -9,8 +9,10 @@ Type=simple
 WorkingDirectory=/opt/issa-bot
 # Виртуальное окружение с зависимостями:
 ExecStart=/opt/issa-bot/.venv/bin/python /opt/issa-bot/bot.py
-# Токен читается из .env в WorkingDirectory (или раскомментируйте строку ниже):
-# Environment=BOT_TOKEN=123456789:AA...
+# .env прокидывается в ОКРУЖЕНИЕ процесса. Важно: bot.py читает из .env-файла
+# только BOT_TOKEN (load_token), а WEBAPP_* берёт из os.environ — без этой
+# строки они пустые, и бот показывает старое чат-меню вместо кнопки Mini App.
+EnvironmentFile=/opt/issa-bot/.env
 Restart=always
 RestartSec=5
 User=issa
