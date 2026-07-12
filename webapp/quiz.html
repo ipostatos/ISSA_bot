@@ -224,6 +224,8 @@
     <small>Темы по порядку, от основ к экзамену</small></button>
   <button class="big ghost" id="startRandom"><span class="bic" data-icon="target"></span>Тренировка — случайные
     <small>Вопросы вперемешку, с пояснениями</small></button>
+  <button class="big ghost" id="startContrast"><span class="bic" data-icon="shuffle"></span>Различение — похожие вопросы
+    <small>Кардинальные знаки, огни, сигналы — рядом, чтобы не путать</small></button>
   <button class="big ghost" id="startTopic"><span class="bic" data-icon="list"></span>Все темы списком
     <small>Выбрать любую тему</small></button>
   <button class="big ghost" id="startExam"><span class="bic" data-icon="file-check"></span>Экзамен
@@ -958,6 +960,45 @@ document.getElementById("startReview").onclick = ()=>{
   startQuiz("review", false, queue);
 };
 
+// ── РАЗЛИЧЕНИЕ (контрастные пары) ──
+// Interleaving/discrimination: похожие, взаимно путаемые вопросы показываются
+// ПОДРЯД — так мозг учится видеть различия, а не «узнавать» блок темы.
+// Группы заданы темой + регэкспом по тексту вопроса (контента не требуют).
+const CONTRAST_GROUPS = [
+  { name: "Кардинальные знаки",        topic: "IALA",             re: /кардинальн/i },
+  { name: "Латеральные и осевые",      topic: "IALA",             re: /латеральн|осев|безопасн.*вод/i },
+  { name: "Знаки опасности",           topic: "IALA",             re: /опасн/i },
+  { name: "Суда на лову",              topic: "Огни и знаки",     re: /траулер|трал|лов(лей|а|ом)?\s+рыб|рыболов/i },
+  { name: "Буксиры, ограниченные, на мели", topic: "Огни и знаки", re: /буксир|огранич|мели|на мель/i },
+  { name: "Сигналы манёвров",          topic: "Звуковые сигналы", re: /коротк|длинн|гудк/i },
+  { name: "Туманные сигналы",          topic: "Звуковые сигналы", re: /туман/i },
+  { name: "Обгон и пересечение курсов", topic: "COLREG",          re: /обгон|пересека|уступ|дорог/i },
+  { name: "Давление и фронты",         topic: "Метео",            re: /давлен|фронт/i },
+];
+
+function buildContrastQueue(limit){
+  // собрать группы (мин. 3 вопроса, иначе контраста нет), перемешать их порядок
+  const groups = shuffle(CONTRAST_GROUPS
+    .map(g => ({ ...g, qs: shuffle(ALL.filter(q =>
+        (!g.topic || q.topic === g.topic) && g.re.test(q.q))) }))
+    .filter(g => g.qs.length >= 3));
+  // добираем группы целиком: члены группы идут ПОДРЯД (в этом суть режима)
+  const queue = [];
+  const seen = new Set();
+  for (const g of groups){
+    if (queue.length >= limit) break;
+    for (const q of g.qs.slice(0, 6)){        // ≤6 из группы, чтобы влезло 3-4 группы
+      if (!seen.has(q.id) && queue.length < limit){ seen.add(q.id); queue.push(q); }
+    }
+  }
+  return queue;
+}
+document.getElementById("startContrast").onclick = ()=>{
+  const queue = buildContrastQueue(20);
+  if (queue.length < 6){ alert("Недостаточно вопросов для режима различения."); return; }
+  startQuiz("contrast", false, queue);
+};
+
 // Случайная тренировка — теперь адаптивная: сначала то, что пора повторить,
 // затем добиваем новыми, чтобы набрать пул.
 document.getElementById("startRandom").onclick = ()=>{
@@ -1059,6 +1100,7 @@ function resumeQuiz(){
 
 const MODE_LABEL = m => m==="exam" ? "Экзамен"
   : m==="random" ? "Тренировка" : m==="mistakes" ? "Работа над ошибками"
+  : m==="contrast" ? "Различение"
   : m && m.startsWith("topic:") ? "Тема: "+m.slice(6) : "Тест";
 
 function renderResumeBanner(){
