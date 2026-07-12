@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Аудио-повторение</title>
+<link rel="stylesheet" href="theme.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="nav.js"></script>
+<script src="quiz_data.js"></script>
+<script src="zeglarz_data.js"></script>
+<script src="sternik_data.js"></script>
+<script src="migration.js"></script>
+<script src="srs.js"></script>
+<script src="icons.js"></script>
+<style>
+  /* — аудио-плеер: специфика страницы — */
+  .src-row{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px }
+  .src-btn{ display:flex; align-items:center; gap:10px; text-align:left; padding:13px 14px;
+    border:1px solid var(--border); background:var(--card); color:var(--text);
+    border-radius:12px; cursor:pointer; font-size:14px }
+  .src-btn small{ display:block; color:var(--hint); font-size:12px; margin-top:2px }
+  .src-btn.on{ border-color:var(--accent) }
+  .src-btn .emi svg{ width:20px; height:20px }
+  .player{ text-align:center }
+  .now{ min-height:120px; font-size:16px; line-height:1.5; padding:14px;
+    background:var(--bg); border:1px solid var(--border); border-radius:12px; margin-bottom:6px;
+    text-align:left; white-space:pre-wrap }
+  .now .ans{ color:var(--ok); display:block; margin-top:10px }
+  .now .muted-part{ color:var(--hint) }
+  .pcount{ color:var(--hint); font-size:13px; margin:8px 0 12px }
+  .controls{ display:flex; gap:10px; justify-content:center; align-items:center; margin-bottom:12px }
+  .cbtn{ width:56px; height:56px; border-radius:50%; border:1px solid var(--border);
+    background:var(--card); color:var(--text); cursor:pointer; font-size:20px;
+    display:flex; align-items:center; justify-content:center }
+  .cbtn.main{ width:72px; height:72px; background:var(--accent); color:var(--accent-text); border:none }
+  .cbtn svg{ width:24px; height:24px }
+  .cbtn.main svg{ width:30px; height:30px }
+  .rate-row{ display:flex; gap:8px; justify-content:center; margin-bottom:4px }
+  .rate{ padding:6px 14px; font-size:13px; border-radius:20px; border:1px solid var(--border);
+    background:transparent; color:var(--text); cursor:pointer }
+  .rate.on{ border-color:var(--accent); color:var(--accent) }
+  .nosupport{ padding:14px; border:1px solid var(--warn); border-radius:12px; color:var(--warn);
+    font-size:14px; line-height:1.5 }
+</style>
+</head>
+<body>
+  <h1><span class="emi" data-icon="headphones"></span> Аудио-повторение</h1>
+  <p class="sub">Вопросы и ответы на слух — повторяй в дороге, у штурвала, на пробежке</p>
+
+  <div id="noSupport" class="nosupport hidden">
+    Синтез речи не поддерживается этим клиентом Telegram. Открой Mini App на
+    другом устройстве или обнови приложение.
+  </div>
+
+  <div id="app">
+    <div class="src-row" id="srcRow">
+      <button class="src-btn on" data-src="weak">
+        <span class="emi" data-icon="refresh-cw"></span>
+        <span>Слабые вопросы ISSA <small id="weakSub">по расписанию повторения</small></span>
+      </button>
+      <button class="src-btn" data-src="zeglarz">
+        <span class="emi" data-icon="anchor"></span>
+        <span>Żeglarz jachtowy <small>польские формулировки + перевод</small></span>
+      </button>
+      <button class="src-btn" data-src="sternik">
+        <span class="emi" data-icon="compass"></span>
+        <span>Sternik motorowodny <small>польские формулировки + перевод</small></span>
+      </button>
+    </div>
+
+    <div class="card player">
+      <div class="now" id="nowBox">Выбери источник и нажми ▶ — вопрос прозвучит,
+        затем правильный ответ.</div>
+      <div class="pcount" id="pcount">—</div>
+      <div class="controls">
+        <button class="cbtn" id="prevBtn" title="Назад"><span class="emi" data-icon="chevron-right" style="transform:scaleX(-1)"></span></button>
+        <button class="cbtn main" id="playBtn"><span class="emi" data-icon="play"></span></button>
+        <button class="cbtn" id="nextBtn" title="Дальше"><span class="emi" data-icon="chevron-right"></span></button>
+      </div>
+      <div class="rate-row" id="rateRow">
+        <button class="rate" data-rate="0.85">0.85×</button>
+        <button class="rate on" data-rate="1">1×</button>
+        <button class="rate" data-rate="1.2">1.2×</button>
+      </div>
+      <p class="muted" style="font-size:12px">Не выключай экран: синтез речи живёт в
+        открытой странице Mini App.</p>
+    </div>
+  </div>
+
+<script>
+"use strict";
+if (window.Icons) Icons.hydrate();
+
+// ── поддержка ──
+const SS = window.speechSynthesis;
+if (!SS || !window.SpeechSynthesisUtterance){
+  document.getElementById("noSupport").classList.remove("hidden");
+  document.getElementById("app").classList.add("hidden");
+}
+
+// ── источники плейлиста ──
+// weak: слабые/просроченные вопросы ISSA (SRS.pickDue), RU-голос.
+// zeglarz/sternik: гибридные PL+RU вопросы — PL часть читает польский голос
+// (слышать экзаменационные формулировки до реального экзамена), RU — русский.
+const RU = window.QUIZ_DATA ? QUIZ_DATA.questions : [];
+const PL_BANKS = {
+  zeglarz: (window.ZEGLARZ_DATA && ZEGLARZ_DATA.questions) || [],
+  sternik: (window.STERNIK_DATA && STERNIK_DATA.questions) || [],
+};
+
+function buildPlaylist(src){
+  if (src === "weak"){
+    const ids = RU.map(q => q.id);
+    const due = window.SRS ? SRS.pickDue(ids, 20) : [];
+    const byId = Object.fromEntries(RU.map(q => [q.id, q]));
+    let qs = due.map(id => byId[id]).filter(Boolean);
+    if (!qs.length) qs = shuffle(RU).slice(0, 20);   // всё повторено — случайные
+    // трек: RU вопрос → RU правильный ответ
+    return qs.map(q => ({
+      show: q.q + "\n\n✔ " + q.options[q.answer],
+      parts: [ {text: q.q, lang: "ru"}, {text: "Правильный ответ: " + q.options[q.answer], lang: "ru"} ],
+    }));
+  }
+  // польские: поле "PL\nRU" — читаем PL, затем RU, затем ответ PL+RU
+  const qs = shuffle(PL_BANKS[src] || []).slice(0, 20);
+  return qs.map(q => {
+    const [qPl, qRu] = splitHybrid(q.q);
+    const [aPl, aRu] = splitHybrid(q.options[q.answer]);
+    const parts = [ {text: qPl, lang: "pl"} ];
+    if (qRu) parts.push({text: qRu, lang: "ru"});
+    parts.push({text: "Prawidłowa odpowiedź: " + aPl, lang: "pl"});
+    if (aRu) parts.push({text: "Правильный ответ: " + aRu, lang: "ru"});
+    return { show: qPl + (qRu ? "\n" + qRu : "") + "\n\n✔ " + aPl + (aRu ? "\n" + aRu : ""), parts };
+  });
+}
+// "PL\nRU" → [PL, RU]; если перевода нет — RU пустой
+function splitHybrid(s){
+  const i = String(s).indexOf("\n");
+  return i < 0 ? [s, ""] : [s.slice(0, i).trim(), s.slice(i + 1).trim()];
+}
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+
+// ── голоса: ленивый выбор по языку (getVoices грузится асинхронно) ──
+let voices = [];
+function refreshVoices(){ voices = SS ? SS.getVoices() : []; }
+if (SS){ refreshVoices(); SS.onvoiceschanged = refreshVoices; }
+function voiceFor(lang){
+  const pref = lang === "pl" ? "pl" : "ru";
+  return voices.find(v => v.lang && v.lang.toLowerCase().startsWith(pref)) || null;
+}
+
+// ── плеер ──
+let playlist = [];
+let idx = 0;
+let playing = false;
+let rate = 1;
+let src = "weak";
+
+function setPlayIcon(){
+  document.getElementById("playBtn").innerHTML =
+    Icons.svg(playing ? "pause" : "play");
+}
+
+function renderNow(){
+  const box = document.getElementById("nowBox");
+  if (!playlist.length){
+    box.textContent = "Плейлист пуст."; return;
+  }
+  const t = playlist[idx];
+  const i = t.show.indexOf("\n\n✔ ");
+  const q = i < 0 ? t.show : t.show.slice(0, i);
+  const a = i < 0 ? "" : t.show.slice(i + 3);
+  box.innerHTML = escapeHtml(q) + (a ? `<span class="ans">✔ ${escapeHtml(a.replace(/^✔\s*/, ""))}</span>` : "");
+  document.getElementById("pcount").textContent = `${idx + 1} / ${playlist.length}`;
+}
+const escapeHtml = s => String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+// говорим части трека последовательно; по окончании — авто-переход к следующему
+function speakTrack(){
+  if (!SS || !playlist.length) return;
+  SS.cancel();
+  const t = playlist[idx];
+  let p = 0;
+  const speakNext = () => {
+    if (!playing) return;
+    if (p >= t.parts.length){
+      // трек дочитан — пауза-вдох и следующий
+      setTimeout(() => { if (playing){ next(); } }, 900);
+      return;
+    }
+    const part = t.parts[p++];
+    const u = new SpeechSynthesisUtterance(part.text);
+    const v = voiceFor(part.lang);
+    if (v) u.voice = v;
+    u.lang = part.lang === "pl" ? "pl-PL" : "ru-RU";
+    u.rate = rate;
+    u.onend = speakNext;
+    u.onerror = speakNext;   // битый голос не должен вешать плейлист
+    SS.speak(u);
+  };
+  speakNext();
+}
+
+function play(){ playing = true; setPlayIcon(); renderNow(); speakTrack(); haptic("light"); }
+function pause(){ playing = false; setPlayIcon(); if (SS) SS.cancel(); }
+function next(){ idx = (idx + 1) % playlist.length; renderNow(); if (playing) speakTrack(); }
+function prev(){ idx = (idx - 1 + playlist.length) % playlist.length; renderNow(); if (playing) speakTrack(); }
+
+document.getElementById("playBtn").onclick = () => { playing ? pause() : play(); };
+document.getElementById("nextBtn").onclick = () => { haptic("select"); next(); };
+document.getElementById("prevBtn").onclick = () => { haptic("select"); prev(); };
+
+document.getElementById("rateRow").querySelectorAll(".rate").forEach(b => {
+  b.onclick = () => {
+    rate = parseFloat(b.dataset.rate);
+    document.querySelectorAll(".rate").forEach(x => x.classList.toggle("on", x === b));
+    if (playing) speakTrack();   // перечитать текущий с новой скоростью
+  };
+});
+
+document.getElementById("srcRow").querySelectorAll(".src-btn").forEach(b => {
+  b.onclick = () => {
+    src = b.dataset.src;
+    document.querySelectorAll(".src-btn").forEach(x => x.classList.toggle("on", x === b));
+    pause();
+    playlist = buildPlaylist(src);
+    idx = 0;
+    renderNow();
+  };
+});
+
+// подпись «слабых»: сколько к повтору
+(function(){
+  if (!window.SRS || !RU.length) return;
+  const due = SRS.dueCount(RU.map(q => q.id));
+  document.getElementById("weakSub").textContent =
+    due ? `${due} вопрос(ов) к повторению` : "по расписанию повторения";
+})();
+
+// при закрытии страницы затыкаем синтез (иначе голос переживает Mini App)
+window.addEventListener("pagehide", () => { if (SS) SS.cancel(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") pause();
+});
+
+playlist = buildPlaylist(src);
+renderNow();
+</script>
+</body>
+</html>
