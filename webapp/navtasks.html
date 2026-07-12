@@ -64,49 +64,80 @@
   .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px}
   .hidden{display:none !important}
 
-  /* ── интерактивный компас-песочница ── */
+  /* ── интерактивный компас-песочница ──
+     Настоящий морской компас: стальной безель (conic-gradient), тёмная
+     картушка с белой разметкой (не зависит от темы — как у прибора),
+     стеклянный блик сверху, стрелки разной длины со свечением. */
   .cmono{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace }
   .stage{ display:grid; place-items:center; padding:6px 0 2px }
   /* компас крупный — цифры идут ВДОЛЬ окружности (узкое кольцо), места не съедают */
   .cwrap{ position:relative; width:min(80vw,320px); aspect-ratio:1;
     display:grid; place-items:center; touch-action:none; user-select:none }
-  .cring{ position:absolute; inset:0; border-radius:50%; background:var(--bg); border:1px solid var(--border) }
-  .clubber{ position:absolute; top:-2px; left:50%; transform:translateX(-50%);
+  /* безель: шлифованная сталь + внутренняя кромка */
+  .cring{ position:absolute; inset:0; border-radius:50%;
+    background:conic-gradient(from 210deg,
+      #39434c, #7d8a93 12%, #38424b 26%, #94a1aa 42%,
+      #404b54 58%, #7d8a93 74%, #313b44 88%, #39434c);
+    box-shadow:0 8px 22px rgba(0,0,0,.35),
+      inset 0 1px 2px rgba(255,255,255,.4), inset 0 -2px 5px rgba(0,0,0,.45) }
+  .cring::after{ content:""; position:absolute; inset:3%; border-radius:50%;
+    background:#0d151d; box-shadow:inset 0 3px 8px rgba(0,0,0,.7) }
+  .clubber{ position:absolute; top:-3px; left:50%; transform:translateX(-50%);
     width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent;
-    border-top:13px solid var(--bad); z-index:5 }
-  /* засечки рисуются SVG (надёжно, без conic-масок) */
-  .cface{ position:absolute; inset:5%; border-radius:50%; border:1px solid var(--border); z-index:2 }
+    border-top:14px solid #e5544b; z-index:7;
+    filter:drop-shadow(0 1px 3px rgba(229,84,75,.65)) }
+  /* картушка: тёмная, с лёгким объёмом; засечки рисуются SVG */
+  .cface{ position:absolute; inset:5%; border-radius:50%; z-index:2;
+    background:radial-gradient(circle at 50% 40%, #1c2835 0%, #141e29 55%, #0b131c 100%);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), inset 0 12px 26px rgba(0,0,0,.45) }
   .cface svg{ position:absolute; inset:0; width:100%; height:100% }
+  /* стеклянный купол: блик сверху + холодный отсвет снизу (не ловит палец) */
+  .cglass{ position:absolute; inset:5%; border-radius:50%; z-index:6; pointer-events:none;
+    background:
+      radial-gradient(ellipse 62% 40% at 32% 18%, rgba(255,255,255,.13), rgba(255,255,255,0) 62%),
+      radial-gradient(ellipse 52% 32% at 68% 90%, rgba(130,180,230,.06), rgba(255,255,255,0) 70%) }
   /* слой подписей */
   .clabels{ position:absolute; inset:5%; border-radius:50%; pointer-events:none; z-index:4 }
   /* буквы N/E/S/W — крупные, горизонтальные (читаются ровно), внутри круга */
   .ccard4{ position:absolute; left:50%; top:50%; width:38px; height:22px; margin:-11px 0 0 -19px;
-    text-align:center; font:800 17px/22px ui-monospace,Menlo,Consolas,monospace; color:var(--text);
+    text-align:center; font:800 17px/22px ui-monospace,Menlo,Consolas,monospace; color:#e9eef4;
+    text-shadow:0 1px 2px rgba(0,0,0,.6);
     transform:rotate(var(--a)) translateY(calc(-1 * min(26vw,104px))) rotate(calc(-1 * var(--a))) }
-  .ccard4.n{ color:var(--bad) }
+  .ccard4.n{ color:#ff5a4e }
   /* градусы — ВДОЛЬ окружности (повёрнуты по касательной, БЕЗ обратного rotate),
      у внутреннего края засечек: узкое кольцо, компас остаётся крупным */
   .cdeg{ position:absolute; left:50%; top:50%; width:30px; height:13px; margin:-6.5px 0 0 -15px;
-    text-align:center; color:var(--hint); font:600 10px/13px ui-monospace,Menlo,Consolas,monospace;
+    text-align:center; color:#8fa3b5; font:600 10px/13px ui-monospace,Menlo,Consolas,monospace;
     transform:rotate(var(--a)) translateY(calc(-1 * min(29vw,116px))) }
-  /* векторы-СТРЕЛКИ: верхний слой (поверх засечек), длинные */
-  .cvec{ position:absolute; width:3px; height:34%; left:calc(50% - 1.5px); top:16%;
-    transform-origin:50% 100%; border-radius:2px 2px 0 0; z-index:3; transition:transform .1s ease-out }
+  /* векторы-СТРЕЛКИ разной длины (T длиннее, C короче) — цепочка читается,
+     даже когда углы близки; каждая со своим свечением */
+  .cvec{ position:absolute; width:3px; transform-origin:50% 100%; border-radius:2px 2px 0 0;
+    z-index:3; transition:transform .12s ease-out }
   .cvec::before{ content:""; position:absolute; top:-8px; left:50%; transform:translateX(-50%);
-    width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; }
-  .cvec.t{ background:var(--c-true) } .cvec.t::before{ border-bottom:9px solid var(--c-true) }
-  .cvec.m{ background:var(--c-mag) }  .cvec.m::before{ border-bottom:9px solid var(--c-mag) }
-  .cvec.c{ background:var(--c-comp) } .cvec.c::before{ border-bottom:9px solid var(--c-comp) }
-  /* центральный диск со значением CC — строго по центру круга */
-  /* меньше центр → стрелки визуально длиннее (больше открытого поля) */
+    width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent }
+  .cvec.t{ left:calc(50% - 1.5px); top:13%; height:37%;
+    background:linear-gradient(var(--c-true), rgba(58,160,255,.30));
+    filter:drop-shadow(0 0 5px rgba(58,160,255,.55)) }
+  .cvec.t::before{ border-bottom:9px solid var(--c-true) }
+  .cvec.m{ left:calc(50% - 1.5px); top:19%; height:31%;
+    background:linear-gradient(var(--c-mag), rgba(240,192,48,.30));
+    filter:drop-shadow(0 0 5px rgba(240,192,48,.5)) }
+  .cvec.m::before{ border-bottom:9px solid var(--c-mag) }
+  .cvec.c{ left:calc(50% - 1.75px); width:3.5px; top:25%; height:25%;
+    background:linear-gradient(var(--c-comp), rgba(70,210,122,.30));
+    filter:drop-shadow(0 0 6px rgba(70,210,122,.55)) }
+  .cvec.c::before{ border-bottom:10px solid var(--c-comp) }
+  /* центральный диск-«котелок» со значением CC — металлический колпачок */
   .ccenter{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    width:34%; aspect-ratio:1; border-radius:50%;
-    background:var(--card); border:1px solid var(--border); display:flex;
-    flex-direction:column; align-items:center; justify-content:center; gap:1px; z-index:3 }
+    width:32%; aspect-ratio:1; border-radius:50%;
+    background:radial-gradient(circle at 38% 30%, #2c3b4a, #172230 68%, #0e161e);
+    border:1px solid rgba(255,255,255,.10); display:flex;
+    flex-direction:column; align-items:center; justify-content:center; gap:1px; z-index:5;
+    box-shadow:0 3px 9px rgba(0,0,0,.5), inset 0 1px 1px rgba(255,255,255,.14) }
   /* паддинг-лево компенсирует узкий символ ° справа → число оптически по центру */
-  .ccenter strong{ font:800 clamp(22px,6vw,28px)/1 ui-monospace,Menlo,Consolas,monospace;
-    color:var(--c-comp); padding-left:.55ch }
-  .ccenter span{ color:var(--hint); font:700 10px/1 ui-monospace,Menlo,Consolas,monospace; letter-spacing:.04em }
+  .ccenter strong{ font:800 clamp(21px,5.6vw,26px)/1 ui-monospace,Menlo,Consolas,monospace;
+    color:var(--c-comp); padding-left:.55ch; text-shadow:0 0 10px rgba(70,210,122,.45) }
+  .ccenter span{ color:#8fa3b5; font:700 10px/1 ui-monospace,Menlo,Consolas,monospace; letter-spacing:.04em }
   .cvals{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:14px }
   .cval{ background:var(--bg); border:1px solid var(--border); border-radius:11px; padding:9px 4px; text-align:center }
   .cval .k{ color:var(--hint); font-size:11px } .cval .v{ font:800 15px/1.4 ui-monospace,Menlo,Consolas,monospace }
@@ -190,8 +221,13 @@
           <div class="ccenter">
             <strong id="ccCC">000°</strong><span>CC</span>
           </div>
+          <div class="cglass"></div>
         </div>
       </div>
+      <p class="sub" style="color:var(--hint); font-size:12px; margin:8px 0 0; text-align:center">
+        дуги на картушке: <b style="color:var(--c-mag)">Variation</b> (T→M) и
+        <b style="color:var(--c-comp)">Deviation</b> (M→C)
+      </p>
 
       <div class="cvals">
         <div class="cval"><div class="k">TC</div><div class="v t" id="ccTC">000°</div></div>
@@ -322,25 +358,43 @@ window.tvmdcCompass = function (trueCourse, varSigned, devSigned) {
     return current + diff;
   }
 
-  // ── засечки SVG: мелкие каждые 5°, крупные (длиннее/толще) каждые 30° ──
+  // ── засечки SVG: мелкие каждые 5°, крупные каждые 30°, кардинальные каждые
+  // 90° (длиннее и толще, север — красный). Картушка тёмная, разметка светлая
+  // фиксированных цветов (не зависит от темы — как настоящий прибор). ──
   (function drawTicks(){
     var svg = $("cticksSvg"); if (!svg) return;
     var R = 98, cx = 100, cy = 100;     // viewBox 200×200
-    var col = "var(--text)";
     var parts = [];
     for (var a = 0; a < 360; a += 5){
-      var major = (a % 30 === 0);
-      var len = major ? 9 : 5;           // крупные чуть длиннее, но короткие (не лезут на цифры)
-      var w   = major ? 1.6 : .8;        // тоньше и изящнее (как iOS)
-      var op  = major ? .75 : .32;       // приглушённее, не «кричат»
+      var cardinal = (a % 90 === 0), major = (a % 30 === 0);
+      var len = cardinal ? 12 : (major ? 9 : 5);
+      var w   = cardinal ? 2.2 : (major ? 1.6 : .8);
+      var op  = cardinal ? .95 : (major ? .8 : .35);
+      var col = (a === 0) ? "#ff5a4e" : (cardinal ? "#e9eef4" : (major ? "#cfdae4" : "#9fb2c4"));
       var rad = (a - 90) * Math.PI / 180; // 0° наверху
       var x1 = cx + (R - len) * Math.cos(rad), y1 = cy + (R - len) * Math.sin(rad);
       var x2 = cx + R * Math.cos(rad),         y2 = cy + R * Math.sin(rad);
       parts.push('<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+
         '" y2="'+y2.toFixed(1)+'" stroke="'+col+'" stroke-width="'+w+'" opacity="'+op+'" stroke-linecap="round"/>');
     }
+    // тонкое опорное кольцо по краю разметки
+    parts.push('<circle cx="100" cy="100" r="'+(R-13)+'" fill="none" stroke="#8fa3b5" stroke-width=".6" opacity=".22"/>');
+    // дуги поправок: Variation (T→M, жёлтая) и Deviation (M→C, зелёная) —
+    // d обновляет renderCompass() на каждом изменении
+    parts.push('<path id="carcVar" fill="none" stroke="var(--c-mag)" stroke-width="4.5" opacity=".85" stroke-linecap="round"/>');
+    parts.push('<path id="carcDev" fill="none" stroke="var(--c-comp)" stroke-width="4.5" opacity=".85" stroke-linecap="round"/>');
     svg.innerHTML = parts.join("");
   })();
+
+  // короткая дуга от угла a1 к a2 (0° = север) радиусом r — для дуг поправок
+  function arcPath(a1, a2, r){
+    var d = ((a2 - a1) % 360 + 540) % 360 - 180;   // подписанная разница в (-180,180]
+    if (Math.abs(d) < 0.8) return "";
+    var s = (a1 - 90) * Math.PI / 180, e = (a1 + d - 90) * Math.PI / 180;
+    return "M" + (100 + r*Math.cos(s)).toFixed(1) + " " + (100 + r*Math.sin(s)).toFixed(1)
+      + " A" + r + " " + r + " 0 0 " + (d > 0 ? 1 : 0) + " "
+      + (100 + r*Math.cos(e)).toFixed(1) + " " + (100 + r*Math.sin(e)).toFixed(1);
+  }
 
   function angleFromPointer(e){
     var r = cwrap.getBoundingClientRect();
@@ -358,6 +412,13 @@ window.tvmdcCompass = function (trueCourse, varSigned, devSigned) {
     $("cvT").style.transform = "rotate(" + rotT + "deg)";
     $("cvM").style.transform = "rotate(" + rotM + "deg)";
     $("cvC").style.transform = "rotate(" + rotC + "deg)";
+
+    // дуги поправок на картушке: Var между True и Magnetic (у кончика M),
+    // Dev между Magnetic и Compass (чуть ниже). Радиусы в единицах viewBox:
+    // кончики стрелок ≈ 82 (T) / 69 (M) / 56 (C).
+    var pVar = $("carcVar"), pDev = $("carcDev");
+    if (pVar) pVar.setAttribute("d", arcPath(trueCourse, r.magnetic, 74));
+    if (pDev) pDev.setAttribute("d", arcPath(r.magnetic, r.compass, 61));
 
     $("ccCC").textContent = pad(r.compass) + "°";
     $("ccCC2").textContent = pad(r.compass) + "°";
