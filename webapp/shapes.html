@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Фигуры и флаги</title>
+<link rel="stylesheet" href="theme.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="nav.js"></script>
+<script src="icons.js"></script>
+<script src="shapes_data.js"></script>
+<style>
+  :root{
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --text: var(--tg-theme-text-color, #fff);
+    --hint: var(--tg-theme-hint-color, #8a9aa9);
+    --card: var(--tg-theme-secondary-bg-color, #232e3c);
+    --accent: var(--tg-theme-button-color, #50a8eb);
+    --accent-text: var(--tg-theme-button-text-color, #fff);
+    --border: rgba(255,255,255,.10);
+    --ok:#4caf72; --bad:#e5544b;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg: var(--tg-theme-bg-color, #ffffff);
+      --text: var(--tg-theme-text-color, #1a1a1a);
+      --hint: var(--tg-theme-hint-color, #7d8a99);
+      --card: var(--tg-theme-secondary-bg-color, #f1f3f5);
+      --accent: var(--tg-theme-button-color, #3390ec);
+      --accent-text: var(--tg-theme-button-text-color, #ffffff);
+      --border: rgba(0,0,0,.10);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0; padding:14px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.5; -webkit-tap-highlight-color:transparent}
+  h1{font-size:19px; margin:0 0 2px}
+  .sub{color:var(--hint); font-size:13px; margin:0 0 14px}
+  .hidden{display:none !important}
+  .card{background:var(--card); border-radius:14px; padding:14px; margin-bottom:12px}
+  .btn{display:block; width:100%; padding:14px; font-size:15px; font-weight:600; border:none;
+    border-radius:12px; background:var(--accent); color:var(--accent-text); cursor:pointer;
+    margin-bottom:10px; text-align:left}
+  .btn small{display:block; font-weight:400; font-size:12px; opacity:.85; margin-top:2px}
+  .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--border)}
+  .row{display:flex; gap:10px}
+  /* список справочника */
+  .item{display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    padding:10px 12px; margin-bottom:8px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); border-radius:12px; cursor:pointer}
+  .item canvas{flex:0 0 auto}
+  .item .t{font-size:14px; font-weight:600}
+  .item .m{font-size:12px; color:var(--hint)}
+  /* карточка */
+  .stage{display:flex; justify-content:center; padding:10px 0}
+  .info{background:var(--bg); border:1px solid var(--border); border-radius:10px;
+    padding:12px; font-size:14px; margin-top:10px}
+  .info .note{color:var(--hint); font-size:13px; margin-top:6px}
+  /* тест */
+  .opt{display:block; width:100%; text-align:left; padding:13px; margin-bottom:9px; font-size:14px;
+    border:1px solid var(--border); background:var(--bg); color:var(--text); border-radius:11px; cursor:pointer}
+  .opt.correct{border-color:var(--ok); background:rgba(76,175,114,.16)}
+  .opt.wrong{border-color:var(--bad); background:rgba(229,84,75,.16)}
+  .opt[disabled]{cursor:default}
+  .score{font-size:15px; font-weight:700; text-align:center; margin-top:8px}
+</style>
+</head>
+<body>
+
+<!-- МЕНЮ -->
+<section id="menu">
+  <h1><span class="emi" data-icon="triangle"></span> Фигуры и флаги</h1>
+  <p class="sub">Дневные фигуры COLREG + однофлажные сигналы МСС</p>
+  <button class="btn" id="goShapes"><span class="emi" data-icon="triangle"></span> Дневные фигуры
+    <small>Шары, конусы, ромб, цилиндр — что несёт судно днём</small></button>
+  <button class="btn" id="goFlags"><span class="emi" data-icon="flag"></span> Флаги МСС
+    <small>A — водолаз, B — опасный груз, O — человек за бортом…</small></button>
+  <button class="btn ghost" id="goQuiz"><span class="emi" data-icon="graduation-cap"></span> Тест
+    <small>Фигуры и флаги вперемешку — что означает?</small></button>
+</section>
+
+<!-- СПРАВОЧНИК (список) -->
+<section id="learn" class="hidden">
+  <div class="row" style="margin-bottom:10px">
+    <button class="btn ghost" id="learnBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Меню</button>
+    <div style="flex:1; align-self:center; font-weight:700" id="learnTitle"></div>
+  </div>
+  <div id="learnList"></div>
+</section>
+
+<!-- КАРТОЧКА -->
+<section id="view" class="hidden">
+  <div class="row" style="margin-bottom:10px">
+    <button class="btn ghost" id="viewBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Список</button>
+    <div style="flex:1; align-self:center; font-weight:700" id="viewTitle"></div>
+  </div>
+  <div class="card">
+    <div class="stage"><canvas id="viewCanvas" width="220" height="240"></canvas></div>
+    <div class="info">
+      <div id="viewMeaning" style="font-weight:600"></div>
+      <div class="note" id="viewNote"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ТЕСТ -->
+<section id="quiz" class="hidden">
+  <div class="row" style="margin-bottom:10px">
+    <button class="btn ghost" id="quizBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Меню</button>
+    <div style="flex:1; text-align:right; color:var(--hint); font-size:13px; align-self:center" id="quizCounter"></div>
+  </div>
+  <div class="card">
+    <div class="stage"><canvas id="quizCanvas" width="220" height="240"></canvas></div>
+    <div style="margin-top:6px; font-weight:600" id="quizQ">Что означает?</div>
+    <div id="quizOpts" style="margin-top:10px"></div>
+    <div class="row" id="quizCtrl" style="display:none">
+      <button class="btn" id="quizNext" style="margin:0">Следующий →</button>
+    </div>
+    <div class="score" id="quizScore"></div>
+  </div>
+</section>
+
+<script>
+"use strict";
+if (window.Icons) Icons.hydrate();
+const D = window.SHAPES_DATA || { dayshapes: [], flags: [] };
+
+// ─────────────────────── Рендер: дневные фигуры ───────────────────────
+// Фигуры чёрные (как в море), на светлой подложке-небе; рисуем «фалом» сверху
+// вниз в порядке figures.
+function drawShapes(canvas, figures, scale){
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.width / dpr || canvas.width, H = canvas.height / dpr || canvas.height;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  // подложка-небо, чтобы чёрное читалось в тёмной теме
+  ctx.fillStyle = "#cfe3f0";
+  roundRect(ctx, 0, 0, W, H, 12); ctx.fill();
+  const cx = W / 2;
+  const s = (scale || 1) * Math.min(W, H) / 5.2;      // базовый размер фигуры
+  const gap = s * 0.35;
+  const totalH = figures.reduce((acc, f) => acc + figH(f, s), 0) + gap * (figures.length - 1);
+  let y = (H - totalH) / 2;
+  // фал
+  ctx.strokeStyle = "#5a6b78"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx, 6); ctx.lineTo(cx, y); ctx.stroke();
+  ctx.fillStyle = "#14181c";
+  figures.forEach(f => {
+    const h = figH(f, s);
+    drawFigure(ctx, f, cx, y, s, h);
+    y += h + gap;
+  });
+}
+function figH(f, s){ return f === "cones-apex" ? s * 1.7 : f === "cylinder" ? s * 1.6 : s; }
+function drawFigure(ctx, f, cx, top, s, h){
+  const r = s / 2;
+  ctx.beginPath();
+  if (f === "ball"){
+    ctx.arc(cx, top + r, r, 0, Math.PI * 2);
+  } else if (f === "diamond"){
+    ctx.moveTo(cx, top); ctx.lineTo(cx + r, top + r); ctx.lineTo(cx, top + s); ctx.lineTo(cx - r, top + r);
+  } else if (f === "cone-up"){
+    ctx.moveTo(cx, top); ctx.lineTo(cx + r, top + s); ctx.lineTo(cx - r, top + s);
+  } else if (f === "cone-down"){
+    ctx.moveTo(cx - r, top); ctx.lineTo(cx + r, top); ctx.lineTo(cx, top + s);
+  } else if (f === "cones-apex"){
+    // два конуса вершинами вместе («песочные часы»)
+    const mid = top + h / 2;
+    ctx.moveTo(cx - r, top); ctx.lineTo(cx + r, top); ctx.lineTo(cx, mid);
+    ctx.moveTo(cx, mid); ctx.lineTo(cx + r, top + h); ctx.lineTo(cx - r, top + h);
+  } else if (f === "cylinder"){
+    ctx.rect(cx - r * 0.7, top, s * 0.7, h);
+  }
+  ctx.closePath(); ctx.fill();
+}
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+// ─────────────────────── Рендер: флаги МСС ───────────────────────
+// Декларативные kind'ы из shapes_data.js. Флаг рисуем с «мачтой» слева.
+function drawFlag(canvas, flag){
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.width / dpr || canvas.width, H = canvas.height / dpr || canvas.height;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = "#cfe3f0";
+  roundRect(ctx, 0, 0, W, H, 12); ctx.fill();
+  const mastX = W * 0.16;
+  ctx.strokeStyle = "#5a6b78"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(mastX, 10); ctx.lineTo(mastX, H - 10); ctx.stroke();
+
+  if (flag.draw.shape === "double"){
+    // N над C (сигнал бедствия) — два флага один под другим
+    const fw = W * 0.56, fh = H * 0.34;
+    const n = D.flags.find(f => f.key === "N"), c = D.flags.find(f => f.key === "C");
+    if (n) paintFlag(ctx, n.draw, mastX + 2, H * 0.10, fw, fh);
+    if (c) paintFlag(ctx, c.draw, mastX + 2, H * 0.54, fw, fh);
+    return;
+  }
+  paintFlag(ctx, flag.draw, mastX + 2, H * 0.22, W * 0.62, H * 0.5);
+}
+function paintFlag(ctx, draw, x, y, w, h){
+  ctx.save();
+  // контур: прямоугольник или «косицы» (swallowtail)
+  ctx.beginPath();
+  if (draw.shape === "swallowtail"){
+    const cut = w * 0.28;
+    ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w - cut, y + h / 2);
+    ctx.lineTo(x + w, y + h); ctx.lineTo(x, y + h); ctx.closePath();
+  } else {
+    ctx.rect(x, y, w, h);
+  }
+  ctx.clip();
+  const cs = draw.colors || [];
+  if (draw.kind === "solid"){
+    ctx.fillStyle = cs[0]; ctx.fillRect(x, y, w, h);
+  } else if (draw.kind === "vsplit"){
+    ctx.fillStyle = cs[0]; ctx.fillRect(x, y, w / 2, h);
+    ctx.fillStyle = cs[1]; ctx.fillRect(x + w / 2, y, w / 2, h);
+  } else if (draw.kind === "hstripes"){
+    const sh = h / cs.length;
+    cs.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(x, y + i * sh, w, sh + 0.5); });
+  } else if (draw.kind === "vstripes"){
+    const sw = w / cs.length;
+    cs.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(x + i * sw, y, sw + 0.5, h); });
+  } else if (draw.kind === "checker"){
+    const n = draw.n || 4, cw = w / n, ch = h / n;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++){
+      ctx.fillStyle = cs[(i + j) % 2]; ctx.fillRect(x + i * cw, y + j * ch, cw + 0.5, ch + 0.5);
+    }
+  } else if (draw.kind === "diag"){
+    ctx.fillStyle = cs[0]; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = cs[1];
+    ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + h); ctx.closePath(); ctx.fill();
+  } else if (draw.kind === "center-rect"){
+    ctx.fillStyle = cs[0]; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = cs[1]; ctx.fillRect(x + w * 0.3, y + h * 0.3, w * 0.4, h * 0.4);
+  } else if (draw.kind === "saltire"){
+    ctx.fillStyle = cs[0]; ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = cs[1]; ctx.lineWidth = Math.min(w, h) * 0.2;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y + h);
+    ctx.moveTo(x + w, y); ctx.lineTo(x, y + h); ctx.stroke();
+  } else if (draw.kind === "nested"){
+    // W: синий фон → белый прямоугольник → красный центр
+    ctx.fillStyle = cs[0]; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = cs[1]; ctx.fillRect(x + w * 0.18, y + h * 0.18, w * 0.64, h * 0.64);
+    ctx.fillStyle = cs[2]; ctx.fillRect(x + w * 0.36, y + h * 0.36, w * 0.28, h * 0.28);
+  }
+  ctx.restore();
+  ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = 1;
+  if (draw.shape !== "swallowtail") ctx.strokeRect(x, y, w, h);
+}
+
+// единый рендер элемента (фигура или флаг) на канву
+function renderItem(canvas, item){
+  if (item.figures) drawShapes(canvas, item.figures);
+  else drawFlag(canvas, item);
+}
+
+// ─────────────────────── Справочник ───────────────────────
+const show = id => document.getElementById(id).classList.remove("hidden");
+const hide = id => document.getElementById(id).classList.add("hidden");
+const esc = s => String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+let learnKind = "shapes";
+
+function openLearn(kind){
+  learnKind = kind;
+  document.getElementById("learnTitle").textContent =
+    kind === "shapes" ? "Дневные фигуры" : "Флаги МСС";
+  const list = kind === "shapes" ? D.dayshapes : D.flags;
+  const box = document.getElementById("learnList");
+  box.innerHTML = "";
+  list.forEach(item => {
+    const b = document.createElement("button");
+    b.className = "item";
+    const c = document.createElement("canvas");
+    c.width = 64; c.height = 72;
+    b.appendChild(c);
+    const t = document.createElement("div");
+    t.innerHTML = `<div class="t">${esc(item.title || (item.key + " · " + item.name))}</div>
+      <div class="m">${esc(item.meaning)}</div>`;
+    b.appendChild(t);
+    b.onclick = () => openView(item);
+    box.appendChild(b);
+    renderItem(c, item);
+  });
+  hide("menu"); hide("view"); show("learn");
+  window.scrollTo(0, 0);
+}
+function openView(item){
+  document.getElementById("viewTitle").textContent = item.title || (item.key + " · " + item.name);
+  document.getElementById("viewMeaning").textContent = item.meaning;
+  document.getElementById("viewNote").textContent = item.note || "";
+  renderItem(document.getElementById("viewCanvas"), item);
+  hide("learn"); show("view");
+  window.scrollTo(0, 0);
+}
+document.getElementById("goShapes").onclick = () => openLearn("shapes");
+document.getElementById("goFlags").onclick = () => openLearn("flags");
+document.getElementById("learnBack").onclick = () => { hide("learn"); show("menu"); };
+document.getElementById("viewBack").onclick = () => { hide("view"); show("learn"); };
+
+// ─────────────────────── Тест ───────────────────────
+// Показ фигуры/флага + 3 значения (правильное + 2 «обманки» из того же
+// раздела — фигуры путаются с фигурами, флаги с флагами).
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+let Q = null;   // {pool, idx, ok}
+
+function startQuiz(){
+  const pool = shuffle([...D.dayshapes, ...D.flags]);
+  Q = { pool, idx: 0, ok: 0 };
+  hide("menu"); show("quiz");
+  document.getElementById("quizScore").textContent = "";
+  window.scrollTo(0, 0);
+  renderQuizQ();
+}
+function renderQuizQ(){
+  const item = Q.pool[Q.idx];
+  document.getElementById("quizCounter").textContent = `${Q.idx + 1} / ${Q.pool.length}`;
+  renderItem(document.getElementById("quizCanvas"), item);
+  const sameKind = item.figures ? D.dayshapes : D.flags;
+  const wrong = shuffle(sameKind.filter(x => x !== item)).slice(0, 2);
+  const opts = shuffle([item, ...wrong]);
+  const box = document.getElementById("quizOpts");
+  box.innerHTML = "";
+  document.getElementById("quizCtrl").style.display = "none";
+  opts.forEach(o => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.textContent = o.meaning;
+    b.onclick = () => {
+      const ok = o === item;
+      if (ok) Q.ok++;
+      haptic(ok ? "light" : "rigid");
+      box.querySelectorAll(".opt").forEach(x => {
+        x.disabled = true;
+        if (x.textContent === item.meaning) x.classList.add("correct");
+        else if (x === b && !ok) x.classList.add("wrong");
+      });
+      document.getElementById("quizCtrl").style.display = "flex";
+    };
+    box.appendChild(b);
+  });
+}
+document.getElementById("quizNext").onclick = () => {
+  if (Q.idx + 1 >= Q.pool.length){
+    document.getElementById("quizScore").textContent =
+      `Результат: ${Q.ok} / ${Q.pool.length}`;
+    haptic("success");
+    document.getElementById("quizCtrl").style.display = "none";
+    document.getElementById("quizOpts").innerHTML = "";
+    document.getElementById("quizQ").textContent = "Тест завершён!";
+    return;
+  }
+  Q.idx++;
+  document.getElementById("quizQ").textContent = "Что означает?";
+  renderQuizQ();
+};
+document.getElementById("goQuiz").onclick = startQuiz;
+document.getElementById("quizBack").onclick = () => { hide("quiz"); show("menu"); };
+
+// системная «Назад» Telegram: внутренние экраны → меню
+window.__navBack = () => {
+  if (!document.getElementById("view").classList.contains("hidden")){ hide("view"); show("learn"); return true; }
+  if (!document.getElementById("learn").classList.contains("hidden")){ hide("learn"); show("menu"); return true; }
+  if (!document.getElementById("quiz").classList.contains("hidden")){ hide("quiz"); show("menu"); return true; }
+  return false;
+};
+</script>
+</body>
+</html>
