@@ -30,6 +30,11 @@ eq(P.nextStreak(base, "2026-06-12"), { streak: 6, best: 7, lastDay: "2026-06-12"
 eq(P.nextStreak(base, "2026-06-13").streak, 1, "пропуск 2+ дней — серия сброшена в 1");
 eq(P.nextStreak({ streak: 0, best: 0, lastDay: null }, "2026-06-13").streak, 1, "первый день — серия = 1");
 eq(P.nextStreak(base, "2026-06-11").best, 7, "best не уменьшается");
+// заморозка НЕ бесконечная: если она уже потрачена, второй пропуск подряд рвёт серию
+const frozen = { streak: 6, best: 7, lastDay: "2026-06-12", frozenUsed: true };
+eq(P.nextStreak(frozen, "2026-06-14").streak, 1, "вторая заморозка подряд не даётся — серия рвётся");
+eq(P.nextStreak(frozen, "2026-06-13"), { streak: 7, best: 7, lastDay: "2026-06-13", frozenUsed: false },
+   "день подряд после заморозки — страховка восстанавливается");
 
 // ── дневной счётчик + recordAnswer ──
 P.reset();
@@ -43,6 +48,11 @@ eq(P.streakInfo("2026-06-21").streak, 2, "второй день подряд —
 // ── streakInfo обнуляет при долгом пропуске ──
 eq(P.streakInfo("2026-06-25").streak, 0, "при заходе через 4 дня — текущая серия 0");
 eq(P.streakInfo("2026-06-25").best >= 2, true, "best сохранён");
+
+// ── видимость заморозки (для ❄ в UI) ──
+eq(P.streakInfo("2026-06-21").frozenAvailable, true, "страховка цела — frozenAvailable");
+eq(P.streakInfo("2026-06-23").onIce, true, "пропущен ровно 1 день — серия «на льду»");
+eq(P.streakInfo("2026-06-25").frozenAvailable, false, "после разрыва страховки нет");
 
 // ── goal ──
 eq(P.getGoal(), 15, "цель по умолчанию 15");
@@ -60,6 +70,22 @@ eq(r.topics[0].topic, "VHF", "слабая тема (VHF) сверху");
 eq(r.topics.find(t => t.topic === "Нав").pct, 100, "Нав закреплена = 100%");
 // общий: (1+1+0+0)/4 = 50%
 eq(r.percent, 50, "общий процент готовности = 50");
+
+// ── план к дате экзамена ──
+P.reset();
+eq(P.examPlan(qs, () => null), null, "без даты — плана нет");
+P.setExamDate("2026-07-20");
+// 4 вопроса: a(box5)→0, b(box5)→0, c(box0)→4, d(null)→4 = 8 повторов, 8 дней
+const plan = P.examPlan(qs, id => boxes[id] === undefined ? null : boxes[id], "2026-07-12");
+eq(plan.daysLeft, 8, "дней до экзамена считаются");
+eq(plan.reviewsLeft, 8, "повторы до закрепления: max(0, 4-box) по банку");
+eq(plan.needPerDay, 1, "дневная норма = ceil(повторы/дни)");
+eq(plan.onTrack, true, "норма ≤ цели — идём по плану");
+P.setExamDate("2026-07-13");
+eq(P.examPlan(qs, () => 0, "2026-07-12").needPerDay, 16, "завтра экзамен — вся норма на сегодня");
+eq(P.examPlan(qs, () => 0, "2026-07-14"), null, "дата прошла — плана нет");
+P.setExamDate(null);
+eq(P.getExamDate(), null, "дату можно сбросить");
 
 if (fails) { console.log(`\nPROGRESS CHECK: ${fails} провал(ов)`); process.exit(1); }
 console.log("\nPROGRESS CHECK OK");

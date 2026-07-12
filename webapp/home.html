@@ -113,6 +113,8 @@
           </div>
         </div>
         <div class="muted" style="font-size:12px; margin-top:8px" id="weakLine"></div>
+        <!-- план к дате экзамена: обратный отсчёт + честная дневная норма -->
+        <div id="examPlanLine" style="font-size:12px; margin-top:8px; cursor:pointer"></div>
       </div>
 
       <!-- слайды польских лицензий (заполняются JS) -->
@@ -269,7 +271,9 @@ function render(){
       `Интервальное повторение · закреплено ${st.learned} из ${total}`;
     const b = document.getElementById("nextBtn");
     b.innerHTML = `${ic} Повторить`;
-    b.href = "quiz.html";   // на странице тестов кнопка «Повторить сегодня» уже первая
+    // сразу В сессию повторения, без промежуточного меню тестов — одна
+    // кнопка = одно действие (quiz.html понимает ?mode=review)
+    b.href = "quiz.html?mode=review";
   } else if (st.started > 0){
     document.getElementById("nextLabel").textContent = "Так держать";
     document.getElementById("nextHint").textContent =
@@ -297,8 +301,15 @@ function render(){
         r.percent>=80 ? "var(--ok)" : r.percent>=50 ? "var(--warn)" : "var(--bad)");
       document.getElementById("readyVerdict").textContent = r.verdict;
       document.getElementById("goalToday").textContent = `${todayN}/${goal}`;
+      // ❄ делает механику заморозки видимой: синяя снежинка — страховка цела
+      // (один пропуск серию не порвёт), янтарная — серия прямо сейчас «на льду»
+      // (вчера был пропуск: без ответов сегодня она сгорит).
+      const flake = !window.Icons ? ""
+        : streak.onIce ? `<span style="color:var(--warn)" title="Серия на льду — позанимайся сегодня!">${Icons.svg("snowflake")}</span>`
+        : streak.frozenAvailable ? `<span style="color:var(--accent);opacity:.7" title="Заморозка цела: один пропуск не страшен">${Icons.svg("snowflake")}</span>`
+        : "";
       document.getElementById("streakVal").innerHTML =
-        `${streak.streak} ${window.Icons ? Icons.svg("flame") : ""}`;
+        `${streak.streak} ${window.Icons ? Icons.svg("flame") : ""}${flake}`;
       document.getElementById("bestVal").textContent = `${streak.best}`;
       document.getElementById("goalBox").onclick = ()=>{
         const cur = Progress.getGoal();
@@ -310,6 +321,9 @@ function render(){
       const weak = r.topics.filter(t=>t.pct<60).slice(0,3).map(t=>t.topic);
       document.getElementById("weakLine").textContent =
         weak.length ? "Слабее всего: " + weak.join(", ") : "Слабых тем нет — отличная база!";
+
+      // ── план к дате экзамена: превращает абстрактный % в личный дедлайн ──
+      renderExamPlan(D.questions, boxOf);
     }
 
     // — польские слайды (Żeglarz 150 / Sternik 460) —
@@ -333,6 +347,40 @@ function render(){
     document.getElementById("profileSub").textContent =
       `Достижения: ${nb} из ${tot} · звания, бейджи`;
   }
+}
+
+// План к дате экзамена: дата → осталось дней → дневная норма (повторы до
+// закрепления / дни). Клик — задать или изменить дату (пустой ввод = убрать).
+function renderExamPlan(questions, boxOf){
+  const el = document.getElementById("examPlanLine");
+  if (!el || !window.Progress || !Progress.examPlan) return;
+  const ic = n => window.Icons ? Icons.svg(n) : "";
+  const plan = Progress.examPlan(questions, boxOf);
+  if (!plan){
+    el.innerHTML = `<span style="color:var(--accent)">${ic("calendar")} Задать дату экзамена</span>`;
+  } else {
+    const [y, m, d] = plan.date.split("-");
+    const col = plan.onTrack ? "var(--ok)" : "var(--warn)";
+    const dayWord = plan.daysLeft === 0 ? "сегодня!"
+      : `осталось ${plan.daysLeft} дн.`;
+    el.innerHTML = `${ic("calendar")} Экзамен ${d}.${m} — ${dayWord}` +
+      (plan.reviewsLeft === 0
+        ? ` · <span style="color:var(--ok)">банк закреплён ${ic("check")}</span>`
+        : ` · <span style="color:${col}">нужно ~${plan.needPerDay} отв./день</span>` +
+          (plan.onTrack ? "" : ` (цель ${Progress.getGoal()} — подними её)`));
+  }
+  el.onclick = ()=>{
+    const cur = Progress.getExamDate() || "";
+    const v = prompt("Дата экзамена (ГГГГ-ММ-ДД), пусто — убрать:", cur);
+    if (v === null) return;
+    const t = v.trim();
+    if (!t){ Progress.setExamDate(null); render(); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || isNaN(Date.parse(t))){
+      alert("Формат: ГГГГ-ММ-ДД, например 2026-08-15"); return;
+    }
+    Progress.setExamDate(t);
+    render();
+  };
 }
 
 // заполнить слайд готовности польской лицензии

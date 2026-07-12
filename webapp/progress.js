@@ -66,8 +66,11 @@
       var gap = dayDiff(last, today);
       if (last == null || gap === 1) {
         streak = streak + 1; frozenUsed = false;          // подряд
-      } else if (gap === 2) {
-        streak = streak + 1; frozenUsed = true;           // пропущен 1 день — заморозка
+      } else if (gap === 2 && !frozenUsed) {
+        // пропущен 1 день и страховка цела — заморозка. Проверка !frozenUsed
+        // обязательна: без неё серия жила бы «через день» вечно, а докстринг
+        // обещает ОДНУ заморозку подряд.
+        streak = streak + 1; frozenUsed = true;
       } else {
         streak = 1; frozenUsed = false;                   // разрыв — начинаем заново
       }
@@ -117,11 +120,19 @@
 
     // Пересчёт серии при заходе: если последняя активность была >2 дней назад —
     // серия фактически прервана, показываем 0 (но best не теряем).
+    // frozenAvailable — «страховка» на сегодня цела: серия переживёт пропуск
+    // одного дня (заморозка ещё не потрачена). UI показывает это снежинкой,
+    // чтобы механика была видимой, а не тайной милостью.
     streakInfo: function (today) {
       var s = load(); var k = today || dayKey();
       var streak = s.streak || 0, best = s.best || 0;
       if (s.lastDay && dayDiff(s.lastDay, k) > 2) streak = 0;
-      return { streak: streak, best: best, lastDay: s.lastDay || null };
+      var gap = s.lastDay ? dayDiff(s.lastDay, k) : Infinity;
+      var frozenAvailable = streak > 0 && !s.frozenUsed && gap <= 1;
+      // пропущен ровно 1 день и заморозка цела — серия жива, но «на льду»
+      var onIce = streak > 0 && !s.frozenUsed && gap === 2;
+      return { streak: streak, best: best, lastDay: s.lastDay || null,
+               frozenAvailable: frozenAvailable, onIce: onIce };
     },
 
     // Готовность к экзамену из статистики SRS по темам.
@@ -156,7 +167,51 @@
       return { percent: percent, verdict: verdict, topics: topics };
     },
 
-    reset: function () { save({}); },
+    // ── план к дате экзамена ──────────────────────────────────────────────
+    // Дата хранится в ОТДЕЛЬНОМ ключе: sync-merge (sync.js / api/merge.py)
+    // переносит только известные поля issa_progress_v1 и молча стёр бы её.
+    // Девайс-локально — осознанный компромисс ради паритета JS/Python merge.
+    getExamDate: function () {
+      try { return global.localStorage.getItem("issa_exam_date_v1") || null; }
+      catch (e) { return null; }
+    },
+    setExamDate: function (iso) {
+      try {
+        if (iso) global.localStorage.setItem("issa_exam_date_v1", iso);
+        else global.localStorage.removeItem("issa_exam_date_v1");
+      } catch (e) {}
+      return iso || null;
+    },
+
+    // План подготовки: сколько отвечать в день, чтобы закрепить банк к дате.
+    // «Закрепить» = довести вопрос до box 4 (как learned в SRS): вопросу с
+    // коробкой b нужно ещё max(0, 4-b) верных ответов. Сумма по банку / дни =
+    // честная дневная норма (ошибки её увеличат — план пересчитывается каждый
+    // день, поэтому не завышаем заранее).
+    // Возвращает null (нет даты / дата прошла) или:
+    //   { date, daysLeft, reviewsLeft, needPerDay, onTrack }
+    examPlan: function (questions, boxOf, today) {
+      var date = Progress.getExamDate();
+      if (!date) return null;
+      var k = today || dayKey();
+      var daysLeft = dayDiff(k, date);
+      if (daysLeft < 0) return null;              // экзамен уже прошёл
+      var reviewsLeft = 0;
+      questions.forEach(function (q) {
+        var box = boxOf(q.id);
+        reviewsLeft += Math.max(0, 4 - (box == null ? 0 : box));
+      });
+      // день экзамена учить поздно — делим на оставшиеся полные дни (мин. 1)
+      var needPerDay = Math.ceil(reviewsLeft / Math.max(1, daysLeft));
+      var onTrack = needPerDay <= Progress.getGoal();
+      return { date: date, daysLeft: daysLeft, reviewsLeft: reviewsLeft,
+               needPerDay: needPerDay, onTrack: onTrack };
+    },
+
+    reset: function () {
+      save({});
+      try { global.localStorage.removeItem("issa_exam_date_v1"); } catch (e) {}
+    },
   };
 
   global.Progress = Progress;
