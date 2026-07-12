@@ -38,13 +38,13 @@
   .sub{color:var(--hint); font-size:13px; margin:0 0 14px}
   .hidden{display:none !important}
 
-  /* сцена: тёмное «море и ночь» + судно на canvas */
-  .scene{ position:relative; width:100%; aspect-ratio:4/3; max-height:300px; border-radius:16px;
+  /* сцена: ночное море + судно (canvas рисует всё сам) */
+  .scene{ position:relative; width:100%; aspect-ratio:4/3; max-height:320px; border-radius:16px;
     overflow:hidden; border:1px solid var(--border);
-    background:linear-gradient(#02060c 0%, #04101d 55%, #061626 100%) }
+    background:linear-gradient(#040b16 0%, #0a1f33 55%, #061422 100%) }
   .scene canvas{ position:absolute; inset:0; width:100%; height:100%; display:block }
   .scene-cap{ position:absolute; left:0; right:0; bottom:8px; text-align:center; font-size:12px;
-    color:#9fb4c8; text-shadow:0 1px 3px #000 }
+    color:#9fb4c8; text-shadow:0 1px 3px #000; pointer-events:none }
 
   .big{width:100%; padding:15px; margin-bottom:10px; border:1px solid var(--border);
     background:var(--card); color:var(--text); border-radius:14px; cursor:pointer;
@@ -68,6 +68,11 @@
   .vcard{ display:flex; align-items:center; gap:10px; padding:12px 14px; border:1px solid var(--border);
     background:var(--card); border-radius:12px; cursor:pointer; font-size:15px; text-align:left; width:100%; color:var(--text) }
   .vcard .r{ font-size:11px; color:var(--hint) }
+  /* мини-схема огней в списке: вертикальная стопка точек */
+  .vcard .lm{ flex:0 0 auto; display:flex; flex-direction:column; gap:3px; align-items:center;
+    width:16px }
+  .vcard .lm i{ width:8px; height:8px; border-radius:50%; box-shadow:0 0 4px currentColor;
+    border:1px solid rgba(90,105,120,.55) }
 
   /* карточка разбора */
   .info{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-top:12px }
@@ -179,194 +184,462 @@ const hide = id => $(id).classList.add("hidden");
 if (window.Icons) Icons.hydrate();
 
 const DATA = window.LIGHTS_DATA || { vessels:[], categories:[] };
-const COLORS = { W:"#ffffff", R:"#ff3b30", G:"#34c759", Y:"#ffd60a", B:"#0a84ff" };
 
-// ─────────────────────── Отрисовка судна с огнями ───────────────────────
-// Рисуем судно. mode: "night" (силуэт + светящиеся огни + блики) или
-// "day" (светлый фон, серый силуэт + чёрные дневные знаки).
-function drawShip(canvas, v, mode){
-  mode = mode || "night";
-  const dpr = window.devicePixelRatio || 1;
-  const r = canvas.getBoundingClientRect();
-  const W = r.width, H = r.height;
-  if (!W || !H) return;
-  canvas.width = W*dpr; canvas.height = H*dpr;
-  const ctx = canvas.getContext("2d");
+// ─────────────────────── Палитры ───────────────────────
+// Цвета огней (ядро тёплое/яркое — как у фонарей буёв в buoys.html)
+const COLORS = { W:"#fff4d0", R:"#ff4d42", G:"#3fe07f", Y:"#ffd24d", B:"#4da3ff" };
+// Силуэт судна: ночь — тёмная сталь с холодной кромкой, день — серо-голубой
+const PAL = {
+  night: { hullTop:"#1c2937", hullBot:"#0a141f", sup:"#243545", supTop:"#2e4254",
+           glass:"#0c151d", line:"rgba(150,190,220,.28)", deck:"rgba(190,220,245,.22)" },
+  day:   { hullTop:"#68798b", hullBot:"#48596b", sup:"#57697c", supTop:"#67798c",
+           glass:"#2e3d4c", line:"rgba(22,38,54,.5)", deck:"rgba(255,255,255,.35)" },
+};
+
+// ─────────────────────── Утилиты рисования ───────────────────────
+function fitCanvas(cv){
+  const dpr = Math.min(window.devicePixelRatio||1, 2.5);
+  const r = cv.getBoundingClientRect();
+  const W = Math.round(r.width), H = Math.round(r.height);
+  if (!W || !H) return null;
+  if (cv.__w !== W*dpr || cv.__h !== H*dpr){
+    cv.width = cv.__w = W*dpr; cv.height = cv.__h = H*dpr; cv.__bg = null;
+  }
+  const ctx = cv.getContext("2d");
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,W,H);
-
-  const waterY = H*0.74;
-  const cx = W/2;
-  const shipW = Math.min(W*0.58, 240);
-  const shipTop = H*0.14;                 // верх мачты
-  const deckY = waterY - H*0.085;         // палуба заметно выше воды (виден борт)
-  const night = mode === "night";
-
-  // — фон и вода —
-  if (night){
-    ctx.save(); ctx.globalAlpha = 0.5;
-    for (let i=0;i<5;i++){ ctx.fillStyle = "rgba(40,70,110,"+(0.10-i*0.018)+")"; ctx.fillRect(0, waterY+i*8, W, 3); }
-    ctx.restore();
-  } else {
-    // светлое дневное небо + море
-    var sky = ctx.createLinearGradient(0,0,0,waterY);
-    sky.addColorStop(0,"#dfe8f0"); sky.addColorStop(1,"#c4d2df");
-    ctx.fillStyle = sky; ctx.fillRect(0,0,W,waterY);
-    var sea = ctx.createLinearGradient(0,waterY,0,H);
-    sea.addColorStop(0,"#9fb6c8"); sea.addColorStop(1,"#7f99ac");
-    ctx.fillStyle = sea; ctx.fillRect(0,waterY,W,H-waterY);
-    ctx.save(); ctx.globalAlpha=.4;
-    for (let i=0;i<4;i++){ ctx.strokeStyle="rgba(255,255,255,"+(0.35-i*0.07)+")"; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(0,waterY+6+i*10); ctx.bezierCurveTo(W*0.3,waterY+2+i*10,W*0.6,waterY+12+i*10,W,waterY+6+i*10); ctx.stroke(); }
-    ctx.restore();
-  }
-
-  // — силуэт корпуса (узнаваемый по типу) —
-  const pal = night
-    ? { hull:"#0c1622", sup:"#12202f", line:"rgba(120,150,180,.45)" }
-    : { hull:"#5a6b7a", sup:"#4c5b68", line:"rgba(40,55,70,.55)" };
-  // мачта должна доходить до самого ВЕРХНЕГО элемента судна (огонь или знак),
-  // а не всегда до верха канваса — иначе торчит пустая палка. Но и не слишком
-  // коротко: мачта всегда заметная (минимум до ~30% высоты сцены над палубой).
-  var minY = 0.30;   // базовая «заметная» высота даже без высоких огней/знаков
-  (v.lights||[]).forEach(function(l){ if (l.y < minY) minY = l.y; });
-  if (mode==="day") (v.day||[]).forEach(function(s){ if (s.y < minY) minY = s.y; });
-  var mastTopY = shipTop + Math.max(0, minY - 0.05)*(deckY - shipTop);  // чуть выше верхнего элемента
-  drawHull(ctx, v.hull||"motor", cx, deckY, shipW, mastTopY, waterY, pal);
-
-  if (night){
-    // — огни: ореол + ядро + блик на воде —
-    (v.lights||[]).forEach(function(l){
-      const lx = cx + l.x*(shipW*0.5), ly = shipTop + l.y*(deckY-shipTop);
-      const col = COLORS[l.c]||"#fff", rad = l.r||4;
-      const g = ctx.createRadialGradient(lx,ly,0,lx,ly,rad*6);
-      g.addColorStop(0,col); g.addColorStop(0.25,hexA(col,0.55)); g.addColorStop(1,hexA(col,0));
-      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(lx,ly,rad*6,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(lx,ly,rad*0.5,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle=col; ctx.globalAlpha=0.9; ctx.beginPath(); ctx.arc(lx,ly,rad*0.85,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
-      if (ly<waterY){
-        const refY = waterY+(waterY-ly)*0.25;
-        const rg = ctx.createLinearGradient(lx,waterY,lx,refY);
-        rg.addColorStop(0,hexA(col,0.5)); rg.addColorStop(1,hexA(col,0));
-        ctx.fillStyle=rg; ctx.fillRect(lx-rad*1.2,waterY,rad*2.4,refY-waterY);
-      }
-    });
-  } else {
-    // — дневные знаки (чёрные фигуры на носу/мачте) —
-    (v.day||[]).forEach(function(s){
-      const sx = cx, sy = shipTop + s.y*(deckY-shipTop);
-      drawDayShape(ctx, s.shape, sx, sy, 11);
-    });
-  }
+  return { ctx, W, H };
 }
+function rr(ctx,x,y,w,h,r){ r=Math.min(r,w/2,h/2);
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function hexA(hex,a){ const n=parseInt(hex.slice(1),16);
+  return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")"; }
+function frac(x){ return x - Math.floor(x); }
 
-// Силуэт судна — ВИД С НОСА (анфас), симметричный. Огни ложатся по бортам
-// (красный слева, зелёный справа), а дневные знаки крепятся к центральной
-// мачте, которая идёт от палубы до shipTop — поэтому не «плавают в воздухе».
-function drawHull(ctx, hull, cx, deckY, w, top, waterY, pal){
-  ctx.lineWidth = 1.3; ctx.lineJoin = "round"; ctx.lineCap = "round";
-  const hw = w*0.5;
-  const hullH = (waterY - deckY);
-  const fillP = (p)=>{ ctx.fillStyle=pal.hull; ctx.fill(p); ctx.strokeStyle=pal.line; ctx.stroke(p); };
-  const boxC  = (bw,bh,yTop)=>{ ctx.fillStyle=pal.sup; ctx.fillRect(cx-bw/2,yTop,bw,bh);
-                                ctx.strokeStyle=pal.line; ctx.strokeRect(cx-bw/2,yTop,bw,bh); };
-  const mast  = (lw)=>{ ctx.strokeStyle=pal.line; ctx.lineWidth=lw||1.6;
-                        ctx.beginPath(); ctx.moveTo(cx,deckY); ctx.lineTo(cx,top); ctx.stroke(); };
-
-  // симметричный корпус анфас: плоская палуба сверху, скруглённое днище.
-  // width — доля полуширины (крупные суда шире).
-  function frontHull(width, deckDrop){
-    const bw = hw*width, dd = deckDrop||0;
-    const p = new Path2D();
-    p.moveTo(cx-bw, deckY+dd);                                  // левый край палубы
-    p.lineTo(cx+bw, deckY+dd);                                  // правый край палубы
-    p.lineTo(cx+bw*0.92, waterY-hullH*0.15);                    // правый борт вниз
-    p.quadraticCurveTo(cx, waterY+hullH*0.35, cx-bw*0.92, waterY-hullH*0.15); // скруглённое днище
-    p.closePath();
-    fillP(p);
+// ─────────────────────── Фон: ночь / день ───────────────────────
+const HORIZON = 0.44, WATERY = 0.76;   // доли высоты сцены
+function drawBackdrop(ctx,W,H,mode){
+  let bg = ctx.canvas.__bg;
+  if (!bg || ctx.canvas.__bgMode !== mode){
+    bg = document.createElement("canvas");
+    bg.width = W; bg.height = H;
+    const c = bg.getContext("2d");
+    const horizon = H*HORIZON;
+    if (mode === "night"){
+      const sky = c.createLinearGradient(0,0,0,horizon);
+      sky.addColorStop(0,"#040b16"); sky.addColorStop(0.6,"#0a2038");
+      sky.addColorStop(0.88,"#14344f"); sky.addColorStop(1,"#1d4361");
+      c.fillStyle = sky; c.fillRect(0,0,W,horizon+1);
+      const warm = c.createLinearGradient(0,horizon-H*0.09,0,horizon);
+      warm.addColorStop(0,"rgba(226,166,116,0)"); warm.addColorStop(1,"rgba(226,166,116,.13)");
+      c.fillStyle = warm; c.fillRect(0,horizon-H*0.09,W,H*0.09);
+      const sea = c.createLinearGradient(0,horizon,0,H);
+      sea.addColorStop(0,"#123c5c"); sea.addColorStop(0.2,"#0c2e49");
+      sea.addColorStop(0.6,"#082238"); sea.addColorStop(1,"#051627");
+      c.fillStyle = sea; c.fillRect(0,horizon,W,H-horizon);
+    } else {
+      const sky = c.createLinearGradient(0,0,0,horizon);
+      sky.addColorStop(0,"#cfe0ee"); sky.addColorStop(0.7,"#dbe7f0");
+      sky.addColorStop(1,"#eef2f2");
+      c.fillStyle = sky; c.fillRect(0,0,W,horizon+1);
+      const sea = c.createLinearGradient(0,horizon,0,H);
+      sea.addColorStop(0,"#9db8ca"); sea.addColorStop(0.4,"#8aa7bb");
+      sea.addColorStop(1,"#74909f");
+      c.fillStyle = sea; c.fillRect(0,horizon,W,H-horizon);
+      // солнечная дорожка
+      const gl = c.createRadialGradient(W*0.5,horizon+H*0.05,2,W*0.5,horizon+H*0.12,W*0.4);
+      gl.addColorStop(0,"rgba(255,252,238,.5)"); gl.addColorStop(0.35,"rgba(255,250,235,.14)");
+      gl.addColorStop(1,"rgba(255,250,235,0)");
+      c.save(); c.translate(W*0.5,horizon+H*0.10); c.scale(0.55,1); c.translate(-W*0.5,-(horizon+H*0.10));
+      c.fillStyle = gl; c.fillRect(0,horizon,W,H-horizon);
+      c.restore();
+    }
+    ctx.canvas.__bg = bg; ctx.canvas.__bgMode = mode;
   }
-
-  if (hull==="sail"){
-    // ЯХТА анфас: узкий корпус + высокая мачта + парус, «раздутый» вбок (виден с носа)
-    const p=new Path2D();
-    p.moveTo(cx-hw*0.5, deckY); p.lineTo(cx+hw*0.5, deckY);
-    p.quadraticCurveTo(cx, waterY+hullH*0.5, cx-hw*0.5, deckY); p.closePath();
-    fillP(p);
-    mast(2);
-    ctx.fillStyle=pal.sup; ctx.globalAlpha=.9;                  // парус, выгнутый в сторону
-    ctx.beginPath();
-    ctx.moveTo(cx, top+top*0.15); ctx.lineTo(cx, deckY-2);
-    ctx.quadraticCurveTo(cx+hw*0.7, deckY-hullH*1.2, cx, top+top*0.15);
-    ctx.closePath(); ctx.fill(); ctx.globalAlpha=1; ctx.stroke();
-
-  } else if (hull==="fishing"){
-    // РЫБОЛОВНОЕ анфас: широкий корпус + центральная рубка + БОКОВЫЕ выстрелы-краны
-    frontHull(0.9);
-    boxC(hw*0.7, hullH*0.9, deckY-hullH*0.9);                   // рубка
-    mast(1.8);
-    // боковые выстрелы (аутригеры/краны) — расходятся вниз-в стороны
-    ctx.strokeStyle=pal.line; ctx.lineWidth=1.8;
-    ctx.beginPath(); ctx.moveTo(cx, deckY-hullH*0.5); ctx.lineTo(cx-hw*1.05, deckY+hullH*0.5); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx, deckY-hullH*0.5); ctx.lineTo(cx+hw*1.05, deckY+hullH*0.5); ctx.stroke();
-
-  } else if (hull==="tug"){
-    // БУКСИР анфас: широкий низкий корпус + КРУПНАЯ высокая рубка (почти во всю ширину)
-    frontHull(0.85);
-    boxC(hw*1.05, hullH*1.15, deckY-hullH*1.15);                // большая рубка
-    boxC(hw*0.4,  hullH*0.5,  deckY-hullH*1.55);                // ходовой мостик сверху
-    mast(1.6);
-
-  } else if (hull==="big"){
-    // КРУПНОЕ (танкер/сухогруз) анфас: ШИРОКИЙ высокий корпус + узкая надстройка + труба
-    frontHull(1.15, -hullH*0.15);                               // выше и шире прочих
-    boxC(hw*0.6, hullH*1.1, deckY-hullH*0.15-hullH*1.1);        // надстройка
-    boxC(hw*0.18, hullH*0.5, deckY-hullH*0.15-hullH*1.6);       // труба
-    mast(2);
-
-  } else {
-    // МОТОРНОЕ (PD vessel) анфас: аккуратный корпус + рубка + мачта
-    frontHull(0.85);
-    boxC(hw*0.65, hullH*0.85, deckY-hullH*0.85);               // рубка
-    boxC(hw*0.22, hullH*0.4,  deckY-hullH*1.25);               // труба
-    mast(1.6);
-  }
+  ctx.drawImage(bg,0,0,W,H);
 }
-
-// Дневной знак COLREG. shape: ball, cone-up, cone-down, cylinder, diamond.
-function drawDayShape(ctx, shape, x, y, s){
-  ctx.fillStyle="#111"; ctx.strokeStyle="rgba(255,255,255,.25)"; ctx.lineWidth=1;
+function drawStars(ctx,W,H,ts){
+  const horizon = H*HORIZON;
+  ctx.save();
+  ctx.fillStyle = "#cfe4f5";
+  for (let i=0;i<30;i++){
+    const x = frac(Math.sin(i*127.1)*43758.5453)*W;
+    const y = frac(Math.sin(i*311.7)*12543.21)*horizon*0.85;
+    const r = 0.6 + frac(Math.sin(i*74.7)*9631.3)*0.9;
+    const tw = 0.45 + 0.4*Math.sin(ts*0.0016 + i*2.1);
+    ctx.globalAlpha = Math.max(0.05, Math.min(0.7, tw));
+    ctx.fillRect(x,y,r,r);
+  }
+  ctx.restore();
+}
+function drawHorizonSparkle(ctx,W,H,ts,mode){
+  const horizon = H*HORIZON;
+  ctx.save();
+  ctx.fillStyle = mode==="night" ? "#bfe0f2" : "#ffffff";
+  const base = mode==="night" ? 0.045 : 0.10;
+  for (let k=0;k<6;k++){
+    const y = horizon + 2 + k*H*0.014;
+    for (let m=0;m<7;m++){
+      const sp = 6 + k*2;
+      const x = frac(Math.sin(m*91.3 + k*17.7)*7351.7 + ts*0.00002*sp)*W;
+      const w = 5 + frac(Math.sin(m*13.3 + k*7.1)*971.3)*9;
+      const a = base + 0.04*Math.sin(ts*0.0021 + m*1.7 + k);
+      if (a <= 0.012) continue;
+      ctx.globalAlpha = a;
+      ctx.fillRect(x,y,w,1.2);
+    }
+  }
+  ctx.restore();
+}
+function wavePath(ctx,W,y,amp,ph){
+  const n = 24;
+  ctx.moveTo(0, y + Math.sin(ph)*amp);
+  for (let i=1;i<=n;i++) ctx.lineTo(W*i/n, y + Math.sin(ph + i*0.8)*amp);
+}
+function drawWaterFront(ctx,W,H,ts,cx,hullHW,mode){
+  const waterY = H*WATERY;
+  // тень-контакт под корпусом
+  ctx.fillStyle = mode==="night" ? "rgba(2,8,15,.38)" : "rgba(30,50,66,.25)";
+  ctx.beginPath(); ctx.ellipse(cx,waterY+3,hullHW*1.2,H*0.013,0,0,Math.PI*2); ctx.fill();
+  // передняя вода закрывает низ корпуса
+  const g = ctx.createLinearGradient(0,waterY,0,H);
+  if (mode === "night"){
+    g.addColorStop(0,"rgba(8,36,58,.55)"); g.addColorStop(0.3,"rgba(6,26,43,.85)"); g.addColorStop(1,"rgba(4,16,28,.95)");
+  } else {
+    g.addColorStop(0,"rgba(138,167,187,.5)"); g.addColorStop(0.3,"rgba(122,152,171,.85)"); g.addColorStop(1,"rgba(105,133,148,.95)");
+  }
+  ctx.fillStyle = g;
   ctx.beginPath();
-  if (shape==="ball"){
-    ctx.arc(x,y,s*0.75,0,Math.PI*2); ctx.fill(); ctx.stroke();
-  } else if (shape==="cone-up"){
-    ctx.moveTo(x,y-s); ctx.lineTo(x+s*0.8,y+s*0.7); ctx.lineTo(x-s*0.8,y+s*0.7); ctx.closePath(); ctx.fill(); ctx.stroke();
-  } else if (shape==="cone-down"){
-    ctx.moveTo(x,y+s); ctx.lineTo(x+s*0.8,y-s*0.7); ctx.lineTo(x-s*0.8,y-s*0.7); ctx.closePath(); ctx.fill(); ctx.stroke();
-  } else if (shape==="cylinder"){
-    ctx.rect(x-s*0.6,y-s*0.9,s*1.2,s*1.8); ctx.fill(); ctx.stroke();
-  } else if (shape==="diamond"){
-    // два конуса основаниями вместе (ромб)
-    ctx.moveTo(x,y-s); ctx.lineTo(x+s*0.7,y); ctx.lineTo(x,y+s); ctx.lineTo(x-s*0.7,y); ctx.closePath(); ctx.fill(); ctx.stroke();
+  wavePath(ctx,W,waterY+1.5,H*0.006,ts*0.0012);
+  ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
+  // блики волн
+  const col = mode==="night" ? "150,200,235" : "255,255,255";
+  const waves = [
+    [waterY+2.5,   H*0.005, mode==="night"?0.14:0.35, 0.0012, 0],
+    [waterY+H*0.05, H*0.007, mode==="night"?0.09:0.22, 0.0009, 2.1],
+    [waterY+H*0.12, H*0.009, mode==="night"?0.055:0.13, 0.0007, 4.2],
+  ];
+  for (const wv of waves){
+    ctx.strokeStyle = "rgba("+col+","+wv[2]+")"; ctx.lineWidth = 1.1;
+    ctx.beginPath(); wavePath(ctx,W,wv[0],wv[1],ts*wv[3]+wv[4]); ctx.stroke();
   }
 }
 
-// hex → rgba строка с альфой
-function hexA(hex, a){
-  const n = parseInt(hex.slice(1),16);
-  return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";
+// ─────────────────────── Огни: ореол + отражение ───────────────────────
+function drawGlowPoint(ctx,W,x,y,col,rad){
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  let g, R;
+  R = rad*2.4;                                    // ядро
+  g = ctx.createRadialGradient(x,y,0,x,y,R);
+  g.addColorStop(0,"rgba(255,255,255,.95)"); g.addColorStop(0.35,hexA(col,.8)); g.addColorStop(1,hexA(col,0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
+  R = rad*7;                                      // цветной ореол
+  g = ctx.createRadialGradient(x,y,0,x,y,R);
+  g.addColorStop(0,hexA(col,.30)); g.addColorStop(1,hexA(col,0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
+  R = rad*14;                                     // широкое свечение
+  g = ctx.createRadialGradient(x,y,0,x,y,R);
+  g.addColorStop(0,hexA(col,.08)); g.addColorStop(1,hexA(col,0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
+  // горизонтальный линзовый разлёт
+  ctx.translate(x,y); ctx.scale(2.4,0.4);
+  g = ctx.createRadialGradient(0,0,0,0,0,rad*6);
+  g.addColorStop(0,hexA(col,.28)); g.addColorStop(1,hexA(col,0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0,0,rad*6,0,Math.PI*2); ctx.fill();
+  ctx.restore();
 }
+function drawReflection(ctx,W,H,ts,wx,col,phase){
+  const waterY = H*WATERY;
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  const n = 8;
+  for (let k=0;k<n;k++){
+    const y = waterY + 4 + k*H*0.02;
+    const half = W*0.03*(1 - k/(n+2));
+    const xo = Math.sin(ts*0.0031 + k*1.9 + phase)*(1.2 + k*0.9);
+    const a = 0.22*(1 - k/(n-0.5));
+    if (a <= 0.01) continue;
+    const g = ctx.createLinearGradient(wx-half+xo,0,wx+half+xo,0);
+    g.addColorStop(0,hexA(col,0)); g.addColorStop(0.5,hexA(col,a)); g.addColorStop(1,hexA(col,0));
+    ctx.fillStyle = g;
+    ctx.fillRect(wx-half+xo, y, half*2, Math.max(2,H*0.011));
+  }
+  ctx.restore();
+}
+
+// ─────────────────────── Силуэты судов (вид с носа, симметрично) ───────────────────────
+// Общая геометрия кадра: shipTop (верх мачт), deckY (палуба), waterY.
+// Контракт координат огней из lights_data.js СОХРАНЁН:
+//   lx = cx + l.x * shipW/2;  ly = shipTop + l.y * (deckY - shipTop)
+function hullGrad(ctx,p,y0,y1){
+  const g = ctx.createLinearGradient(0,y0,0,y1);
+  g.addColorStop(0,p.hullTop); g.addColorStop(1,p.hullBot);
+  return g;
+}
+function supBox(ctx,p,cx,w,yTop,h,r){
+  const g = ctx.createLinearGradient(0,yTop,0,yTop+h);
+  g.addColorStop(0,p.supTop); g.addColorStop(1,p.sup);
+  ctx.fillStyle = g;
+  ctx.beginPath(); rr(ctx,cx-w/2,yTop,w,h,r||2); ctx.fill();
+  ctx.strokeStyle = p.line; ctx.lineWidth = 1; ctx.stroke();
+  // верхняя кромка ловит свет неба
+  ctx.strokeStyle = p.deck; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx-w/2+2,yTop+0.7); ctx.lineTo(cx+w/2-2,yTop+0.7); ctx.stroke();
+}
+function glassStrip(ctx,p,cx,w,y,h){       // тёмная полоса окон рубки (не светятся)
+  ctx.fillStyle = p.glass;
+  ctx.beginPath(); rr(ctx,cx-w/2,y,w,h,1.5); ctx.fill();
+}
+function mastLine(ctx,p,x,yBot,yTop,lw){
+  ctx.strokeStyle = p.line; ctx.lineWidth = lw||2;
+  ctx.beginPath(); ctx.moveTo(x,yBot); ctx.lineTo(x,yTop); ctx.stroke();
+}
+function railing(ctx,p,cx,bw,deckLine){    // стойки лееров вдоль палубы
+  ctx.strokeStyle = p.deck; ctx.lineWidth = 1;
+  ctx.beginPath();
+  const n = 8;
+  for (let i=0;i<=n;i++){
+    const x = cx - bw + (2*bw)*i/n;
+    ctx.moveTo(x, deckLine); ctx.lineTo(x, deckLine-3.2);
+  }
+  ctx.moveTo(cx-bw, deckLine-3.2); ctx.lineTo(cx+bw, deckLine-3.2);
+  ctx.stroke();
+}
+
+function drawHull(ctx, hull, cx, deckY, w, mastTopY, waterY, p, night){
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  const hw = w*0.5;
+  const hullH = waterY - deckY;
+  const keelY = waterY + hullH*0.4;   // низ уходит под передний слой воды
+
+  // корпус анфас: палуба → расклешённые борта → скруглённое днище + форштевень
+  function bowHull(width, deckDrop){
+    const bw = hw*width, dd = deckDrop||0, dy = deckY+dd;
+    ctx.beginPath();
+    ctx.moveTo(cx-bw, dy);
+    ctx.lineTo(cx+bw, dy);
+    ctx.lineTo(cx+bw*0.88, waterY - hullH*0.05);
+    ctx.quadraticCurveTo(cx, keelY, cx-bw*0.88, waterY - hullH*0.05);
+    ctx.closePath();
+    ctx.fillStyle = hullGrad(ctx,p,dy,waterY+4);
+    ctx.fill();
+    ctx.strokeStyle = p.line; ctx.lineWidth = 1.2; ctx.stroke();
+    // фальшборт (кромка палубы ловит свет)
+    ctx.strokeStyle = p.deck; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(cx-bw+2, dy+1); ctx.lineTo(cx+bw-2, dy+1); ctx.stroke();
+    // форштевень — вертикальное «ребро» по центру
+    const sg = ctx.createLinearGradient(0,dy,0,waterY);
+    sg.addColorStop(0,"rgba(255,255,255,.14)"); sg.addColorStop(1,"rgba(255,255,255,.02)");
+    ctx.strokeStyle = sg; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(cx, dy+2); ctx.lineTo(cx, waterY+hullH*0.16); ctx.stroke();
+    // ватерлиния-«намокание»
+    ctx.strokeStyle = "rgba(2,10,18,.5)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx-bw*0.9, waterY-1); ctx.lineTo(cx+bw*0.9, waterY-1); ctx.stroke();
+    return bw;
+  }
+
+  if (hull === "sail"){
+    // яхта: узкий корпус, высокая мачта с краспицами, грот выгнут вбок, гик
+    const bw = bowHull(0.5);
+    // грот (едва темнее неба, выпуклый вправо)
+    ctx.fillStyle = night ? "rgba(26,40,54,.85)" : "rgba(120,138,155,.9)";
+    ctx.beginPath();
+    ctx.moveTo(cx+1, mastTopY+4);
+    ctx.quadraticCurveTo(cx+hw*0.78, deckY-hullH*1.6, cx+hw*0.52, deckY-3);
+    ctx.lineTo(cx+1, deckY-3);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = p.line; ctx.lineWidth = 1; ctx.stroke();
+    // стаксель (слева, поменьше)
+    ctx.fillStyle = night ? "rgba(20,32,44,.8)" : "rgba(133,150,166,.85)";
+    ctx.beginPath();
+    ctx.moveTo(cx-1, mastTopY+hullH*0.9);
+    ctx.quadraticCurveTo(cx-hw*0.6, deckY-hullH*1.1, cx-hw*0.44, deckY-3);
+    ctx.lineTo(cx-1, deckY-3);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = p.line; ctx.stroke();
+    mastLine(ctx,p,cx,deckY,mastTopY,2);
+    // гик
+    ctx.strokeStyle = p.line; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(cx,deckY-4); ctx.lineTo(cx+hw*0.5,deckY-6); ctx.stroke();
+    // краспицы
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx-hw*0.16, mastTopY+hullH*0.8); ctx.lineTo(cx+hw*0.16, mastTopY+hullH*0.8); ctx.stroke();
+
+  } else if (hull === "fishing"){
+    // траулер: крепкий корпус, рубка со стеклом, П-рама (портал) и выстрелы
+    const bw = bowHull(0.9);
+    supBox(ctx,p,cx,hw*0.72,deckY-hullH*0.95,hullH*0.95,2.5);
+    glassStrip(ctx,p,cx,hw*0.56,deckY-hullH*0.82,hullH*0.3);
+    // П-образный портал за рубкой
+    ctx.strokeStyle = p.line; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx-hw*0.5, deckY);
+    ctx.lineTo(cx-hw*0.5, deckY-hullH*1.45);
+    ctx.lineTo(cx+hw*0.5, deckY-hullH*1.45);
+    ctx.lineTo(cx+hw*0.5, deckY);
+    ctx.stroke();
+    // выстрелы-краны в стороны
+    ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.moveTo(cx-hw*0.5, deckY-hullH*1.3); ctx.lineTo(cx-hw*1.02, deckY+hullH*0.2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+hw*0.5, deckY-hullH*1.3); ctx.lineTo(cx+hw*1.02, deckY+hullH*0.2); ctx.stroke();
+    mastLine(ctx,p,cx,deckY-hullH*1.45,mastTopY,1.8);
+    railing(ctx,p,cx,bw*0.92,deckY+1);
+
+  } else if (hull === "tug"){
+    // буксир: низкий широкий корпус с носовым кранцем, массивная рубка
+    const bw = bowHull(0.85);
+    // носовой кранец (тёмная дуга по фальшборту)
+    ctx.strokeStyle = night ? "#060c13" : "#2c3a46"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(cx-bw*0.96, deckY+3); ctx.quadraticCurveTo(cx, deckY+hullH*0.42, cx+bw*0.96, deckY+3); ctx.stroke();
+    supBox(ctx,p,cx,hw*1.02,deckY-hullH*1.05,hullH*1.05,3);
+    glassStrip(ctx,p,cx,hw*0.84,deckY-hullH*0.92,hullH*0.34);
+    supBox(ctx,p,cx,hw*0.42,deckY-hullH*1.5,hullH*0.45,2);
+    mastLine(ctx,p,cx,deckY-hullH*1.5,mastTopY,1.8);
+    // радар-перекладина
+    ctx.strokeStyle = p.line; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(cx-hw*0.14, deckY-hullH*1.62); ctx.lineTo(cx+hw*0.14, deckY-hullH*1.62); ctx.stroke();
+
+  } else if (hull === "big"){
+    // крупное судно: высокий борт, многоярусная надстройка, труба, бак
+    const bw = bowHull(1.15, -hullH*0.2);
+    railing(ctx,p,cx,bw*0.94,deckY-hullH*0.2+1);
+    supBox(ctx,p,cx,hw*0.62,deckY-hullH*1.25,hullH*1.05,2.5);   // ярус 1
+    supBox(ctx,p,cx,hw*0.5, deckY-hullH*1.7, hullH*0.5,2);      // мостик
+    glassStrip(ctx,p,cx,hw*0.4,deckY-hullH*1.62,hullH*0.26);
+    // труба со «звёздочкой»-маркой
+    supBox(ctx,p,cx,hw*0.2,deckY-hullH*2.1,hullH*0.45,2);
+    ctx.fillStyle = night ? "#111b26" : "#3c4c5c";
+    ctx.beginPath(); rr(ctx,cx-hw*0.1,deckY-hullH*2.12,hw*0.2,3,1); ctx.fill();
+    mastLine(ctx,p,cx,deckY-hullH*2.1,mastTopY,2);
+    // радар-перекладина на мостике
+    ctx.strokeStyle = p.line; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(cx-hw*0.18, deckY-hullH*1.82); ctx.lineTo(cx+hw*0.18, deckY-hullH*1.82); ctx.stroke();
+
+  } else {
+    // моторное: аккуратный корпус, рубка с лобовым стеклом, короткая мачта
+    const bw = bowHull(0.85);
+    supBox(ctx,p,cx,hw*0.68,deckY-hullH*0.9,hullH*0.9,3);
+    glassStrip(ctx,p,cx,hw*0.52,deckY-hullH*0.78,hullH*0.3);
+    supBox(ctx,p,cx,hw*0.24,deckY-hullH*1.28,hullH*0.4,2);
+    mastLine(ctx,p,cx,deckY-hullH*1.28,mastTopY,1.6);
+    railing(ctx,p,cx,bw*0.9,deckY+1);
+  }
+}
+
+// Дневной знак COLREG — объёмный чёрный (стиль топмарок буёв).
+function drawDayShape(ctx, shape, x, y, s){
+  const grad = (x0,x1)=>{ const g=ctx.createLinearGradient(x0,0,x1,0);
+    g.addColorStop(0,"#3a424b"); g.addColorStop(0.45,"#1c2126"); g.addColorStop(1,"#0b0f13");
+    return g; };
+  ctx.strokeStyle = "rgba(255,255,255,.28)"; ctx.lineWidth = 0.9;
+  if (shape === "ball"){
+    const r = s*0.78;
+    const g = ctx.createRadialGradient(x-r*0.35,y-r*0.38,r*0.15,x,y,r);
+    g.addColorStop(0,"#454e58"); g.addColorStop(0.55,"#1c2126"); g.addColorStop(1,"#090d11");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  } else if (shape === "cone-up" || shape === "cone-down"){
+    const up = shape === "cone-up";
+    ctx.fillStyle = grad(x-s*0.8,x+s*0.8);
+    ctx.beginPath();
+    if (up){ ctx.moveTo(x,y-s); ctx.lineTo(x+s*0.8,y+s*0.7); ctx.lineTo(x-s*0.8,y+s*0.7); }
+    else   { ctx.moveTo(x,y+s); ctx.lineTo(x+s*0.8,y-s*0.7); ctx.lineTo(x-s*0.8,y-s*0.7); }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  } else if (shape === "cylinder"){
+    ctx.fillStyle = grad(x-s*0.6,x+s*0.6);
+    ctx.beginPath(); rr(ctx,x-s*0.6,y-s*0.95,s*1.2,s*1.9,1.5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "rgba(0,0,0,.35)";
+    ctx.beginPath(); ctx.ellipse(x,y-s*0.93,s*0.55,s*0.14,0,0,Math.PI*2); ctx.fill();
+  } else if (shape === "diamond"){
+    ctx.fillStyle = grad(x-s*0.75,x+s*0.75);
+    ctx.beginPath();
+    ctx.moveTo(x,y-s); ctx.lineTo(x+s*0.75,y); ctx.lineTo(x,y+s); ctx.lineTo(x-s*0.75,y);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+}
+
+// ─────────────────────── Кадр сцены ───────────────────────
+function drawShip(cv, v, mode, ts){
+  const f = fitCanvas(cv); if (!f) return;
+  const { ctx, W, H } = f;
+  ts = ts || 0;
+  const night = mode !== "day";
+  const cx = W*0.5, waterY = H*WATERY;
+  const shipW = Math.min(W*0.58, 250);
+  const shipTop = H*0.15;
+  const deckY = waterY - H*0.09;
+  const p = night ? PAL.night : PAL.day;
+
+  drawBackdrop(ctx,W,H,night?"night":"day");
+  if (night) drawStars(ctx,W,H,ts);
+  drawHorizonSparkle(ctx,W,H,ts,night?"night":"day");
+
+  // мачта — до самого верхнего элемента (огня или знака), но не короче базовой
+  let minY = 0.30;
+  (v.lights||[]).forEach(l=>{ if (l.y < minY) minY = l.y; });
+  if (!night) (v.day||[]).forEach(s=>{ if (s.y < minY) minY = s.y; });
+  const mastTopY = shipTop + Math.max(0, minY - 0.05)*(deckY - shipTop);
+
+  // лёгкая качка: судно тяжелее буя — амплитуда меньше
+  const bob = Math.sin(ts*0.0009)*H*0.004;
+  const ang = Math.sin(ts*0.0006 + 1.1)*0.018;
+
+  ctx.save();
+  ctx.translate(cx,waterY+bob); ctx.rotate(ang); ctx.translate(-cx,-waterY);
+  drawHull(ctx, v.hull||"motor", cx, deckY, shipW, mastTopY, waterY, p, night);
+  if (night){
+    // сами «лампы» — точки на местах огней (ореолы добавим поверх воды)
+    (v.lights||[]).forEach(l=>{
+      const lx = cx + l.x*(shipW*0.5), ly = shipTop + l.y*(deckY-shipTop);
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(lx,ly,(l.r||4)*0.42,0,Math.PI*2); ctx.fill();
+    });
+  } else {
+    (v.day||[]).forEach(s=>{
+      drawDayShape(ctx, s.shape, cx, shipTop + s.y*(deckY-shipTop), Math.max(9, W*0.030));
+    });
+  }
+  ctx.restore();
+
+  drawWaterFront(ctx,W,H,ts,cx,shipW*0.5,night?"night":"day");
+
+  if (night){
+    // ореолы и отражения — в мировых координатах (не вращаются с судном)
+    const cosA = Math.cos(ang), sinA = Math.sin(ang);
+    (v.lights||[]).forEach((l,idx)=>{
+      const lx = cx + l.x*(shipW*0.5), ly = shipTop + l.y*(deckY-shipTop);
+      const dx = lx-cx, dy = ly-waterY;
+      const wx = cx + dx*cosA - dy*sinA;
+      const wy = waterY + bob + dx*sinA + dy*cosA;
+      const col = COLORS[l.c] || "#fff";
+      drawGlowPoint(ctx,W,wx,wy,col,l.r||4);
+      drawReflection(ctx,W,H,ts,wx,col,idx*2.1);
+    });
+  }
+}
+
+// ─────────────────────── Управление анимацией ───────────────────────
+let anim = null;
+function startShipAnim(canvas, v, mode){
+  stopShipAnim();
+  if (!canvas || !v) return;
+  const loop = ts => {
+    anim.raf = requestAnimationFrame(loop);
+    drawShip(canvas, v, mode, ts);
+  };
+  anim = { raf: requestAnimationFrame(loop) };
+}
+function stopShipAnim(){ if (anim){ cancelAnimationFrame(anim.raf); anim = null; } }
 
 // текущий режим отображения (общий для просмотра и теста)
 let curMode = "night";
-let curViewId = null;   // какое судно открыто в просмотре
+let curViewId = null;
 
-// тумблеры день/ночь: переключают curMode и перерисовывают активную сцену
+// тумблеры день/ночь
 function setupDayNight(toggleId, redraw){
   const box = $(toggleId); if (!box) return;
   Array.prototype.forEach.call(box.querySelectorAll("span"), sp=>{
     sp.onclick = ()=>{
       curMode = sp.dataset.mode;
-      // синхронизировать оба тумблера
       document.querySelectorAll(".daynight span").forEach(x=>
         x.classList.toggle("on", x.dataset.mode===curMode));
       redraw();
@@ -375,10 +648,21 @@ function setupDayNight(toggleId, redraw){
 }
 
 // ─────────────────────── Меню ───────────────────────
-// на превью в меню — моторное с носа (всегда ночь, для атмосферы)
+// карусель: показываем суда по очереди (всегда ночь — для атмосферы)
+let menuTimer = null, menuIdx = -1;
 function renderMenu(){
-  const demo = DATA.vessels.find(v=>v.id==="power_head") || DATA.vessels[0];
-  requestAnimationFrame(()=> drawShip($("shipMenu"), demo, "night"));
+  if (!DATA.vessels.length) return;
+  if (menuIdx < 0){
+    const n = DATA.vessels.findIndex(v=>v.id==="power_head");
+    menuIdx = n >= 0 ? n : 0;
+  }
+  startShipAnim($("shipMenu"), DATA.vessels[menuIdx % DATA.vessels.length], "night");
+  clearInterval(menuTimer);
+  menuTimer = setInterval(()=>{
+    if ($("menu").classList.contains("hidden")) return;
+    menuIdx++;
+    startShipAnim($("shipMenu"), DATA.vessels[menuIdx % DATA.vessels.length], "night");
+  }, 8000);
 }
 
 // ─────────────────────── Справочник ───────────────────────
@@ -393,15 +677,24 @@ function renderChips(){
     ch.onclick = ()=>{ curCat = ch.dataset.cat; renderChips(); renderVList(); };
   });
 }
+// мини-схема центральных огней для карточки списка (топ-огни сверху вниз)
+function lightsMini(v){
+  const centre = (v.lights||[]).filter(l=>Math.abs(l.x) < 0.2)
+    .sort((a,b)=>a.y-b.y).slice(0,3);
+  const use = centre.length ? centre : (v.lights||[]).slice(0,2);
+  return '<span class="lm">'+use.map(l=>{
+    const c = COLORS[l.c]||"#fff";
+    return '<i style="background:'+c+'; color:'+c+'"></i>';
+  }).join("")+'</span>';
+}
 function renderVList(){
   const box = $("vlist");
   const list = DATA.vessels.filter(v=> curCat==="all" || v.cat===curCat);
   box.innerHTML = list.map(v=>
     '<button class="vcard" data-id="'+v.id+'">'
-    + '<span class="bic" data-icon="ship" style="color:var(--accent)"></span>'
+    + lightsMini(v)
     + '<span>'+esc(v.title)+'<br><span class="r">'+esc(v.rule)+'</span></span></button>'
   ).join("");
-  if (window.Icons) Icons.hydrate(box);
   Array.prototype.forEach.call(box.querySelectorAll(".vcard"), b=>{
     b.onclick = ()=> openView(b.dataset.id);
   });
@@ -415,12 +708,12 @@ function openView(id){
   $("viewHint").textContent = v.hint;
   $("viewCap").textContent = v.title + (curMode==="day" ? " · дневной знак" : "");
   curViewId = id;
-  requestAnimationFrame(()=> drawShip($("shipView"), v, curMode));
+  startShipAnim($("shipView"), v, curMode);
 }
 
 // ─────────────────────── Тест ───────────────────────
 let qQueue = [], qIdx = 0, qScore = 0, qAnswered = false;
-let qOpts = [], qCorrect = 0;   // перемешанные варианты и индекс правильного
+let qOpts = [], qCorrect = 0;
 function startQuiz(){
   qQueue = shuffle(DATA.vessels.slice());
   qIdx = 0; qScore = 0;
@@ -432,8 +725,7 @@ function renderQuiz(){
   const v = qQueue[qIdx];
   $("quizCounter").textContent = (qIdx+1)+" / "+qQueue.length;
   $("quizQ").textContent = questionText(v);
-  requestAnimationFrame(()=> drawShip($("shipQuiz"), v, curMode));
-  // перемешать варианты, чтобы правильный не был всегда первым
+  startShipAnim($("shipQuiz"), v, curMode);
   const correctText = v.quiz.options[v.quiz.correct];
   qOpts = shuffle(v.quiz.options.slice());
   qCorrect = qOpts.indexOf(correctText);
@@ -466,7 +758,6 @@ function answerQuiz(i){
     else if (k===i) el.classList.add("bad");
   });
   if (i===qCorrect){ qScore++; haptic("success"); } else haptic("error");
-  // разбор
   $("qeRule").textContent = v.rule;
   $("qeText").textContent = v.answer + ". " + v.hint;
   show("quizExpl");
@@ -481,15 +772,15 @@ $("quizNext").onclick = ()=>{
 
 // ─────────────────────── Навигация экранов ───────────────────────
 function toMenu(){ hide("learn"); hide("view"); hide("quiz"); show("menu"); renderMenu(); }
-$("toLearn").onclick = ()=>{ hide("menu"); show("learn"); renderChips(); renderVList(); };
+$("toLearn").onclick = ()=>{ stopShipAnim(); hide("menu"); show("learn"); renderChips(); renderVList(); };
 $("toQuiz").onclick = startQuiz;
 $("learnBack").onclick = toMenu;
-$("viewBack").onclick = ()=>{ hide("view"); show("learn"); };
+$("viewBack").onclick = ()=>{ stopShipAnim(); hide("view"); show("learn"); };
 $("quizBack").onclick = toMenu;
 
 // системная «Назад» Telegram
 window.__navBack = () => {
-  if (!$("view").classList.contains("hidden")){ hide("view"); show("learn"); return true; }
+  if (!$("view").classList.contains("hidden")){ stopShipAnim(); hide("view"); show("learn"); return true; }
   if (!$("learn").classList.contains("hidden")){ toMenu(); return true; }
   if (!$("quiz").classList.contains("hidden")){ toMenu(); return true; }
   return false;
@@ -500,22 +791,12 @@ function esc(s){ return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;","
 function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
 function haptic(t){ try{ tg?.HapticFeedback?.notificationOccurred(t); }catch(e){} }
 
-// перерисовка при повороте/ресайзе
-window.addEventListener("resize", ()=>{
-  if (!$("menu").classList.contains("hidden")) renderMenu();
-  else if (!$("view").classList.contains("hidden") && curViewId){
-    const v = DATA.vessels.find(x=>x.id===curViewId); if (v) drawShip($("shipView"), v, curMode);
-  } else if (!$("quiz").classList.contains("hidden") && qQueue[qIdx]){
-    drawShip($("shipQuiz"), qQueue[qIdx], curMode);
-  }
-});
-
 // тумблеры: в просмотре перерисовать текущее судно, в тесте — текущий вопрос
 setupDayNight("viewToggle", ()=>{
   const v = DATA.vessels.find(x=>x.id===curViewId);
-  if (v){ $("viewCap").textContent = v.title + (curMode==="day"?" · дневной знак":""); drawShip($("shipView"), v, curMode); }
+  if (v){ $("viewCap").textContent = v.title + (curMode==="day"?" · дневной знак":""); startShipAnim($("shipView"), v, curMode); }
 });
-setupDayNight("quizToggle", ()=>{ if (qQueue[qIdx]) drawShip($("shipQuiz"), qQueue[qIdx], curMode); });
+setupDayNight("quizToggle", ()=>{ if (qQueue[qIdx]) startShipAnim($("shipQuiz"), qQueue[qIdx], curMode); });
 
 renderMenu();
 </script>
