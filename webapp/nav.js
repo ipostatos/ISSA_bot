@@ -12,6 +12,22 @@
   "use strict";
   var tg = window.Telegram && window.Telegram.WebApp;
 
+  // PWA / офлайн (Этап 4): service worker + манифест. Прогрессивное улучшение —
+  // в iOS-клиенте Telegram (WKWebView) SW недоступен, там всё работает по сети.
+  // Регистрируем здесь, потому что nav.js подключён на каждой странице; манифест
+  // добавляем динамически, чтобы не править все HTML по отдельности.
+  try {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    }
+    if (!document.querySelector('link[rel="manifest"]')) {
+      var mf = document.createElement("link");
+      mf.rel = "manifest";
+      mf.href = "manifest.webmanifest";
+      document.head.appendChild(mf);
+    }
+  } catch (e) {}
+
   // Безопасный тактильный отклик: на старых/альтернативных клиентах HapticFeedback
   // или его методы могут отсутствовать. Любой сбой глушим, чтобы не ронять UI.
   // type: "success" | "warning" | "error" → notificationOccurred,

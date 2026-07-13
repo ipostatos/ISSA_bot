@@ -154,6 +154,11 @@ jobs:
           node webapp/_content_check.mjs
           node webapp/_licenses_check.mjs
           node webapp/_konspekt_pl_check.mjs
+          node webapp/_migration_check.mjs
+          node webapp/_mistakes_check.mjs
+          node webapp/_buoys_check.mjs
+          node webapp/_shapes_check.mjs
+          node webapp/_sw_check.mjs
 
   secret-scan:
     runs-on: ubuntu-latest

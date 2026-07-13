@@ -1,0 +1,14 @@
+{
+  "name": "ISSA Trainer — теория яхтинга",
+  "short_name": "ISSA Trainer",
+  "description": "Тренажёр теории: ISSA Inshore Skipper + SRC, Żeglarz jachtowy, Sternik motorowodny",
+  "lang": "ru",
+  "start_url": "index.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#17212b",
+  "theme_color": "#17212b",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

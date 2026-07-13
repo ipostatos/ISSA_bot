@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Иконка PWA: картушка компаса в цветах приложения (theme.css) -->
+  <rect width="512" height="512" rx="96" fill="#17212b"/>
+  <circle cx="256" cy="256" r="176" fill="none" stroke="#50a8eb" stroke-width="20"/>
+  <circle cx="256" cy="256" r="146" fill="none" stroke="#50a8eb" stroke-width="4" opacity=".35"/>
+  <!-- стрелка N-S: север акцентом, юг приглушённо -->
+  <polygon points="256,110 300,256 256,232 212,256" fill="#50a8eb"/>
+  <polygon points="256,402 300,256 256,280 212,256" fill="#8a9aa9"/>
+  <circle cx="256" cy="256" r="22" fill="#17212b" stroke="#fff" stroke-width="10"/>
+  <!-- засечки E/W -->
+  <rect x="96" y="250" width="36" height="12" rx="6" fill="#50a8eb" opacity=".7"/>
+  <rect x="380" y="250" width="36" height="12" rx="6" fill="#50a8eb" opacity=".7"/>
+</svg>
