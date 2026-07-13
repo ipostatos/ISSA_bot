@@ -364,6 +364,8 @@ PDF-книги для Библиотеки в git **не хранятся** (в�
 - `node webapp/_srs_check.mjs` / `_progress_check.mjs` / `_badges_check.mjs` —
   логика интервального повторения, готовности/цели/серии и достижений.
 - `node webapp/_sync_check.mjs` — JS-слияние прогресса совпадает с серверным (без потерь).
+- `node webapp/_sw_check.mjs` — PWA/офлайн: стратегии service worker (эмуляция офлайна),
+  манифест и полнота деплой-списка (каждый файл webapp/ упомянут в update_webapp.sh).
 - `python test_load.py` — нагрузка 10 одновременных пользователей.
 
 CI (GitHub Actions, `.github/workflows/ci.yml`) гоняет всё это на каждый push,

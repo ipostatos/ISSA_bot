@@ -127,5 +127,6 @@ node webapp/_quiz_check.mjs      # тесты: "QUIZ DATA OK"
 node webapp/_buoys_check.mjs     # буи IALA: "BUOYS DATA OK" (ритмы огней = периоды из char)
 node webapp/_shapes_check.mjs    # фигуры/флаги: "SHAPES DATA OK" (COLREG-инварианты)
 node webapp/_mistakes_check.mjs  # журнал ошибок: "MISTAKES CHECK OK"
+node webapp/_sw_check.mjs        # PWA/офлайн: "SW/PWA CHECK OK" (+ полнота деплой-списка)
 python webapp/build_quiz_data.py # перегенерировать quiz_data.js из банка
 ```
