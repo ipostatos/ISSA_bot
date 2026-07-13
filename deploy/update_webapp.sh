@@ -56,7 +56,12 @@ cp -f "$SRC/konspekt_pl.html" "$DST/konspekt_pl.html"  # польский кон
 cp -f "$SRC/weather.html"    "$DST/weather.html"  # BETA: погода (Open-Meteo, без бэкенда)
 cp -f "$SRC/lights.html"     "$DST/lights.html"   # бонус: огни судов ночью (COLREG)
 cp -f "$SRC/buoys.html"      "$DST/buoys.html"    # бонус: буи IALA (проблески)
-cp -f "$SRC/nav.js"          "$DST/nav.js"        # общая навигация (BackButton)
+cp -f "$SRC/shapes.html"     "$DST/shapes.html"   # бонус: дневные знаки + флаги МСС
+cp -f "$SRC/audio.html"      "$DST/audio.html"    # аудио-повторение (Web Speech API)
+cp -f "$SRC/sw.js"           "$DST/sw.js"          # PWA: офлайн-кэш (service worker)
+cp -f "$SRC/manifest.webmanifest" "$DST/manifest.webmanifest" # PWA-манифест
+cp -f "$SRC/icon.svg"        "$DST/icon.svg"       # PWA-иконка (компас)
+cp -f "$SRC/nav.js"          "$DST/nav.js"        # общая навигация (BackButton) + регистрация SW
 cp -f "$SRC/lightbox.js"     "$DST/lightbox.js"   # зум картинок
 cp -f "$SRC/migration.js"    "$DST/migration.js"  # версионирование localStorage (грузится первым)
 cp -f "$SRC/srs.js"          "$DST/srs.js"        # интервальное повторение (SRS)
@@ -65,6 +70,7 @@ cp -f "$SRC/pl_progress.js"  "$DST/pl_progress.js" # прогресс польс
 cp -f "$SRC/sync.js"         "$DST/sync.js"       # синхрон прогресса через /api/state
 cp -f "$SRC/heatmap.js"      "$DST/heatmap.js"    # heatmap активности на дашборде
 cp -f "$SRC/badges.js"       "$DST/badges.js"     # достижения (бейджи)
+cp -f "$SRC/mistakes.js"     "$DST/mistakes.js"   # журнал ошибок (learning loop)
 cp -f "$SRC/icons.js"        "$DST/icons.js"      # SVG-иконки (Lucide, ISC)
 cp -f "$SRC/theme.css"       "$DST/theme.css"     # единая дизайн-система
 cp -f "$SRC/quiz_data.js"     "$DST/quiz_data.js"
@@ -77,6 +83,7 @@ cp -f "$SRC/sternik_data.js"  "$DST/sternik_data.js"
 cp -f "$SRC/konspekt_pl_data.js" "$DST/konspekt_pl_data.js"
 cp -f "$SRC/lights_data.js"   "$DST/lights_data.js"   # огни судов (COLREG)
 cp -f "$SRC/buoys_data.js"    "$DST/buoys_data.js"    # буи IALA
+cp -f "$SRC/shapes_data.js"   "$DST/shapes_data.js"   # дневные знаки + флаги МСС
 
 echo "→ копируем PDF-книги (если есть)"
 # Книги кладём в $SRC/books/ под латинскими именами (book.pdf / studbook.pdf / toghill.pdf).
