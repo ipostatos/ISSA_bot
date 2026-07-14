@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Калькулятор TVMDC</title>
+<title data-i18n="calcTitleTag">Калькулятор TVMDC</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="icons.js"></script>
 <style>
   :root{
@@ -79,19 +81,19 @@
 </style>
 </head>
 <body>
-  <h1><span class="emi" data-icon="calculator"></span> Морской калькулятор</h1>
+  <h1><span class="emi" data-icon="calculator"></span> <span data-i18n="calcTitle"></span></h1>
 
   <div class="seg" id="tabs" style="margin-bottom:14px">
-    <button data-tab="compass" class="active"><span class="emi" data-icon="compass"></span> Поправки</button>
-    <button data-tab="marine"><span class="emi" data-icon="clock"></span> Время</button>
-    <button data-tab="tide"><span class="emi" data-icon="waves"></span> Прилив</button>
+    <button data-tab="compass" class="active"><span class="emi" data-icon="compass"></span> <span data-i18n="calcTabCorr"></span></button>
+    <button data-tab="marine"><span class="emi" data-icon="clock"></span> <span data-i18n="calcTabTime"></span></button>
+    <button data-tab="tide"><span class="emi" data-icon="waves"></span> <span data-i18n="calcTabTide"></span></button>
   </div>
 
   <div id="panel-compass">
   <p class="sub">True ↔ Variation ↔ Magnetic ↔ Deviation ↔ Compass</p>
 
   <div class="card">
-    <label>Что во что пересчитать</label>
+    <label data-i18n="calcConvLabel"></label>
     <div class="seg" id="dirs">
       <button data-s="T" data-d="C">True → Compass</button>
       <button data-s="C" data-d="T">Compass → True</button>
@@ -129,7 +131,7 @@
     </div>
   </div>
 
-  <button class="go" id="go">Рассчитать</button>
+  <button class="go" id="go" data-i18n="calcCalc"></button>
 
   <div class="card result hidden" id="resultCard">
     <div class="answer" id="answer"></div>
@@ -141,11 +143,11 @@
 
   <div id="panel-marine" class="hidden">
     <div class="card">
-      <label>Что посчитать</label>
+      <label data-i18n="calcWhatCalc"></label>
       <div class="seg" id="mkinds">
-        <button data-k="t" class="active"><span class="emi" data-icon="clock"></span> Время</button>
-        <button data-k="d"><span class="emi" data-icon="map"></span> Дистанция</button>
-        <button data-k="v"><span class="emi" data-icon="gauge"></span> Скорость</button>
+        <button data-k="t" class="active"><span class="emi" data-icon="clock"></span> <span data-i18n="calcTabTime"></span></button>
+        <button data-k="d"><span class="emi" data-icon="map"></span> <span data-i18n="calcKDist"></span></button>
+        <button data-k="v"><span class="emi" data-icon="gauge"></span> <span data-i18n="calcKSpeed"></span></button>
         <button data-k="e"><span class="emi" data-icon="target"></span> ETA</button>
       </div>
     </div>
@@ -159,15 +161,15 @@
         <input id="mB" type="number" inputmode="decimal" min="0" placeholder="13.2">
       </div></div>
       <div class="row hidden" id="mRowRes"><div class="field">
-        <label>Запас, %</label>
+        <label data-i18n="calcLblReserve"></label>
         <input id="mRes" type="number" inputmode="decimal" min="0" placeholder="20">
       </div></div>
       <div class="row hidden" id="mRowStart"><div class="field">
-        <label>Время старта (ЧЧ:ММ)</label>
+        <label data-i18n="calcLblStart"></label>
         <input id="mStart" type="text" inputmode="numeric" placeholder="09:00">
       </div></div>
     </div>
-    <button class="go" id="mGo">Рассчитать</button>
+    <button class="go" id="mGo" data-i18n="calcCalc"></button>
     <div class="card result hidden" id="mResultCard">
       <div class="answer" id="mAnswer"></div>
       <div class="steps" id="mSteps"></div>
@@ -176,24 +178,24 @@
   </div><!-- /panel-marine -->
 
   <div id="panel-tide" class="hidden">
-    <p class="sub">Правило двенадцатых: 1–2–3–3–2–1 за 6 часов</p>
+    <p class="sub" data-i18n="calcTideSub"></p>
     <div class="card">
       <div class="row">
         <div class="field">
-          <label>Малая вода LW (м)</label>
+          <label data-i18n="calcLblLw"></label>
           <input id="tLw" type="number" inputmode="decimal" placeholder="2">
         </div>
         <div class="field">
-          <label>Полная вода HW (м)</label>
+          <label data-i18n="calcLblHw"></label>
           <input id="tHw" type="number" inputmode="decimal" placeholder="8">
         </div>
       </div>
       <div class="row"><div class="field">
-        <label>Часов после малой воды (0–6)</label>
+        <label data-i18n="calcLblHours"></label>
         <input id="tH" type="number" inputmode="decimal" min="0" max="6" step="0.5" placeholder="3.5">
       </div></div>
     </div>
-    <button class="go" id="tGo">Рассчитать</button>
+    <button class="go" id="tGo" data-i18n="calcCalc"></button>
     <div class="card result hidden" id="tResultCard">
       <div class="answer" id="tAnswer"></div>
       <canvas id="tChart" width="320" height="180" style="width:100%;height:auto;margin-top:6px"></canvas>
@@ -202,7 +204,7 @@
     <div class="err hidden" id="tError"></div>
   </div><!-- /panel-tide -->
 
-  <p class="foot">Учебный инструмент. Не является официальным материалом ISSA.</p>
+  <p class="foot" data-i18n="calcFoot"></p>
 
 <script>
 "use strict";
@@ -250,9 +252,7 @@ function solve(src, dst, course, vr, vrDir, dv, dvDir){
 }
 
 function ruleHint(direction){
-  return direction === "down"
-    ? "Правило (вниз, True→Compass): East вычитаем (−), West прибавляем (+)."
-    : "Правило (вверх, Compass→True): East прибавляем (+), West вычитаем (−).";
+  return direction === "down" ? I18N.t("calcRuleDown") : I18N.t("calcRuleUp");
 }
 
 // ── UI ──
@@ -268,7 +268,7 @@ function needDev(){ const p=pair(); return (p.has("M")&&p.has("C"))||(p.has("T")
 function syncFields(){
   document.getElementById("varRow").classList.toggle("hidden", !needVar());
   document.getElementById("devRow").classList.toggle("hidden", !needDev());
-  document.getElementById("courseLabel").textContent = `Курс ${NAME[SRC]} (°)`;
+  document.getElementById("courseLabel").textContent = `${I18N.t("calcCourse")} ${NAME[SRC]} (°)`;
 }
 
 dirsBox.addEventListener("click", e => {
@@ -300,11 +300,11 @@ function showError(msg){
 document.getElementById("go").addEventListener("click", () => {
   document.getElementById("error").classList.add("hidden");
   const course = parseFloat(document.getElementById("course").value);
-  if (Number.isNaN(course)) return showError("Введите курс.");
+  if (Number.isNaN(course)) return showError(I18N.t("calcErrCourse"));
   const vr = needVar() ? parseFloat(document.getElementById("var").value) : 0;
   const dv = needDev() ? parseFloat(document.getElementById("dev").value) : 0;
-  if (needVar() && Number.isNaN(vr)) return showError("Введите Variation.");
-  if (needDev() && Number.isNaN(dv)) return showError("Введите Deviation.");
+  if (needVar() && Number.isNaN(vr)) return showError(I18N.t("calcErrVar"));
+  if (needDev() && Number.isNaN(dv)) return showError(I18N.t("calcErrDev"));
 
   const res = solve(SRC, DST, course, Math.abs(vr||0), VDIR, Math.abs(dv||0), DDIR);
   const pad = String(res.answer).padStart(3, "0");
@@ -321,7 +321,7 @@ syncFields();
 // ───────────────────── Раздел «Скорость · время · ETA» ─────────────────────
 // Та же арифметика, что marine.py.
 function numFmt(x){ return String(Math.round(x*100)/100).replace(".", ","); }
-function hoursToHM(h){ if(h<0)h=0; const t=Math.round(h*60); return `${Math.floor(t/60)} ч ${String(t%60).padStart(2,"0")} мин`; }
+function hoursToHM(h){ if(h<0)h=0; const t=Math.round(h*60); return I18N.t("calcHM", {h: Math.floor(t/60), m: String(t%60).padStart(2,"0")}); }
 function etaClock(start, travelH){
   const s = String(start).trim().replace(".", ":");
   let hh, mm;
@@ -336,17 +336,17 @@ function etaClock(start, travelH){
 
 let MKIND = "t";
 const MK = {
-  t: { a:["Скорость (узлы)","5.5"], b:["Дистанция (NM)","13.2"], res:false, start:false },
-  d: { a:["Скорость (узлы)","6"],   b:["Время (часы)","2.5"],    res:false, start:false },
-  v: { a:["Дистанция (NM)","15"],   b:["Время (часы)","3"],      res:false, start:false },
-  e: { a:["Дистанция (NM)","18"],   b:["Скорость (узлы)","5"],   res:true,  start:true  },
+  t: { a:["calcLblSpeed","5.5"], b:["calcLblDist","13.2"], res:false, start:false },
+  d: { a:["calcLblSpeed","6"],   b:["calcLblTime","2.5"],  res:false, start:false },
+  v: { a:["calcLblDist","15"],   b:["calcLblTime","3"],    res:false, start:false },
+  e: { a:["calcLblDist","18"],   b:["calcLblSpeed","5"],   res:true,  start:true  },
 };
 
 function syncMarine(){
   const c = MK[MKIND];
   const A=document.getElementById("mLabelA"), B=document.getElementById("mLabelB");
-  A.textContent = c.a[0]; document.getElementById("mA").placeholder = c.a[1];
-  B.textContent = c.b[0]; document.getElementById("mB").placeholder = c.b[1];
+  A.textContent = I18N.t(c.a[0]); document.getElementById("mA").placeholder = c.a[1];
+  B.textContent = I18N.t(c.b[0]); document.getElementById("mB").placeholder = c.b[1];
   document.getElementById("mRowRes").classList.toggle("hidden", !c.res);
   document.getElementById("mRowStart").classList.toggle("hidden", !c.start);
 }
@@ -369,29 +369,30 @@ document.getElementById("mGo").addEventListener("click", () => {
   document.getElementById("mError").classList.add("hidden");
   const a = parseFloat(document.getElementById("mA").value);
   const b = parseFloat(document.getElementById("mB").value);
-  if (Number.isNaN(a) || Number.isNaN(b)) return mErr("Заполни оба поля.");
+  if (Number.isNaN(a) || Number.isNaN(b)) return mErr(I18N.t("calcErrBoth"));
   let answer="", steps="";
+  const HR = I18N.t("calcHr");
   if (MKIND === "t"){
-    if (a<=0) return mErr("Скорость должна быть > 0.");
-    const h=b/a; answer=`Время в пути: ${numFmt(h)} ч (${hoursToHM(h)})`;
-    steps=`t = D / V = ${numFmt(b)} / ${numFmt(a)} = ${numFmt(h)} ч`;
+    if (a<=0) return mErr(I18N.t("calcErrSpeedPos"));
+    const h=b/a; answer=I18N.t("calcAnsTravel", {n: numFmt(h), hm: hoursToHM(h)});
+    steps=`t = D / V = ${numFmt(b)} / ${numFmt(a)} = ${numFmt(h)} ${HR}`;
   } else if (MKIND === "d"){
-    const d=a*b; answer=`Дистанция: ${numFmt(d)} NM`;
+    const d=a*b; answer=I18N.t("calcAnsDist", {d: numFmt(d)});
     steps=`D = V × t = ${numFmt(a)} × ${numFmt(b)} = ${numFmt(d)} NM`;
   } else if (MKIND === "v"){
-    if (b<=0) return mErr("Время должно быть > 0.");
-    const v=a/b; answer=`Средняя скорость: ${numFmt(v)} узла`;
-    steps=`V = D / t = ${numFmt(a)} / ${numFmt(b)} = ${numFmt(v)} узла`;
+    if (b<=0) return mErr(I18N.t("calcErrTimePos"));
+    const v=a/b; answer=I18N.t("calcAnsSpeed", {v: numFmt(v)});
+    steps=`V = D / t = ${numFmt(a)} / ${numFmt(b)} = ${numFmt(v)}`;
   } else { // e: ETA
-    if (b<=0) return mErr("Скорость должна быть > 0.");
+    if (b<=0) return mErr(I18N.t("calcErrSpeedPos"));
     const res=parseFloat(document.getElementById("mRes").value)||0;
     const start=document.getElementById("mStart").value.trim();
     const base=a/b, withR=base*(1+Math.max(0,res)/100);
-    answer=`В пути: ${numFmt(withR)} ч (${hoursToHM(withR)})`;
+    answer=I18N.t("calcAnsInTravel", {n: numFmt(withR), hm: hoursToHM(withR)});
     const eta = start ? etaClock(start, withR) : null;
     if (eta) answer+=`\n🕒 ETA: ${eta}`;
-    steps=`t = D / V = ${numFmt(a)} / ${numFmt(b)} = ${numFmt(base)} ч`;
-    if (res) steps+=`\nс запасом ${numFmt(res)}% → ${numFmt(withR)} ч`;
+    steps=`t = D / V = ${numFmt(a)} / ${numFmt(b)} = ${numFmt(base)} ${HR}`;
+    if (res) steps+=`\n${I18N.t("calcStepReserve", {r: numFmt(res), w: numFmt(withR)})}`;
   }
   document.getElementById("mAnswer").textContent = answer;
   document.getElementById("mSteps").textContent = steps;
@@ -436,7 +437,7 @@ function drawTide(hw, lw, mark){
   ctx.stroke();
   // подписи часов
   ctx.fillStyle = hint; ctx.font = "10px sans-serif"; ctx.textAlign = "center";
-  for (let hh=0; hh<=6; hh++) ctx.fillText(hh+"ч", x(hh), H-pad+12);
+  for (let hh=0; hh<=6; hh++) ctx.fillText(hh+I18N.t("calcHr"), x(hh), H-pad+12);
   // точка-маркер на текущем времени
   if (mark != null){
     const mx=x(Math.max(0,Math.min(6,mark))), my=y(heightAfterLw(hw,lw,mark));
@@ -453,15 +454,15 @@ document.getElementById("tGo").addEventListener("click", () => {
   const lw = parseFloat(document.getElementById("tLw").value);
   const hw = parseFloat(document.getElementById("tHw").value);
   const h  = parseFloat(document.getElementById("tH").value);
-  if (Number.isNaN(lw) || Number.isNaN(hw)) return tErr("Введи LW и HW.");
-  if (Number.isNaN(h)) return tErr("Введи число часов после малой воды.");
+  if (Number.isNaN(lw) || Number.isNaN(hw)) return tErr(I18N.t("calcErrLwHw"));
+  if (Number.isNaN(h)) return tErr(I18N.t("calcErrHours"));
   const rng = hw - lw;
   const water = heightAfterLw(hw, lw, h);
   const f = x => String(Math.round(x*100)/100).replace(".", ",");
-  document.getElementById("tAnswer").textContent = `Высота воды: ${f(water)} м`;
+  document.getElementById("tAnswer").textContent = I18N.t("calcAnsWater", {v: f(water)});
   // пошаговая таблица 1-2-3-3-2-1
-  let acc = lw, lines = [`Диапазон = ${f(hw)} − ${f(lw)} = ${f(rng)} м; 1/12 = ${f(rng/12)} м`];
-  for (let i=0;i<6;i++){ acc += rng*TWELFTHS[i]/12; lines.push(`${i+1}ч  +${TWELFTHS[i]}/12 → ${f(acc)} м`); }
+  let acc = lw, lines = [I18N.t("calcTideRange", {hw: f(hw), lw: f(lw), rng: f(rng), tw: f(rng/12)})];
+  for (let i=0;i<6;i++){ acc += rng*TWELFTHS[i]/12; lines.push(I18N.t("calcTideStep", {i: i+1, n: TWELFTHS[i], v: f(acc)})); }
   document.getElementById("tSteps").textContent = lines.join("\n");
   document.getElementById("tResultCard").classList.remove("hidden");
   drawTide(hw, lw, h);
