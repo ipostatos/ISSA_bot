@@ -220,7 +220,31 @@
     histEmpty:    { ru: "Пока нет завершённых тестов.<br>Пройди тренировку или экзамен — здесь появится история.", pl: "Brak ukończonych testów.<br>Zrób trening lub egzamin — tu pojawi się historia.", ua: "Поки немає завершених тестів.<br>Пройди тренування або екзамен — тут з'явиться історія.", en: "No completed tests yet.<br>Take a practice or exam — history will appear here." },
     histSyncNote: { ru: "История прохождений синхронизируется при открытии из Telegram. Слабые темы и рекомендации доступны и так.", pl: "Historia podejść synchronizuje się po otwarciu z Telegrama. Słabe tematy i rekomendacje są dostępne i tak.", ua: "Історія проходжень синхронізується при відкритті з Telegram. Слабкі теми й рекомендації доступні й так.", en: "Attempt history syncs when opened from Telegram. Weak topics and tips are available regardless." },
     hMin:         { ru: "м", pl: "min", ua: "хв", en: "m" },
-    hSec:         { ru: "с", pl: "s", ua: "с", en: "s" }
+    hSec:         { ru: "с", pl: "s", ua: "с", en: "s" },
+
+    /* ── about.html — только заголовки/кнопки/подписи; описательная проза
+       (банки, источники, об авторе, дисклеймер) оставлена на русском ── */
+    aboutTitle:   { ru: "О банке вопросов", pl: "O banku pytań", ua: "Про банк питань", en: "About the question bank" },
+    aboutSub:     { ru: "Прозрачно: из чего собран и как проверен", pl: "Przejrzyście: z czego zebrany i jak sprawdzony", ua: "Прозоро: з чого зібраний і як перевірений", en: "Transparent: what it's built from and how it's checked" },
+    aboutCap:     { ru: "проверенных вопросов · ревизия", pl: "sprawdzonych pytań · rewizja", ua: "перевірених питань · ревізія", en: "verified questions · revision" },
+    aboutLicenses:{ ru: "Лицензии и банки", pl: "Licencje i banki", ua: "Ліцензії та банки", en: "Licenses & banks" },
+    aboutVerified:{ ru: "Что выверено", pl: "Co zweryfikowano", ua: "Що вивірено", en: "What's verified" },
+    aboutByDiff:  { ru: "По сложности", pl: "Według trudności", ua: "За складністю", en: "By difficulty" },
+    aboutByTopic: { ru: "По темам", pl: "Według tematów", ua: "За темами", en: "By topic" },
+    aboutSources: { ru: "Источники", pl: "Źródła", ua: "Джерела", en: "Sources" },
+    aboutAuthor:  { ru: "Об авторе", pl: "O autorze", ua: "Про автора", en: "About the author" },
+    aboutDiffEasy:{ ru: "Лёгкие", pl: "Łatwe", ua: "Легкі", en: "Easy" },
+    aboutDiffMed: { ru: "Средние", pl: "Średnie", ua: "Середні", en: "Medium" },
+    aboutDiffHard:{ ru: "Сложные", pl: "Trudne", ua: "Складні", en: "Hard" },
+    aboutSupport: { ru: "Поддержать в Telegram Stars:", pl: "Wesprzyj w Telegram Stars:", ua: "Підтримати в Telegram Stars:", en: "Support with Telegram Stars:" },
+    aboutCoffee:  { ru: "Кофе · 50 ⭐", pl: "Kawa · 50 ⭐", ua: "Кава · 50 ⭐", en: "Coffee · 50 ⭐" },
+    aboutThanks:  { ru: "Спасибо · 100 ⭐", pl: "Dzięki · 100 ⭐", ua: "Дякую · 100 ⭐", en: "Thanks · 100 ⭐" },
+    aboutGenerous:{ ru: "Щедро · 300 ⭐", pl: "Hojnie · 300 ⭐", ua: "Щедро · 300 ⭐", en: "Generous · 300 ⭐" },
+    aboutCoffeeExt:{ ru: "Или купить кофе (внешне)", pl: "Albo postaw kawę (zewnętrznie)", ua: "Або купити каву (зовні)", en: "Or buy a coffee (external)" },
+    aboutToTrain: { ru: "К тренировке", pl: "Do treningu", ua: "До тренування", en: "To practice" },
+    aboutDonateThanks:{ ru: "💙 Спасибо за поддержку! Попутного ветра ⛵", pl: "💙 Dziękuję za wsparcie! Pomyślnych wiatrów ⛵", ua: "💙 Дякую за підтримку! Попутного вітру ⛵", en: "💙 Thanks for the support! Fair winds ⛵" },
+    aboutDonateFail:{ ru: "Платёж не прошёл. Можно попробовать ещё раз.", pl: "Płatność nie przeszła. Można spróbować ponownie.", ua: "Платіж не пройшов. Можна спробувати ще раз.", en: "Payment didn't go through. You can try again." },
+    aboutDonateChat:{ ru: "Открыли чат с ботом — там выбери сумму в звёздах ⭐", pl: "Otwarliśmy czat z botem — tam wybierz kwotę w gwiazdkach ⭐", ua: "Відкрили чат з ботом — там обери суму в зірках ⭐", en: "Opened the chat with the bot — pick an amount in Stars there ⭐" }
   };
 
   return { LANGS: LANGS, DICT: DICT };

@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>О банке вопросов</title>
+<title data-i18n="aboutTitle">О банке вопросов</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="icons.js"></script>
 <script src="quiz_data.js"></script>
 <style>
@@ -47,16 +49,16 @@
 </style>
 </head>
 <body>
-  <h1>О банке вопросов</h1>
-  <p class="sub">Прозрачно: из чего собран и как проверен</p>
+  <h1 data-i18n="aboutTitle"></h1>
+  <p class="sub" data-i18n="aboutSub"></p>
 
   <div class="card" style="margin-bottom:12px">
     <div class="big-num" id="total">—</div>
-    <div class="big-cap">проверенных вопросов · ревизия <span id="rev">—</span></div>
+    <div class="big-cap"><span data-i18n="aboutCap"></span> <span id="rev">—</span></div>
   </div>
 
   <!-- Свайп по лицензиям: банки вопросов (ISSA / Żeglarz / Sternik) -->
-  <div class="section-title" style="margin:4px 0 8px">Лицензии и банки</div>
+  <div class="section-title" style="margin:4px 0 8px" data-i18n="aboutLicenses"></div>
   <div class="bank-track" id="bankTrack">
     <div class="card bank-slide" style="margin:0">
       <div class="bank-title"><span class="emi" data-icon="graduation-cap"></span> ISSA Inshore Skipper + SRC</div>
@@ -83,7 +85,7 @@
   <div class="bank-dots" id="bankDots"></div>
 
   <div class="card" style="margin-bottom:12px">
-    <div class="h2">Что выверено</div>
+    <div class="h2" data-i18n="aboutVerified"></div>
     <div class="li"><span class="b emi" data-icon="check"></span><span>У каждого вопроса <b id="cExpl">—</b> — пояснение к правильному ответу.</span></div>
     <div class="li"><span class="b emi" data-icon="check"></span><span>У <b id="cRef">—</b> указан <b>источник</b> (правило МППСС / раздел учебника ISSA).</span></div>
     <div class="li"><span class="b emi" data-icon="check"></span><span>У <b id="cWhy">—</b> — разбор <b>каждого</b> варианта: почему он верен или неверен.</span></div>
@@ -91,21 +93,21 @@
   </div>
 
   <div class="card" style="margin-bottom:12px">
-    <div class="h2">По сложности</div>
+    <div class="h2" data-i18n="aboutByDiff"></div>
     <div class="difrow">
-      <div class="pill"><span>Лёгкие</span><span class="n ok-i" id="d1">—</span></div>
-      <div class="pill"><span>Средние</span><span class="n" id="d2" style="color:#e0a13a">—</span></div>
-      <div class="pill"><span>Сложные</span><span class="n" id="d3" style="color:var(--bad)">—</span></div>
+      <div class="pill"><span data-i18n="aboutDiffEasy"></span><span class="n ok-i" id="d1">—</span></div>
+      <div class="pill"><span data-i18n="aboutDiffMed"></span><span class="n" id="d2" style="color:#e0a13a">—</span></div>
+      <div class="pill"><span data-i18n="aboutDiffHard"></span><span class="n" id="d3" style="color:var(--bad)">—</span></div>
     </div>
   </div>
 
   <div class="card" style="margin-bottom:12px">
-    <div class="h2">По темам</div>
+    <div class="h2" data-i18n="aboutByTopic"></div>
     <div id="topics"></div>
   </div>
 
   <div class="card" style="margin-bottom:12px">
-    <div class="h2">Источники</div>
+    <div class="h2" data-i18n="aboutSources"></div>
     <div class="muted" style="font-size:13px; line-height:1.6">
       <b>ISSA (Inshore Skipper + SRC):</b> вопросы составлены по открытым
       первоисточникам — <b>МППСС-72 (COLREG)</b>, система ограждения <b>IALA MBS</b>,
@@ -133,7 +135,7 @@
 
   <!-- Об авторе + благодарность -->
   <div class="card" style="margin-bottom:12px">
-    <div class="h2">Об авторе</div>
+    <div class="h2" data-i18n="aboutAuthor"></div>
     <div class="muted" style="font-size:13px; line-height:1.6; margin-bottom:10px">
       Тренажёр — независимый некоммерческий проект: подготовка к экзаменам по
       яхтингу на русском. Собран и поддерживается одним человеком в свободное время.
@@ -145,19 +147,19 @@
       <a href="https://t.me/ipostatos" target="_blank" rel="noopener"
          style="color:var(--accent)"><span class="emi" data-icon="send"></span> @ipostatos</a>.
     </div>
-    <div class="muted" style="font-size:12px; margin-bottom:8px">Поддержать в Telegram Stars:</div>
+    <div class="muted" style="font-size:12px; margin-bottom:8px" data-i18n="aboutSupport"></div>
     <div class="donate-row">
       <button class="btn stars-btn" data-stars="50">
-        <span class="emi" data-icon="coffee"></span> Кофе · 50 ⭐
+        <span class="emi" data-icon="coffee"></span> <span data-i18n="aboutCoffee"></span>
       </button>
       <button class="btn stars-btn" data-stars="100">
-        <span class="emi" data-icon="star"></span> Спасибо · 100 ⭐
+        <span class="emi" data-icon="star"></span> <span data-i18n="aboutThanks"></span>
       </button>
       <button class="btn stars-btn" data-stars="300">
-        <span class="emi" data-icon="rocket"></span> Щедро · 300 ⭐
+        <span class="emi" data-icon="rocket"></span> <span data-i18n="aboutGenerous"></span>
       </button>
       <a class="btn ghost" href="https://buymeacoffee.com/ipostatos" target="_blank" rel="noopener" id="coffeeBtn">
-        <span class="emi" data-icon="coffee"></span> Или купить кофе (внешне)
+        <span class="emi" data-icon="coffee"></span> <span data-i18n="aboutCoffeeExt"></span>
       </a>
     </div>
     <div class="muted" id="donateNote" style="font-size:12px; margin-top:10px; text-align:center"></div>
@@ -167,7 +169,7 @@
     подготовки. Банк <b>не содержит экзаменационных ключей</b> и
     <b>не является официальным материалом ISSA</b> или какой-либо школы.</p>
 
-  <a class="btn" href="quiz.html" style="margin-top:8px"><span class="emi" data-icon="graduation-cap"></span> К тренировке</a>
+  <a class="btn" href="quiz.html" style="margin-top:8px"><span class="emi" data-icon="graduation-cap"></span> <span data-i18n="aboutToTrain"></span></a>
 
 <script>
 "use strict";
@@ -223,7 +225,7 @@ if (!D){
     const link = "https://t.me/" + BOT + "?start=donate";
     if (tg && tg.openTelegramLink) tg.openTelegramLink(link);
     else window.open(link, "_blank");
-    note.textContent = "Открыли чат с ботом — там выбери сумму в звёздах ⭐";
+    note.textContent = I18N.t("aboutDonateChat");
   }
 
   function pay(amount, btn){
@@ -243,10 +245,10 @@ if (!D){
       // Открываем счёт ПРЯМО в окне мини-аппа.
       tg.openInvoice(d.link, function(status){
         if (status === "paid"){
-          note.textContent = "💙 Спасибо за поддержку! Попутного ветра ⛵";
+          note.textContent = I18N.t("aboutDonateThanks");
           if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
         } else if (status === "failed"){
-          note.textContent = "Платёж не прошёл. Можно попробовать ещё раз.";
+          note.textContent = I18N.t("aboutDonateFail");
         } // "cancelled" / "pending" — молча
       });
     })
