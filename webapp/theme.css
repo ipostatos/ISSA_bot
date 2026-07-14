@@ -158,3 +158,13 @@ body{
 .btn > .emi:only-child{ margin-right:0 }
 
 .hidden{ display:none !important }
+
+/* ── выбор языка (i18n) ── */
+.lang-overlay{ position:fixed; inset:0; z-index:1000; display:flex; align-items:center;
+  justify-content:center; padding:24px; background:rgba(0,0,0,.55) }
+.lang-box{ width:100%; max-width:340px }
+.lang-list{ display:flex; flex-direction:column; gap:10px }
+.lang-chip{ font-size:13px; font-weight:700; color:var(--hint); background:transparent;
+  border:1px solid var(--border); border-radius:999px; padding:4px 12px; cursor:pointer;
+  line-height:1.2 }
+.lang-chip:active{ transform:scale(.97) }

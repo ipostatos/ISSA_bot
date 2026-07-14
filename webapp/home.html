@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js" data-home="true"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="quiz_data.js"></script>
 <script src="migration.js"></script>
 <script src="srs.js"></script>
@@ -69,8 +71,8 @@
 </style>
 </head>
 <body>
-  <div class="hero"><span class="logo emi" data-icon="anchor"></span><h1>ISSA Trainer</h1></div>
-  <p class="sub">Подготовка к экзамену Inshore Skipper + SRC</p>
+  <div class="hero"><span class="logo emi" data-icon="anchor"></span><h1>ISSA Trainer</h1><button class="lang-chip" id="langChip" style="margin-left:auto; align-self:center"></button></div>
+  <p class="sub" data-i18n="homeSub"></p>
 
   <!-- ПРИОРИТЕТ: что делать прямо сейчас (динамически: повтор или старт) -->
   <div class="next">
@@ -79,7 +81,7 @@
     <div class="hintline" id="nextHint">605 вопросов · перемешанные варианты · разбор и источники</div>
     <div class="actions">
       <a class="btn" id="nextBtn" href="quiz.html"><span class="emi" data-icon="graduation-cap"></span> Начать</a>
-      <a class="btn ghost" href="konspekt.html"><span class="emi" data-icon="book-open"></span> Теория</a>
+      <a class="btn ghost" href="konspekt.html"><span class="emi" data-icon="book-open"></span> <span data-i18n="btnTheory"></span></a>
     </div>
   </div>
 
@@ -94,21 +96,21 @@
             <div class="ring-val"><span class="ring-num" id="readyPct">0%</span></div>
           </div>
           <div style="flex:1; min-width:0">
-            <div class="h2" style="margin:0 0 4px">Готовность · ISSA</div>
+            <div class="h2" style="margin:0 0 4px" data-i18n="readyIssa"></div>
             <div class="muted" style="font-size:13px" id="readyVerdict"></div>
           </div>
         </div>
         <div style="display:flex; gap:10px; margin-top:12px">
           <div id="goalBox" style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px; cursor:pointer">
-            <div style="font-size:11px; color:var(--hint)">Сегодня</div>
+            <div style="font-size:11px; color:var(--hint)" data-i18n="lblToday"></div>
             <div style="font-weight:800; font-size:18px" id="goalToday">0/0</div>
           </div>
           <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
-            <div style="font-size:11px; color:var(--hint)">Серия</div>
+            <div style="font-size:11px; color:var(--hint)" data-i18n="lblStreak"></div>
             <div style="font-weight:800; font-size:18px" id="streakVal">0 <span class="emi" data-icon="flame"></span></div>
           </div>
           <div style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px">
-            <div style="font-size:11px; color:var(--hint)">Рекорд</div>
+            <div style="font-size:11px; color:var(--hint)" data-i18n="lblBest"></div>
             <div style="font-weight:800; font-size:18px" id="bestVal">0</div>
           </div>
         </div>
@@ -127,100 +129,100 @@
 
   <!-- АКТИВНОСТЬ (heatmap по дням) -->
   <div class="card hidden" id="activityCard" style="margin-bottom:14px">
-    <div class="h2" style="margin:0 0 10px">Активность</div>
+    <div class="h2" style="margin:0 0 10px" data-i18n="activity"></div>
     <div id="heatmap"></div>
   </div>
 
   <!-- РАЗДЕЛЫ -->
-  <div class="section-title">Практика</div>
+  <div class="section-title" data-i18n="secPractice"></div>
   <div class="grid">
     <a class="cell" href="quiz.html">
       <div class="ic-tile blue" data-icon="graduation-cap"></div>
-      <div class="t">Тесты ISSA</div>
-      <div class="d">Темы и экзамен, таймер, разбор</div>
+      <div class="t" data-i18n="cQuizT"></div>
+      <div class="d" data-i18n="cQuizD"></div>
     </a>
     <a class="cell" href="exam_pl.html">
       <div class="ic-tile gold" data-icon="file-check"></div>
-      <div class="t">Лицензии PL</div>
-      <div class="d">Żeglarz + Sternik · экзамен 75/65</div>
+      <div class="t" data-i18n="cPlT"></div>
+      <div class="d" data-i18n="cPlD"></div>
     </a>
     <a class="cell" href="tasks.html">
       <div class="ic-tile green" data-icon="clipboard-list"></div>
-      <div class="t">Задачки</div>
-      <div class="d">Скорость·время·ETA, приливы</div>
+      <div class="t" data-i18n="cTasksT"></div>
+      <div class="d" data-i18n="cTasksD"></div>
     </a>
     <a class="cell" href="navtasks.html">
       <div class="ic-tile cyan" data-icon="compass"></div>
-      <div class="t">T-V-M-D-C</div>
-      <div class="d">50 задач на поправки компаса</div>
+      <div class="t" data-i18n="cNavT"></div>
+      <div class="d" data-i18n="cNavD"></div>
     </a>
     <a class="cell" href="calc.html">
       <div class="ic-tile violet" data-icon="calculator"></div>
-      <div class="t">Калькулятор</div>
-      <div class="d">TVMDC и S·D·T·ETA</div>
+      <div class="t" data-i18n="cCalcT"></div>
+      <div class="d" data-i18n="cCalcD"></div>
     </a>
     <!-- BETA:weather — самодостаточный блок, можно удалить целиком без правки грида -->
     <a class="cell" href="weather.html" data-beta="weather">
       <div class="ic-tile cyan" data-icon="wind"></div>
-      <div class="t">Погода <span class="beta-badge">beta</span></div>
-      <div class="d">Ветер и волна по точке</div>
+      <div class="t"><span data-i18n="cWeatherT"></span> <span class="beta-badge">beta</span></div>
+      <div class="d" data-i18n="cWeatherD"></div>
     </a>
     <!-- /BETA:weather -->
   </div>
 
-  <div class="section-title">Теория и справка</div>
+  <div class="section-title" data-i18n="secTheory"></div>
   <div class="grid">
     <a class="cell" href="konspekt.html">
       <div class="ic-tile amber" data-icon="book-open"></div>
-      <div class="t">Конспект</div>
-      <div class="d">16 тем по учебнику ISSA</div>
+      <div class="t" data-i18n="cKonspektT"></div>
+      <div class="d" data-i18n="cKonspektD"></div>
     </a>
     <a class="cell" href="cheatsheet.html">
       <div class="ic-tile red" data-icon="bookmark"></div>
-      <div class="t">Шпаргалки</div>
-      <div class="d">МППСС, огни, IALA, узлы…</div>
+      <div class="t" data-i18n="cCheatT"></div>
+      <div class="d" data-i18n="cCheatD"></div>
     </a>
     <a class="cell" href="glossary.html">
       <div class="ic-tile blue" data-icon="book-marked"></div>
-      <div class="t">Словарь</div>
-      <div class="d">180+ терминов с поиском</div>
+      <div class="t" data-i18n="cGlossaryT"></div>
+      <div class="d" data-i18n="cGlossaryD"></div>
     </a>
     <a class="cell" href="book.html">
       <div class="ic-tile green" data-icon="library"></div>
-      <div class="t">Библиотека</div>
-      <div class="d">Учебники целиком (PDF)</div>
+      <div class="t" data-i18n="cBookT"></div>
+      <div class="d" data-i18n="cBookD"></div>
     </a>
   </div>
 
-  <div class="section-title">Бонус · интерактив</div>
+  <div class="section-title" data-i18n="secBonus"></div>
   <div class="grid">
     <a class="cell" href="audio.html">
       <div class="ic-tile violet" data-icon="headphones"></div>
-      <div class="t">Аудио-повторение 🎧</div>
-      <div class="d">Вопросы на слух — в дорогу</div>
+      <div class="t" data-i18n="cAudioT"></div>
+      <div class="d" data-i18n="cAudioD"></div>
     </a>
     <a class="cell" href="lights.html">
       <div class="ic-tile gold" data-icon="ship"></div>
-      <div class="t">Огни судов 🚢</div>
-      <div class="d">Распознавание ночью · COLREG</div>
+      <div class="t" data-i18n="cLightsT"></div>
+      <div class="d" data-i18n="cLightsD"></div>
     </a>
     <a class="cell" href="buoys.html">
       <div class="ic-tile cyan" data-icon="map-pin"></div>
-      <div class="t">Буи IALA 🔆</div>
-      <div class="d">Знаки и проблески · куда обходить</div>
+      <div class="t" data-i18n="cBuoysT"></div>
+      <div class="d" data-i18n="cBuoysD"></div>
     </a>
     <a class="cell" href="shapes.html">
       <div class="ic-tile amber" data-icon="triangle"></div>
-      <div class="t">Фигуры и флаги ⚑</div>
-      <div class="d">Дневные фигуры COLREG · флаги МСС</div>
+      <div class="t" data-i18n="cShapesT"></div>
+      <div class="d" data-i18n="cShapesD"></div>
     </a>
   </div>
 
   <a class="cell wide" href="profile.html" style="margin-top:12px">
     <div class="ic-tile gold" data-icon="trophy"></div>
     <div class="body">
-      <div class="t">Профиль и достижения</div>
-      <div class="d" id="profileSub">Звания, бейджи, прогресс</div>
+      <div class="t" data-i18n="cProfileT"></div>
+      <div class="d" id="profileSub"></div>
     </div>
     <div class="chev">›</div>
   </a>
@@ -228,8 +230,8 @@
   <a class="cell wide" href="history.html" style="margin-top:10px">
     <div class="ic-tile cyan" data-icon="history"></div>
     <div class="body">
-      <div class="t">История прохождений</div>
-      <div class="d">Все тесты и экзамены, динамика результатов</div>
+      <div class="t" data-i18n="cHistoryT"></div>
+      <div class="d" data-i18n="cHistoryD"></div>
     </div>
     <div class="chev">›</div>
   </a>
@@ -237,14 +239,13 @@
   <a class="cell wide" href="about.html" style="margin-top:10px">
     <div class="ic-tile" data-icon="book-marked"></div>
     <div class="body">
-      <div class="t">О банке вопросов</div>
-      <div class="d">Источники, проверка, состав — прозрачно</div>
+      <div class="t" data-i18n="cAboutT"></div>
+      <div class="d" data-i18n="cAboutD"></div>
     </div>
     <div class="chev">›</div>
   </a>
 
-  <p class="foot">Учебный тренажёр. Не является официальным материалом ISSA
-    и не содержит экзаменационных ключей.</p>
+  <p class="foot" data-i18n="homeFoot"></p>
 
 <script>
 "use strict";
@@ -260,13 +261,27 @@ if (!WEATHER_BETA){
 // заменить data-icon на SVG-иконки (Lucide) сразу при загрузке
 if (window.Icons) Icons.hydrate();
 
+// переключатель языка в шапке
+(function () {
+  var chip = document.getElementById("langChip");
+  if (chip && window.I18N) {
+    chip.textContent = I18N.lang.toUpperCase() + " · " + I18N.t("langBtn");
+    chip.onclick = function () { I18N.picker(true); };
+  }
+})();
+
 // Оживляем блок «С чего начать»: если есть вопросы к повтору по SRS —
 // предлагаем повторение приоритетом, иначе обычный старт. Всё на устройстве.
 function render(){
   const D = window.QUIZ_DATA;
   const total = D && D.meta ? D.meta.total : (D && D.questions ? D.questions.length : 0);
-  if (D && D.questions) document.getElementById("nextHint").textContent =
-    `${total} вопросов · перемешанные варианты · разбор и источники`;
+  // дефолт приоритетного блока (перебивается ниже, если есть что повторять)
+  const startIc = window.Icons ? Icons.svg("graduation-cap") : "";
+  document.getElementById("nextLabel").textContent = I18N.t("nextStart");
+  document.getElementById("nextTitle").textContent = I18N.t("nextTrain");
+  const nb = document.getElementById("nextBtn");
+  nb.innerHTML = `${startIc} ${I18N.t("btnStart")}`; nb.href = "quiz.html";
+  if (D && D.questions) document.getElementById("nextHint").textContent = I18N.t("nextHint", {n: total});
   if (!window.SRS || !D || !D.questions) return;
 
   const ids = D.questions.map(q=>q.id);
@@ -274,20 +289,18 @@ function render(){
   const st = SRS.stats(ids);
   if (due > 0 && st.started > 0){
     // есть что повторять — делаем это главным действием
-    document.getElementById("nextLabel").textContent = "Пора повторить";
+    document.getElementById("nextLabel").textContent = I18N.t("dueLabel");
     const ic = window.Icons ? Icons.svg("refresh-cw") : "";
-    document.getElementById("nextTitle").innerHTML = `${ic} ${due} вопрос(ов) к повторению`;
-    document.getElementById("nextHint").textContent =
-      `Интервальное повторение · закреплено ${st.learned} из ${total}`;
+    document.getElementById("nextTitle").innerHTML = `${ic} ${I18N.t("dueTitle", {n: due})}`;
+    document.getElementById("nextHint").textContent = I18N.t("dueHint", {done: st.learned, total: total});
     const b = document.getElementById("nextBtn");
-    b.innerHTML = `${ic} Повторить`;
+    b.innerHTML = `${ic} ${I18N.t("btnReview")}`;
     // сразу В сессию повторения, без промежуточного меню тестов — одна
     // кнопка = одно действие (quiz.html понимает ?mode=review)
     b.href = "quiz.html?mode=review";
   } else if (st.started > 0){
-    document.getElementById("nextLabel").textContent = "Так держать";
-    document.getElementById("nextHint").textContent =
-      `На сегодня всё повторено · закреплено ${st.learned} из ${total}`;
+    document.getElementById("nextLabel").textContent = I18N.t("keepUp");
+    document.getElementById("nextHint").textContent = I18N.t("allDone", {done: st.learned, total: total});
   }
 
   // ── «Готовность» — свайп по лицензиям (ISSA + польские) ──
@@ -323,14 +336,14 @@ function render(){
       document.getElementById("bestVal").textContent = `${streak.best}`;
       document.getElementById("goalBox").onclick = ()=>{
         const cur = Progress.getGoal();
-        const v = prompt("Дневная цель — сколько вопросов в день? (5–100)", cur);
+        const v = prompt(I18N.t("promptGoal"), cur);
         if (v === null) return;
         const n = parseInt(v, 10);
         if (!isNaN(n)){ Progress.setGoal(n); if (window.Sync) Sync.schedulePush(); render(); }
       };
       const weak = r.topics.filter(t=>t.pct<60).slice(0,3).map(t=>t.topic);
       document.getElementById("weakLine").textContent =
-        weak.length ? "Слабее всего: " + weak.join(", ") : "Слабых тем нет — отличная база!";
+        weak.length ? I18N.t("weakTop", {list: weak.join(", ")}) : I18N.t("noWeak");
 
       // ── план к дате экзамена: превращает абстрактный % в личный дедлайн ──
       renderExamPlan(D.questions, boxOf);
@@ -351,11 +364,11 @@ function render(){
   }
 
   // подпись плитки профиля: сколько достижений открыто
+  document.getElementById("profileSub").textContent = I18N.t("cProfileD");
   if (window.Badges){
     const bm = Badges.computeMetrics();
     const nb = Badges.unlockedCount(bm), tot = Badges.DEFS.length;
-    document.getElementById("profileSub").textContent =
-      `Достижения: ${nb} из ${tot} · звания, бейджи`;
+    document.getElementById("profileSub").textContent = I18N.t("achOf", {n: nb, tot: tot});
   }
 }
 
@@ -367,26 +380,26 @@ function renderExamPlan(questions, boxOf){
   const ic = n => window.Icons ? Icons.svg(n) : "";
   const plan = Progress.examPlan(questions, boxOf);
   if (!plan){
-    el.innerHTML = `<span style="color:var(--accent)">${ic("calendar")} Задать дату экзамена</span>`;
+    el.innerHTML = `<span style="color:var(--accent)">${ic("calendar")} ${I18N.t("setExamDate")}</span>`;
   } else {
     const [y, m, d] = plan.date.split("-");
     const col = plan.onTrack ? "var(--ok)" : "var(--warn)";
-    const dayWord = plan.daysLeft === 0 ? "сегодня!"
-      : `осталось ${plan.daysLeft} дн.`;
-    el.innerHTML = `${ic("calendar")} Экзамен ${d}.${m} — ${dayWord}` +
+    const dayWord = plan.daysLeft === 0 ? I18N.t("examToday")
+      : I18N.t("daysLeft", {n: plan.daysLeft});
+    el.innerHTML = `${ic("calendar")} ${I18N.t("examOn", {date: d + "." + m, left: dayWord})}` +
       (plan.reviewsLeft === 0
-        ? ` · <span style="color:var(--ok)">банк закреплён ${ic("check")}</span>`
-        : ` · <span style="color:${col}">нужно ~${plan.needPerDay} отв./день</span>` +
-          (plan.onTrack ? "" : ` (цель ${Progress.getGoal()} — подними её)`));
+        ? ` · <span style="color:var(--ok)">${I18N.t("bankReady")} ${ic("check")}</span>`
+        : ` · <span style="color:${col}">${I18N.t("needPerDay", {n: plan.needPerDay})}</span>` +
+          (plan.onTrack ? "" : ` ${I18N.t("raiseGoal", {g: Progress.getGoal()})}`));
   }
   el.onclick = ()=>{
     const cur = Progress.getExamDate() || "";
-    const v = prompt("Дата экзамена (ГГГГ-ММ-ДД), пусто — убрать:", cur);
+    const v = prompt(I18N.t("promptDate"), cur);
     if (v === null) return;
     const t = v.trim();
     if (!t){ Progress.setExamDate(null); render(); return; }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || isNaN(Date.parse(t))){
-      alert("Формат: ГГГГ-ММ-ДД, например 2026-08-15"); return;
+      alert(I18N.t("badDate")); return;
     }
     Progress.setExamDate(t);
     render();
@@ -407,17 +420,17 @@ function renderPlSlide(lic, title, total, icon){
          <div class="ring-val"><span class="ring-num">${r.percent}%</span></div>
        </div>
        <div style="flex:1; min-width:0">
-         <div class="h2" style="margin:0 0 4px">Готовность · ${title}</div>
+         <div class="h2" style="margin:0 0 4px">${I18N.t("readyOf", {title: title})}</div>
          <div class="muted" style="font-size:13px">${r.verdict}</div>
        </div>
      </div>
      <div class="pl-mini">
-       <div><div class="k">Изучено</div><div class="v">${r.solved}/${total}</div></div>
-       <div><div class="k">Лучший экз.</div><div class="v">${best ? best.correct+"/"+best.total : "—"}</div></div>
-       <div><div class="k">Порог</div><div class="v">65</div></div>
+       <div><div class="k">${I18N.t("lblLearned")}</div><div class="v">${r.solved}/${total}</div></div>
+       <div><div class="k">${I18N.t("lblBestExam")}</div><div class="v">${best ? best.correct+"/"+best.total : "—"}</div></div>
+       <div><div class="k">${I18N.t("lblThreshold")}</div><div class="v">65</div></div>
      </div>
      <a class="muted" href="exam_pl.html" style="display:block; font-size:12px; margin-top:8px;
-        color:var(--accent); text-decoration:none">Открыть тренажёр →</a>`;
+        color:var(--accent); text-decoration:none">${I18N.t("openTrainer")}</a>`;
 }
 
 // точки-индикаторы под каруселью + подсветка активного слайда при свайпе
