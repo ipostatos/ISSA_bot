@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Профиль</title>
+<title data-i18n="pTitle">Профиль</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="icons.js"></script>
 <script src="quiz_data.js"></script>
 <script src="migration.js"></script>
@@ -38,16 +40,15 @@
   </div>
 
   <div class="pstats">
-    <div class="s"><div class="n" id="stReady">0%</div><div class="c">готовность</div></div>
-    <div class="s"><div class="n" id="stStreak">0</div><div class="c">серия <span class="emi" data-icon="flame"></span></div></div>
-    <div class="s"><div class="n" id="stBadges">0</div><div class="c">бейджей</div></div>
+    <div class="s"><div class="n" id="stReady">0%</div><div class="c" data-i18n="pReady"></div></div>
+    <div class="s"><div class="n" id="stStreak">0</div><div class="c"><span data-i18n="pStreak"></span> <span class="emi" data-icon="flame"></span></div></div>
+    <div class="s"><div class="n" id="stBadges">0</div><div class="c" data-i18n="pBadges"></div></div>
   </div>
 
-  <div class="h2">Достижения</div>
+  <div class="h2" data-i18n="pAch"></div>
   <div class="bgrid" id="badges"></div>
 
-  <p class="foot">Достижения считаются из вашей активности на этом устройстве
-    и синхронизируются между устройствами.</p>
+  <p class="foot" data-i18n="pFoot"></p>
 
 <script>
 "use strict";
@@ -67,11 +68,11 @@ function badgeIcon(emoji){
 // звание по числу открытых бейджей
 function rankFor(n, total){
   const p = total ? n/total : 0;
-  if (p >= 1)   return { icon:"🧑‍✈️", title:"Капитан" };
-  if (p >= 0.7) return { icon:"🎖️", title:"Шкипер" };
-  if (p >= 0.4) return { icon:"🧭", title:"Штурман" };
-  if (p >= 0.15)return { icon:"🚢", title:"Матрос" };
-  return { icon:"⚓", title:"Юнга" };
+  if (p >= 1)   return { icon:"🧑‍✈️", title:"rankCaptain" };
+  if (p >= 0.7) return { icon:"🎖️", title:"rankSkipper" };
+  if (p >= 0.4) return { icon:"🧭", title:"rankNav" };
+  if (p >= 0.15)return { icon:"🚢", title:"rankSailor" };
+  return { icon:"⚓", title:"rankCabin" };
 }
 
 function render(){
@@ -82,8 +83,8 @@ function render(){
 
   const r = rankFor(unlocked, list.length);
   $("rankIcon").innerHTML = badgeIcon(r.icon);
-  $("rankTitle").textContent = r.title;
-  $("rankSub").textContent = `Открыто ${unlocked} из ${list.length} достижений`;
+  $("rankTitle").textContent = I18N.t(r.title);
+  $("rankSub").textContent = I18N.t("pOpenedOf", {n: unlocked, tot: list.length});
 
   $("stReady").textContent = m.ready + "%";
   $("stStreak").textContent = m.streak;

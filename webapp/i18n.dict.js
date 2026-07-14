@@ -108,7 +108,45 @@
     /* ── prompt/alert (нативные диалоги) ── */
     promptGoal:{ ru: "Дневная цель — сколько вопросов в день? (5–100)", pl: "Cel dzienny — ile pytań dziennie? (5–100)", ua: "Денна ціль — скільки питань на день? (5–100)", en: "Daily goal — how many questions per day? (5–100)" },
     promptDate:{ ru: "Дата экзамена (ГГГГ-ММ-ДД), пусто — убрать:", pl: "Data egzaminu (RRRR-MM-DD), pusto — usuń:", ua: "Дата іспиту (РРРР-ММ-ДД), пусто — прибрати:", en: "Exam date (YYYY-MM-DD), empty — remove:" },
-    badDate:   { ru: "Формат: ГГГГ-ММ-ДД, например 2026-08-15", pl: "Format: RRRR-MM-DD, np. 2026-08-15", ua: "Формат: РРРР-ММ-ДД, напр. 2026-08-15", en: "Format: YYYY-MM-DD, e.g. 2026-08-15" }
+    badDate:   { ru: "Формат: ГГГГ-ММ-ДД, например 2026-08-15", pl: "Format: RRRR-MM-DD, np. 2026-08-15", ua: "Формат: РРРР-ММ-ДД, напр. 2026-08-15", en: "Format: YYYY-MM-DD, e.g. 2026-08-15" },
+
+    /* ── profile.html ── */
+    pTitle:    { ru: "Профиль", pl: "Profil", ua: "Профіль", en: "Profile" },
+    pReady:    { ru: "готовность", pl: "gotowość", ua: "готовність", en: "readiness" },
+    pStreak:   { ru: "серия", pl: "seria", ua: "серія", en: "streak" },
+    pBadges:   { ru: "бейджей", pl: "odznak", ua: "бейджів", en: "badges" },
+    pAch:      { ru: "Достижения", pl: "Osiągnięcia", ua: "Досягнення", en: "Achievements" },
+    pFoot:     { ru: "Достижения считаются из вашей активности на этом устройстве и синхронизируются между устройствами.", pl: "Osiągnięcia liczone są z Twojej aktywności na tym urządzeniu i synchronizują się między urządzeniami.", ua: "Досягнення рахуються з вашої активності на цьому пристрої й синхронізуються між пристроями.", en: "Achievements are computed from your activity on this device and sync across devices." },
+    pOpenedOf: { ru: "Открыто {n} из {tot} достижений", pl: "Odblokowano {n} z {tot} osiągnięć", ua: "Відкрито {n} з {tot} досягнень", en: "{n} of {tot} achievements unlocked" },
+    rankCaptain:{ ru: "Капитан", pl: "Kapitan", ua: "Капітан", en: "Captain" },
+    rankSkipper:{ ru: "Шкипер", pl: "Skiper", ua: "Шкіпер", en: "Skipper" },
+    rankNav:   { ru: "Штурман", pl: "Nawigator", ua: "Штурман", en: "Navigator" },
+    rankSailor:{ ru: "Матрос", pl: "Marynarz", ua: "Матрос", en: "Sailor" },
+    rankCabin: { ru: "Юнга", pl: "Junga", ua: "Юнга", en: "Cabin boy" },
+
+    /* ── glossary.html ── */
+    glossTitle:  { ru: "Словарь яхтсмена", pl: "Słownik żeglarski", ua: "Словник яхтсмена", en: "Sailor's glossary" },
+    glossSearch: { ru: "Термин по-русски / English…", pl: "Termin po polsku / English…", ua: "Термін українською / English…", en: "Term in English…" },
+    glossFoot:   { ru: "Учебный словарь простыми словами. Не является официальным материалом ISSA.", pl: "Słownik edukacyjny prostymi słowami. Nie jest oficjalnym materiałem ISSA.", ua: "Навчальний словник простими словами. Не є офіційним матеріалом ISSA.", en: "A plain-language study glossary. Not official ISSA material." },
+    glossAll:    { ru: "Все", pl: "Wszystkie", ua: "Усі", en: "All" },
+    glossShown:  { ru: "Показано: {n}", pl: "Pokazano: {n}", ua: "Показано: {n}", en: "Shown: {n}" },
+    glossNone:   { ru: "Ничего не найдено.", pl: "Nic nie znaleziono.", ua: "Нічого не знайдено.", en: "Nothing found." },
+    glossNoneQ:  { ru: "Ничего не найдено по «{q}».", pl: "Nic nie znaleziono dla „{q}”.", ua: "Нічого не знайдено за «{q}».", en: "Nothing found for “{q}”." },
+    glossLoadFail:{ ru: "Не удалось загрузить словарь.", pl: "Nie udało się załadować słownika.", ua: "Не вдалося завантажити словник.", en: "Couldn't load the glossary." },
+
+    /* ── cheatsheet.html ── */
+    cheatTitle:  { ru: "Шпаргалки", pl: "Ściągi", ua: "Шпаргалки", en: "Cheat sheets" },
+    cheatFoot:   { ru: "Учебные выжимки. Не является официальным материалом ISSA.", pl: "Edukacyjne wyciągi. Nie jest oficjalnym materiałem ISSA.", ua: "Навчальні витяги. Не є офіційним матеріалом ISSA.", en: "Study summaries. Not official ISSA material." },
+    cheatFootR:  { ru: "Учебные выжимки.", pl: "Edukacyjne wyciągi.", ua: "Навчальні витяги.", en: "Study summaries." },
+    cheatLoadFail:{ ru: "Не удалось загрузить шпаргалки.", pl: "Nie udało się załadować ściąg.", ua: "Не вдалося завантажити шпаргалки.", en: "Couldn't load the cheat sheets." },
+    step:        { ru: "шаг {n}", pl: "krok {n}", ua: "крок {n}", en: "step {n}" },
+
+    /* ── book.html ── */
+    bookTitle:   { ru: "Библиотека", pl: "Biblioteka", ua: "Бібліотека", en: "Library" },
+    bookSub:     { ru: "Учебники и пособия по яхтингу", pl: "Podręczniki i materiały żeglarskie", ua: "Підручники та посібники з яхтингу", en: "Yachting textbooks and guides" },
+    bookFoot:    { ru: "«Открыть» — чтение прямо в приложении (листание и зум). «Скачать» — сохранить файл. Авторские права принадлежат правообладателям.", pl: "„Otwórz” — czytanie w aplikacji (przewijanie i zoom). „Pobierz” — zapis pliku. Prawa autorskie należą do właścicieli.", ua: "«Відкрити» — читання просто в застосунку (гортання і зум). «Завантажити» — зберегти файл. Авторські права належать правовласникам.", en: "“Open” reads it inside the app (swipe & zoom). “Download” saves the file. Copyrights belong to their owners." },
+    bookOpen:    { ru: "Открыть", pl: "Otwórz", ua: "Відкрити", en: "Open" },
+    bookDownload:{ ru: "Скачать", pl: "Pobierz", ua: "Завантажити", en: "Download" }
   };
 
   return { LANGS: LANGS, DICT: DICT };

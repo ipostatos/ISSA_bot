@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Шпаргалки ISSA</title>
+<title data-i18n="cheatTitle">Шпаргалки ISSA</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="icons.js"></script>
 <script src="lightbox.js" data-scope="#rbody"></script>
 <script src="content_data.js"></script>
@@ -81,18 +83,18 @@
 <body>
 
 <section id="list">
-  <h1><span class="emi" data-icon="bookmark"></span> Шпаргалки</h1>
+  <h1><span class="emi" data-icon="bookmark"></span> <span data-i18n="cheatTitle"></span></h1>
   <div class="tiles" id="tiles"></div>
-  <p class="foot">Учебные выжимки. Не является официальным материалом ISSA.</p>
+  <p class="foot" data-i18n="cheatFoot"></p>
 </section>
 
 <section id="reader" class="hidden">
   <div class="topbar">
-    <button class="back" id="back">← Шпаргалки</button>
+    <button class="back" id="back">← <span data-i18n="cheatTitle"></span></button>
     <span class="rtitle" id="rtitle"></span>
   </div>
   <article id="rbody"></article>
-  <p class="foot">Учебные выжимки.</p>
+  <p class="foot" data-i18n="cheatFootR"></p>
 </section>
 
 <script>
@@ -114,8 +116,7 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
 
 if (!SHEETS.length){
-  $("tiles").innerHTML = '<div class="foot">Не удалось загрузить шпаргалки '+
-    '(content_data.js не найден). Запусти deploy/update_webapp.sh.</div>';
+  $("tiles").innerHTML = '<div class="foot">' + I18N.t("cheatLoadFail") + '</div>';
 }
 
 SHEETS.forEach(s => {
@@ -166,7 +167,7 @@ function open(key){
         <h3>${esc(k.title)}</h3>
         <div>${formatCheat(k.html)}</div>
         <div class="steps">${k.steps.map((st,i)=>
-          `<figure><img src="images/${st}" loading="lazy" alt=""><figcaption>шаг ${i+1}</figcaption></figure>`
+          `<figure><img src="images/${st}" loading="lazy" alt=""><figcaption>${I18N.t("step", {n: i+1})}</figcaption></figure>`
         ).join("")}</div>
       </div>`).join("");
   }
