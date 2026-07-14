@@ -146,7 +146,81 @@
     bookSub:     { ru: "Учебники и пособия по яхтингу", pl: "Podręczniki i materiały żeglarskie", ua: "Підручники та посібники з яхтингу", en: "Yachting textbooks and guides" },
     bookFoot:    { ru: "«Открыть» — чтение прямо в приложении (листание и зум). «Скачать» — сохранить файл. Авторские права принадлежат правообладателям.", pl: "„Otwórz” — czytanie w aplikacji (przewijanie i zoom). „Pobierz” — zapis pliku. Prawa autorskie należą do właścicieli.", ua: "«Відкрити» — читання просто в застосунку (гортання і зум). «Завантажити» — зберегти файл. Авторські права належать правовласникам.", en: "“Open” reads it inside the app (swipe & zoom). “Download” saves the file. Copyrights belong to their owners." },
     bookOpen:    { ru: "Открыть", pl: "Otwórz", ua: "Відкрити", en: "Open" },
-    bookDownload:{ ru: "Скачать", pl: "Pobierz", ua: "Завантажити", en: "Download" }
+    bookDownload:{ ru: "Скачать", pl: "Pobierz", ua: "Завантажити", en: "Download" },
+
+    /* ── общий футер учебного тренажёра (переиспользуется) ── */
+    footTrainer:{ ru: "Учебный тренажёр. Не является официальным материалом ISSA.", pl: "Trener edukacyjny. Nie jest oficjalnym materiałem ISSA.", ua: "Навчальний тренажер. Не є офіційним матеріалом ISSA.", en: "A study trainer. Not official ISSA material." },
+
+    /* ── tasks.html ── */
+    taskTitle:  { ru: "Задачки", pl: "Zadania", ua: "Задачі", en: "Problems" },
+    taskCat:    { ru: "Навигация и приливы", pl: "Nawigacja i pływy", ua: "Навігація і припливи", en: "Navigation & tides" },
+    taskStreak: { ru: "серия: {n}", pl: "seria: {n}", ua: "серія: {n}", en: "streak: {n}" },
+    taskSpeed:  { ru: "Скорость/ETA", pl: "Prędkość/ETA", ua: "Швидкість/ETA", en: "Speed/ETA" },
+    taskTide:   { ru: "Прилив", pl: "Pływ", ua: "Приплив", en: "Tide" },
+    taskPh:     { ru: "ответ числом", pl: "odpowiedź liczbą", ua: "відповідь числом", en: "answer as a number" },
+    taskSolve:  { ru: "Решение", pl: "Rozwiązanie", ua: "Розв'язання", en: "Solution" },
+    taskNext:   { ru: "Новая →", pl: "Nowe →", ua: "Нова →", en: "New →" },
+    taskEmpty:  { ru: "В этой категории задач нет.", pl: "W tej kategorii nie ma zadań.", ua: "У цій категорії задач немає.", en: "No problems in this category." },
+    taskLoadFail:{ ru: "Не удалось загрузить задачи.", pl: "Nie udało się załadować zadań.", ua: "Не вдалося завантажити задачі.", en: "Couldn't load the problems." },
+    taskNaN:    { ru: "Введи ответ числом.", pl: "Wpisz odpowiedź liczbą.", ua: "Введи відповідь числом.", en: "Enter the answer as a number." },
+    taskCorrect:{ ru: "Верно! Ответ {a} {unit}.", pl: "Dobrze! Odpowiedź {a} {unit}.", ua: "Правильно! Відповідь {a} {unit}.", en: "Correct! Answer {a} {unit}." },
+    taskWrong:  { ru: "Не то. Нажми «Решение» и попробуй разобраться.", pl: "Nie to. Kliknij „Rozwiązanie” i spróbuj zrozumieć.", ua: "Не те. Натисни «Розв'язання» і спробуй розібратися.", en: "Not quite. Tap “Solution” and work it through." },
+
+    /* ── shapes.html (фигуры и флаги) ── */
+    shapeTitle:   { ru: "Фигуры и флаги", pl: "Kształty i flagi", ua: "Фігури і прапори", en: "Shapes & flags" },
+    shapeSub:     { ru: "Дневные фигуры COLREG + однофлажные сигналы МСС", pl: "Znaki dzienne COLREG + jednoflagowe sygnały MKS", ua: "Денні фігури COLREG + однофлажні сигнали МСС", en: "COLREG day shapes + single-flag ICS signals" },
+    shapeDay:     { ru: "Дневные фигуры", pl: "Znaki dzienne", ua: "Денні фігури", en: "Day shapes" },
+    shapeDaySub:  { ru: "Шары, конусы, ромб, цилиндр — что несёт судно днём", pl: "Kule, stożki, romb, walec — co statek nosi w dzień", ua: "Кулі, конуси, ромб, циліндр — що несе судно вдень", en: "Balls, cones, diamond, cylinder — what a vessel shows by day" },
+    shapeFlags:   { ru: "Флаги МСС", pl: "Flagi MKS", ua: "Прапори МСС", en: "ICS flags" },
+    shapeFlagsSub:{ ru: "A — водолаз, B — опасный груз, O — человек за бортом…", pl: "A — nurek, B — ładunek niebezpieczny, O — człowiek za burtą…", ua: "A — водолаз, B — небезпечний вантаж, O — людина за бортом…", en: "A — diver, B — dangerous cargo, O — man overboard…" },
+    shapeQuiz:    { ru: "Тест", pl: "Test", ua: "Тест", en: "Quiz" },
+    shapeQuizSub: { ru: "Фигуры и флаги вперемешку — что означает?", pl: "Kształty i flagi na przemian — co oznacza?", ua: "Фігури і прапори впереміш — що означає?", en: "Shapes and flags mixed — what does it mean?" },
+    shapeMenu:    { ru: "← Меню", pl: "← Menu", ua: "← Меню", en: "← Menu" },
+    shapeList:    { ru: "← Список", pl: "← Lista", ua: "← Список", en: "← List" },
+    shapeWhat:    { ru: "Что означает?", pl: "Co oznacza?", ua: "Що означає?", en: "What does it mean?" },
+    shapeNext:    { ru: "Следующий →", pl: "Następny →", ua: "Наступний →", en: "Next →" },
+    shapeResult:  { ru: "Результат: {ok} / {n}", pl: "Wynik: {ok} / {n}", ua: "Результат: {ok} / {n}", en: "Score: {ok} / {n}" },
+    shapeDone:    { ru: "Тест завершён!", pl: "Test zakończony!", ua: "Тест завершено!", en: "Quiz complete!" },
+
+    /* ── audio.html (аудио-повторение) ── */
+    audTitle:     { ru: "Аудио-повторение", pl: "Powtórka audio", ua: "Аудіо-повторення", en: "Audio review" },
+    audSub:       { ru: "Вопросы и ответы на слух — повторяй в дороге, у штурвала, на пробежке", pl: "Pytania i odpowiedzi na słuch — powtarzaj w drodze, przy sterze, na biegu", ua: "Питання й відповіді на слух — повторюй у дорозі, за штурвалом, на пробіжці", en: "Questions and answers by ear — review on the go, at the helm, on a run" },
+    audNoSupport: { ru: "Синтез речи не поддерживается этим клиентом Telegram. Открой Mini App на другом устройстве или обнови приложение.", pl: "Synteza mowy nie jest obsługiwana przez tego klienta Telegram. Otwórz Mini App na innym urządzeniu lub zaktualizuj aplikację.", ua: "Синтез мовлення не підтримується цим клієнтом Telegram. Відкрий Mini App на іншому пристрої або онови застосунок.", en: "Speech synthesis isn't supported by this Telegram client. Open the Mini App on another device or update the app." },
+    audWeak:      { ru: "Слабые вопросы ISSA", pl: "Słabe pytania ISSA", ua: "Слабкі питання ISSA", en: "Weak ISSA questions" },
+    audBySchedule:{ ru: "по расписанию повторения", pl: "według harmonogramu powtórek", ua: "за розкладом повторення", en: "on the review schedule" },
+    audPlSub:     { ru: "польские формулировки + перевод", pl: "polskie sformułowania + tłumaczenie", ua: "польські формулювання + переклад", en: "Polish wording + translation" },
+    audNowDefault:{ ru: "Выбери источник и нажми ▶ — вопрос прозвучит, затем правильный ответ.", pl: "Wybierz źródło i naciśnij ▶ — zabrzmi pytanie, potem prawidłowa odpowiedź.", ua: "Обери джерело й натисни ▶ — прозвучить питання, потім правильна відповідь.", en: "Pick a source and press ▶ — the question plays, then the correct answer." },
+    audPrev:      { ru: "Назад", pl: "Wstecz", ua: "Назад", en: "Back" },
+    audNext:      { ru: "Дальше", pl: "Dalej", ua: "Далі", en: "Next" },
+    audScreenNote:{ ru: "Не выключай экран: синтез речи живёт в открытой странице Mini App.", pl: "Nie wyłączaj ekranu: synteza mowy działa tylko przy otwartej stronie Mini App.", ua: "Не вимикай екран: синтез мовлення живе у відкритій сторінці Mini App.", en: "Keep the screen on: speech runs only while the Mini App page is open." },
+    audEmpty:     { ru: "Плейлист пуст.", pl: "Playlista jest pusta.", ua: "Плейлист порожній.", en: "Playlist is empty." },
+    audDueCount:  { ru: "{n} к повторению", pl: "{n} do powtórki", ua: "{n} до повторення", en: "{n} to review" },
+
+    /* ── history.html (прогресс и история) ── */
+    histTitle:    { ru: "История", pl: "Historia", ua: "Історія", en: "History" },
+    histH1:       { ru: "Прогресс и история", pl: "Postępy i historia", ua: "Прогрес та історія", en: "Progress & history" },
+    histSub:      { ru: "Динамика, слабые темы и все прохождения", pl: "Dynamika, słabe tematy i wszystkie podejścia", ua: "Динаміка, слабкі теми й усі проходження", en: "Trends, weak topics and every attempt" },
+    histTotal:    { ru: "всего", pl: "razem", ua: "усього", en: "total" },
+    histAvgExam:  { ru: "ср. экзамен", pl: "śr. egzamin", ua: "сер. екзамен", en: "avg exam" },
+    histBest:     { ru: "лучший", pl: "najlepszy", ua: "найкращий", en: "best" },
+    histTrend:    { ru: "Динамика результатов", pl: "Dynamika wyników", ua: "Динаміка результатів", en: "Score trend" },
+    histWeakH:    { ru: "Слабые темы — стоит повторить", pl: "Słabe tematy — warto powtórzyć", ua: "Слабкі теми — варто повторити", en: "Weak topics — worth reviewing" },
+    histAll:      { ru: "Все прохождения", pl: "Wszystkie podejścia", ua: "Усі проходження", en: "All attempts" },
+    histLoading:  { ru: "Загрузка…", pl: "Ładowanie…", ua: "Завантаження…", en: "Loading…" },
+    modeExam:     { ru: "Экзамен", pl: "Egzamin", ua: "Екзамен", en: "Exam" },
+    modeReview:   { ru: "Повторение", pl: "Powtórka", ua: "Повторення", en: "Review" },
+    modeTrain:    { ru: "Тренировка", pl: "Trening", ua: "Тренування", en: "Practice" },
+    modeTopic:    { ru: "Тема: {t}", pl: "Temat: {t}", ua: "Тема: {t}", en: "Topic: {t}" },
+    histRevTitle: { ru: "Повторить сегодня", pl: "Powtórz dziś", ua: "Повторити сьогодні", en: "Review today" },
+    histRevSub:   { ru: "{n} к повторению", pl: "{n} do powtórki", ua: "{n} до повторення", en: "{n} to review" },
+    histTopicTitle:{ ru: "Подтянуть: {t}", pl: "Podciągnij: {t}", ua: "Підтягнути: {t}", en: "Brush up: {t}" },
+    histTopicSub: { ru: "Готовность темы {p}%", pl: "Gotowość tematu {p}%", ua: "Готовність теми {p}%", en: "Topic readiness {p}%" },
+    histAllGood:  { ru: "Всё в форме!", pl: "Wszystko w formie!", ua: "Все у формі!", en: "All in shape!" },
+    histAllGoodSub:{ ru: "Слабых тем нет — так держать", pl: "Brak słabych tematów — tak trzymać", ua: "Слабких тем немає — так тримати", en: "No weak topics — keep it up" },
+    histEmpty:    { ru: "Пока нет завершённых тестов.<br>Пройди тренировку или экзамен — здесь появится история.", pl: "Brak ukończonych testów.<br>Zrób trening lub egzamin — tu pojawi się historia.", ua: "Поки немає завершених тестів.<br>Пройди тренування або екзамен — тут з'явиться історія.", en: "No completed tests yet.<br>Take a practice or exam — history will appear here." },
+    histSyncNote: { ru: "История прохождений синхронизируется при открытии из Telegram. Слабые темы и рекомендации доступны и так.", pl: "Historia podejść synchronizuje się po otwarciu z Telegrama. Słabe tematy i rekomendacje są dostępne i tak.", ua: "Історія проходжень синхронізується при відкритті з Telegram. Слабкі теми й рекомендації доступні й так.", en: "Attempt history syncs when opened from Telegram. Weak topics and tips are available regardless." },
+    hMin:         { ru: "м", pl: "min", ua: "хв", en: "m" },
+    hSec:         { ru: "с", pl: "s", ua: "с", en: "s" }
   };
 
   return { LANGS: LANGS, DICT: DICT };

@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Задачки ISSA</title>
+<title data-i18n="taskTitle">Задачки ISSA</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="icons.js"></script>
 <script src="tasks_data.js"></script>
 <style>
@@ -63,33 +65,33 @@
 </style>
 </head>
 <body>
-  <h1><span class="emi" data-icon="clipboard-list"></span> Задачки</h1>
+  <h1><span class="emi" data-icon="clipboard-list"></span> <span data-i18n="taskTitle"></span></h1>
   <div class="bar">
-    <span id="cat">Навигация и приливы</span>
-    <span id="streak"><span class="emi" data-icon="flame"></span> серия: 0</span>
+    <span id="cat" data-i18n="taskCat"></span>
+    <span id="streak"><span class="emi" data-icon="flame"></span> </span>
   </div>
 
   <div class="seg" id="cats">
-    <button data-c="all" class="active">Все</button>
-    <button data-c="nav"><span class="emi" data-icon="clock"></span> Скорость/ETA</button>
-    <button data-c="tide"><span class="emi" data-icon="waves"></span> Прилив</button>
+    <button data-c="all" class="active" data-i18n="glossAll"></button>
+    <button data-c="nav"><span class="emi" data-icon="clock"></span> <span data-i18n="taskSpeed"></span></button>
+    <button data-c="tide"><span class="emi" data-icon="waves"></span> <span data-i18n="taskTide"></span></button>
   </div>
 
   <div class="card">
     <div class="q" id="q">…</div>
     <div class="ans">
-      <input id="inp" type="text" inputmode="decimal" placeholder="ответ числом" autocomplete="off">
+      <input id="inp" type="text" inputmode="decimal" autocomplete="off">
       <button class="btn" id="check">OK</button>
     </div>
     <div class="fb" id="fb"></div>
     <div class="sol" id="sol"></div>
     <div class="row">
-      <button class="btn ghost" id="solveBtn"><span class="emi" data-icon="lightbulb"></span> Решение</button>
-      <button class="btn" id="next">Новая →</button>
+      <button class="btn ghost" id="solveBtn"><span class="emi" data-icon="lightbulb"></span> <span data-i18n="taskSolve"></span></button>
+      <button class="btn" id="next" data-i18n="taskNext"></button>
     </div>
   </div>
 
-  <p class="foot">Учебный тренажёр. Не является официальным материалом ISSA.</p>
+  <p class="foot" data-i18n="footTrainer"></p>
 
 <script>
 "use strict";
@@ -102,7 +104,10 @@ const $ = id => document.getElementById(id);
 let CAT = "all", cur = null, streak = 0;
 try { streak = parseInt(localStorage.getItem("issa_task_streak") || "0", 10) || 0; } catch(e){}
 const FLAME = window.Icons ? Icons.svg("flame") : "";
-$("streak").innerHTML = `${FLAME} серия: ${streak}`;
+$("streak").innerHTML = `${FLAME} ${I18N.t("taskStreak", {n: streak})}`;
+
+// placeholder hydrate не трогает — ставим из JS
+$("inp").placeholder = I18N.t("taskPh");
 
 function pool(){ return CAT === "all" ? ALL : ALL.filter(t => t.cat === CAT); }
 
@@ -110,9 +115,7 @@ function pick(){
   const p = pool();
   if (!p.length){
     cur = null;
-    $("q").textContent = ALL.length
-      ? "В этой категории задач нет."
-      : "Не удалось загрузить задачи (tasks_data.js не найден). Запусти на сервере deploy/update_webapp.sh.";
+    $("q").textContent = ALL.length ? I18N.t("taskEmpty") : I18N.t("taskLoadFail");
     $("sol").textContent = "";
     return;
   }
@@ -132,19 +135,19 @@ function check(){
                 .replace("ч","").replace("м","").replace("h","").trim();
   const val = parseFloat(raw);
   const fb = $("fb");
-  if (Number.isNaN(val)){ fb.className = "fb bad"; fb.textContent = "Введи ответ числом."; return; }
+  if (Number.isNaN(val)){ fb.className = "fb bad"; fb.textContent = I18N.t("taskNaN"); return; }
   const ok = Math.abs(val - cur.answer) <= cur.tol + 1e-9;
   if (ok){
     streak++; fb.className = "fb ok";
-    fb.innerHTML = `${window.Icons?Icons.svg("check-circle"):""} Верно! Ответ ${fmt(cur.answer)} ${cur.unit}.`;
+    fb.innerHTML = `${window.Icons?Icons.svg("check-circle"):""} ${I18N.t("taskCorrect", {a: fmt(cur.answer), unit: cur.unit})}`;
     haptic("success");
   } else {
     streak = 0; fb.className = "fb bad";
-    fb.innerHTML = `${window.Icons?Icons.svg("x-circle"):""} Не то. Нажми «Решение» и попробуй разобраться.`;
+    fb.innerHTML = `${window.Icons?Icons.svg("x-circle"):""} ${I18N.t("taskWrong")}`;
     haptic("error");
   }
   try { localStorage.setItem("issa_task_streak", String(streak)); } catch(e){}
-  $("streak").innerHTML = `${FLAME} серия: ${streak}`;
+  $("streak").innerHTML = `${FLAME} ${I18N.t("taskStreak", {n: streak})}`;
 }
 
 $("check").onclick = check;

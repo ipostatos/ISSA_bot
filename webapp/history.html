@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>История</title>
+<title data-i18n="histTitle">История</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="icons.js"></script>
 <script src="quiz_data.js"></script>
 <script src="migration.js"></script>
@@ -62,31 +64,31 @@
 </style>
 </head>
 <body>
-  <h1 class="h1" style="font-size:20px"><span class="emi" data-icon="bar-chart"></span> Прогресс и история</h1>
-  <p class="sub">Динамика, слабые темы и все прохождения</p>
+  <h1 class="h1" style="font-size:20px"><span class="emi" data-icon="bar-chart"></span> <span data-i18n="histH1"></span></h1>
+  <p class="sub" data-i18n="histSub"></p>
 
   <div id="rec" class="rec hidden"></div>
 
   <div class="sum" id="summary" style="display:none">
-    <div class="s"><div class="n" id="sCount">0</div><div class="c">всего</div></div>
-    <div class="s"><div class="n" id="sExam">—</div><div class="c">ср. экзамен</div></div>
-    <div class="s"><div class="n" id="sBest">—</div><div class="c">лучший</div></div>
+    <div class="s"><div class="n" id="sCount">0</div><div class="c" data-i18n="histTotal"></div></div>
+    <div class="s"><div class="n" id="sExam">—</div><div class="c" data-i18n="histAvgExam"></div></div>
+    <div class="s"><div class="n" id="sBest">—</div><div class="c" data-i18n="histBest"></div></div>
   </div>
 
   <div class="blk hidden" id="chartBlk">
-    <div class="blk-h">Динамика результатов</div>
+    <div class="blk-h" data-i18n="histTrend"></div>
     <div class="chart"><svg id="chart" viewBox="0 0 300 90" preserveAspectRatio="none"></svg>
       <div class="cap"><span id="chartFrom">—</span><span id="chartTo">—</span></div></div>
   </div>
 
   <div class="blk hidden" id="weakBlk">
-    <div class="blk-h">Слабые темы — стоит повторить</div>
+    <div class="blk-h" data-i18n="histWeakH"></div>
     <div class="weak" id="weak"></div>
   </div>
 
   <div class="blk">
-    <div class="blk-h" id="listH" style="display:none">Все прохождения</div>
-    <div id="list"><div class="state">Загрузка…</div></div>
+    <div class="blk-h" id="listH" style="display:none" data-i18n="histAll"></div>
+    <div id="list"><div class="state" data-i18n="histLoading"></div></div>
   </div>
 
 <script>
@@ -96,11 +98,11 @@ const esc = s => String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&g
 
 function ic(name){ return window.Icons ? Icons.svg(name) : ""; }
 function modeInfo(mode){
-  if (mode === "exam")   return { ic:ic("clipboard-list"), name:"Экзамен" };
-  if (mode === "review") return { ic:ic("refresh-cw"), name:"Повторение" };
-  if (mode === "random") return { ic:ic("target"), name:"Тренировка" };
-  if (mode && mode.indexOf("topic:")===0) return { ic:ic("library"), name:"Тема: " + mode.slice(6) };
-  return { ic:ic("graduation-cap"), name:"Тренировка" };
+  if (mode === "exam")   return { ic:ic("clipboard-list"), name:I18N.t("modeExam") };
+  if (mode === "review") return { ic:ic("refresh-cw"), name:I18N.t("modeReview") };
+  if (mode === "random") return { ic:ic("target"), name:I18N.t("modeTrain") };
+  if (mode && mode.indexOf("topic:")===0) return { ic:ic("library"), name:I18N.t("modeTopic", {t: mode.slice(6)}) };
+  return { ic:ic("graduation-cap"), name:I18N.t("modeTrain") };
 }
 function fmtDate(ts){
   // ts может быть в мс (Date.now) — нормализуем
@@ -138,17 +140,17 @@ function renderRec(){
   const dueCount = window.SRS ? SRS.pickDue(ALL.map(q=>q.id), 9999).length : 0;
   let rec;
   if (dueCount > 0){
-    rec = { kind:"review", icon:"refresh-cw", title:"Повторить сегодня",
-            sub: dueCount + " " + plural(dueCount,"вопрос","вопроса","вопросов") + " ждут повторения" };
+    rec = { kind:"review", icon:"refresh-cw", title:I18N.t("histRevTitle"),
+            sub: I18N.t("histRevSub", {n: dueCount}) };
   } else {
     const weak = topicReadiness().filter(t => t.pct < 80)[0];
     if (weak) rec = { kind:"topic", topic:weak.topic, icon:"play",
-                      title:"Подтянуть: " + weak.topic, sub:"Готовность темы " + weak.pct + "%" };
+                      title:I18N.t("histTopicTitle", {t: weak.topic}), sub:I18N.t("histTopicSub", {p: weak.pct}) };
   }
   if (!rec){
     banner.className = "rec done";
     banner.innerHTML = '<div class="rl"><span class="emi" data-icon="trophy"></span></div>'
-      + '<div class="rb"><div class="rt">Всё в форме!</div><div class="rs">Слабых тем нет — так держать</div></div>';
+      + '<div class="rb"><div class="rt">' + I18N.t("histAllGood") + '</div><div class="rs">' + I18N.t("histAllGoodSub") + '</div></div>';
     banner.onclick = null; banner.classList.remove("hidden"); return;
   }
   banner.className = "rec";
@@ -224,8 +226,7 @@ function render(items){
   renderWeak();
 
   if (!items.length){
-    $("list").innerHTML = '<div class="state">Пока нет завершённых тестов.<br>'
-      + 'Пройди тренировку или экзамен — здесь появится история.</div>';
+    $("list").innerHTML = '<div class="state">' + I18N.t("histEmpty") + '</div>';
     return;
   }
   $("listH").style.display = "";
@@ -244,7 +245,7 @@ function render(items){
   // список
   $("list").innerHTML = items.map(a=>{
     const mi = modeInfo(a.mode);
-    const mins = a.secs ? ` · ${Math.floor(a.secs/60)}м ${a.secs%60}с` : "";
+    const mins = a.secs ? ` · ${Math.floor(a.secs/60)}${I18N.t("hMin")} ${a.secs%60}${I18N.t("hSec")}` : "";
     return `<div class="row">
       <div class="ic">${mi.ic}</div>
       <div class="b">
@@ -266,8 +267,7 @@ if (window.Sync && Sync.enabled){
   Sync.getAttempts().then(render).catch(()=>render([]));
 } else {
   render([]);   // покажем рекомендацию/слабые темы; список — заглушка ниже
-  $("list").innerHTML = '<div class="state">История прохождений синхронизируется '
-    + 'при открытии из Telegram. Слабые темы и рекомендации доступны и так.</div>';
+  $("list").innerHTML = '<div class="state">' + I18N.t("histSyncNote") + '</div>';
 }
 </script>
 </body>

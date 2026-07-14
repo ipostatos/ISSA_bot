@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Фигуры и флаги</title>
+<title data-i18n="shapeTitle">Фигуры и флаги</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="icons.js"></script>
 <script src="shapes_data.js"></script>
 <style>
@@ -69,20 +71,20 @@
 
 <!-- МЕНЮ -->
 <section id="menu">
-  <h1><span class="emi" data-icon="triangle"></span> Фигуры и флаги</h1>
-  <p class="sub">Дневные фигуры COLREG + однофлажные сигналы МСС</p>
-  <button class="btn" id="goShapes"><span class="emi" data-icon="triangle"></span> Дневные фигуры
-    <small>Шары, конусы, ромб, цилиндр — что несёт судно днём</small></button>
-  <button class="btn" id="goFlags"><span class="emi" data-icon="flag"></span> Флаги МСС
-    <small>A — водолаз, B — опасный груз, O — человек за бортом…</small></button>
-  <button class="btn ghost" id="goQuiz"><span class="emi" data-icon="graduation-cap"></span> Тест
-    <small>Фигуры и флаги вперемешку — что означает?</small></button>
+  <h1><span class="emi" data-icon="triangle"></span> <span data-i18n="shapeTitle"></span></h1>
+  <p class="sub" data-i18n="shapeSub"></p>
+  <button class="btn" id="goShapes"><span class="emi" data-icon="triangle"></span> <span data-i18n="shapeDay"></span>
+    <small data-i18n="shapeDaySub"></small></button>
+  <button class="btn" id="goFlags"><span class="emi" data-icon="flag"></span> <span data-i18n="shapeFlags"></span>
+    <small data-i18n="shapeFlagsSub"></small></button>
+  <button class="btn ghost" id="goQuiz"><span class="emi" data-icon="graduation-cap"></span> <span data-i18n="shapeQuiz"></span>
+    <small data-i18n="shapeQuizSub"></small></button>
 </section>
 
 <!-- СПРАВОЧНИК (список) -->
 <section id="learn" class="hidden">
   <div class="row" style="margin-bottom:10px">
-    <button class="btn ghost" id="learnBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Меню</button>
+    <button class="btn ghost" id="learnBack" style="flex:0 0 auto; width:auto; padding:9px 14px" data-i18n="shapeMenu"></button>
     <div style="flex:1; align-self:center; font-weight:700" id="learnTitle"></div>
   </div>
   <div id="learnList"></div>
@@ -91,7 +93,7 @@
 <!-- КАРТОЧКА -->
 <section id="view" class="hidden">
   <div class="row" style="margin-bottom:10px">
-    <button class="btn ghost" id="viewBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Список</button>
+    <button class="btn ghost" id="viewBack" style="flex:0 0 auto; width:auto; padding:9px 14px" data-i18n="shapeList"></button>
     <div style="flex:1; align-self:center; font-weight:700" id="viewTitle"></div>
   </div>
   <div class="card">
@@ -106,15 +108,15 @@
 <!-- ТЕСТ -->
 <section id="quiz" class="hidden">
   <div class="row" style="margin-bottom:10px">
-    <button class="btn ghost" id="quizBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Меню</button>
+    <button class="btn ghost" id="quizBack" style="flex:0 0 auto; width:auto; padding:9px 14px" data-i18n="shapeMenu"></button>
     <div style="flex:1; text-align:right; color:var(--hint); font-size:13px; align-self:center" id="quizCounter"></div>
   </div>
   <div class="card">
     <div class="stage"><canvas id="quizCanvas" width="220" height="240"></canvas></div>
-    <div style="margin-top:6px; font-weight:600" id="quizQ">Что означает?</div>
+    <div style="margin-top:6px; font-weight:600" id="quizQ" data-i18n="shapeWhat"></div>
     <div id="quizOpts" style="margin-top:10px"></div>
     <div class="row" id="quizCtrl" style="display:none">
-      <button class="btn" id="quizNext" style="margin:0">Следующий →</button>
+      <button class="btn" id="quizNext" style="margin:0" data-i18n="shapeNext"></button>
     </div>
     <div class="score" id="quizScore"></div>
   </div>
@@ -273,7 +275,7 @@ let learnKind = "shapes";
 function openLearn(kind){
   learnKind = kind;
   document.getElementById("learnTitle").textContent =
-    kind === "shapes" ? "Дневные фигуры" : "Флаги МСС";
+    kind === "shapes" ? I18N.t("shapeDay") : I18N.t("shapeFlags");
   const list = kind === "shapes" ? D.dayshapes : D.flags;
   const box = document.getElementById("learnList");
   box.innerHTML = "";
@@ -351,15 +353,15 @@ function renderQuizQ(){
 document.getElementById("quizNext").onclick = () => {
   if (Q.idx + 1 >= Q.pool.length){
     document.getElementById("quizScore").textContent =
-      `Результат: ${Q.ok} / ${Q.pool.length}`;
+      I18N.t("shapeResult", {ok: Q.ok, n: Q.pool.length});
     haptic("success");
     document.getElementById("quizCtrl").style.display = "none";
     document.getElementById("quizOpts").innerHTML = "";
-    document.getElementById("quizQ").textContent = "Тест завершён!";
+    document.getElementById("quizQ").textContent = I18N.t("shapeDone");
     return;
   }
   Q.idx++;
-  document.getElementById("quizQ").textContent = "Что означает?";
+  document.getElementById("quizQ").textContent = I18N.t("shapeWhat");
   renderQuizQ();
 };
 document.getElementById("goQuiz").onclick = startQuiz;

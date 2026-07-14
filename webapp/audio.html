@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Аудио-повторение</title>
+<title data-i18n="audTitle">Аудио-повторение</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="quiz_data.js"></script>
 <script src="zeglarz_data.js"></script>
 <script src="sternik_data.js"></script>
@@ -45,52 +47,51 @@
 </style>
 </head>
 <body>
-  <h1><span class="emi" data-icon="headphones"></span> Аудио-повторение</h1>
-  <p class="sub">Вопросы и ответы на слух — повторяй в дороге, у штурвала, на пробежке</p>
+  <h1><span class="emi" data-icon="headphones"></span> <span data-i18n="audTitle"></span></h1>
+  <p class="sub" data-i18n="audSub"></p>
 
-  <div id="noSupport" class="nosupport hidden">
-    Синтез речи не поддерживается этим клиентом Telegram. Открой Mini App на
-    другом устройстве или обнови приложение.
-  </div>
+  <div id="noSupport" class="nosupport hidden" data-i18n="audNoSupport"></div>
 
   <div id="app">
     <div class="src-row" id="srcRow">
       <button class="src-btn on" data-src="weak">
         <span class="emi" data-icon="refresh-cw"></span>
-        <span>Слабые вопросы ISSA <small id="weakSub">по расписанию повторения</small></span>
+        <span><span data-i18n="audWeak"></span> <small id="weakSub"></small></span>
       </button>
       <button class="src-btn" data-src="zeglarz">
         <span class="emi" data-icon="anchor"></span>
-        <span>Żeglarz jachtowy <small>польские формулировки + перевод</small></span>
+        <span>Żeglarz jachtowy <small data-i18n="audPlSub"></small></span>
       </button>
       <button class="src-btn" data-src="sternik">
         <span class="emi" data-icon="compass"></span>
-        <span>Sternik motorowodny <small>польские формулировки + перевод</small></span>
+        <span>Sternik motorowodny <small data-i18n="audPlSub"></small></span>
       </button>
     </div>
 
     <div class="card player">
-      <div class="now" id="nowBox">Выбери источник и нажми ▶ — вопрос прозвучит,
-        затем правильный ответ.</div>
+      <div class="now" id="nowBox"></div>
       <div class="pcount" id="pcount">—</div>
       <div class="controls">
-        <button class="cbtn" id="prevBtn" title="Назад"><span class="emi" data-icon="chevron-right" style="transform:scaleX(-1)"></span></button>
+        <button class="cbtn" id="prevBtn"><span class="emi" data-icon="chevron-right" style="transform:scaleX(-1)"></span></button>
         <button class="cbtn main" id="playBtn"><span class="emi" data-icon="play"></span></button>
-        <button class="cbtn" id="nextBtn" title="Дальше"><span class="emi" data-icon="chevron-right"></span></button>
+        <button class="cbtn" id="nextBtn"><span class="emi" data-icon="chevron-right"></span></button>
       </div>
       <div class="rate-row" id="rateRow">
         <button class="rate" data-rate="0.85">0.85×</button>
         <button class="rate on" data-rate="1">1×</button>
         <button class="rate" data-rate="1.2">1.2×</button>
       </div>
-      <p class="muted" style="font-size:12px">Не выключай экран: синтез речи живёт в
-        открытой странице Mini App.</p>
+      <p class="muted" style="font-size:12px" data-i18n="audScreenNote"></p>
     </div>
   </div>
 
 <script>
 "use strict";
 if (window.Icons) Icons.hydrate();
+
+// подписи-подсказки к кнопкам (hydrate не трогает атрибуты)
+document.getElementById("prevBtn").title = I18N.t("audPrev");
+document.getElementById("nextBtn").title = I18N.t("audNext");
 
 // ── поддержка ──
 const SS = window.speechSynthesis;
@@ -165,7 +166,7 @@ function setPlayIcon(){
 function renderNow(){
   const box = document.getElementById("nowBox");
   if (!playlist.length){
-    box.textContent = "Плейлист пуст."; return;
+    box.textContent = I18N.t("audEmpty"); return;
   }
   const t = playlist[idx];
   const i = t.show.indexOf("\n\n✔ ");
@@ -232,10 +233,10 @@ document.getElementById("srcRow").querySelectorAll(".src-btn").forEach(b => {
 
 // подпись «слабых»: сколько к повтору
 (function(){
+  document.getElementById("weakSub").textContent = I18N.t("audBySchedule");  // дефолт
   if (!window.SRS || !RU.length) return;
   const due = SRS.dueCount(RU.map(q => q.id));
-  document.getElementById("weakSub").textContent =
-    due ? `${due} вопрос(ов) к повторению` : "по расписанию повторения";
+  if (due) document.getElementById("weakSub").textContent = I18N.t("audDueCount", {n: due});
 })();
 
 // при закрытии страницы затыкаем синтез (иначе голос переживает Mini App)
