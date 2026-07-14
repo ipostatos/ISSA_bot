@@ -288,7 +288,63 @@
     calcTideRange:{ ru: "Диапазон = {hw} − {lw} = {rng} м; 1/12 = {tw} м", pl: "Zakres = {hw} − {lw} = {rng} m; 1/12 = {tw} m", ua: "Діапазон = {hw} − {lw} = {rng} м; 1/12 = {tw} м", en: "Range = {hw} − {lw} = {rng} m; 1/12 = {tw} m" },
     calcTideStep: { ru: "{i}ч  +{n}/12 → {v} м", pl: "{i}h  +{n}/12 → {v} m", ua: "{i}год  +{n}/12 → {v} м", en: "{i}h  +{n}/12 → {v} m" },
     calcHr:       { ru: "ч", pl: "h", ua: "год", en: "h" },
-    calcFoot:     { ru: "Учебный инструмент. Не является официальным материалом ISSA.", pl: "Narzędzie edukacyjne. Nie jest oficjalnym materiałem ISSA.", ua: "Навчальний інструмент. Не є офіційним матеріалом ISSA.", en: "A study tool. Not official ISSA material." }
+    calcFoot:     { ru: "Учебный инструмент. Не является официальным материалом ISSA.", pl: "Narzędzie edukacyjne. Nie jest oficjalnym materiałem ISSA.", ua: "Навчальний інструмент. Не є офіційним матеріалом ISSA.", en: "A study tool. Not official ISSA material." },
+
+    /* ── buoys.html — справочник буёв IALA. Контент (названия/ответы/подсказки/
+       тест/категории) из buoys_data.js остаётся на русском ── */
+    buoyTitle:    { ru: "Буи IALA · навигационные знаки", pl: "Boje IALA · znaki nawigacyjne", ua: "Буї IALA · навігаційні знаки", en: "IALA buoys · navigation marks" },
+    buoyH1:       { ru: "Буи и знаки IALA", pl: "Boje i znaki IALA", ua: "Буї та знаки IALA", en: "IALA buoys & marks" },
+    buoySub:      { ru: "Навигационные знаки Region A (Балтика/Европа). Смотри форму, цвет, топовую фигуру и ритм проблесков.", pl: "Znaki nawigacyjne Region A (Bałtyk/Europa). Patrz na kształt, kolor, znak szczytowy i rytm błysków.", ua: "Навігаційні знаки Region A (Балтика/Європа). Дивись форму, колір, топову фігуру та ритм проблисків.", en: "Region A navigation marks (Baltic/Europe). Note shape, colour, topmark and light rhythm." },
+    buoyCapMenu:  { ru: "с какой стороны обходить?", pl: "z której strony omijać?", ua: "з якого боку обходити?", en: "which side to pass?" },
+    buoyRef:      { ru: "Справочник", pl: "Katalog", ua: "Довідник", en: "Catalog" },
+    buoyRefSub:   { ru: "все буи с огнями и разбором обхода", pl: "wszystkie boje z ogniami i analizą omijania", ua: "усі буї з вогнями та розбором обходу", en: "all buoys with lights and passing notes" },
+    buoyQuizBtn:  { ru: "Тест «Куда обходить?»", pl: "Test „Którędy omijać?”", ua: "Тест «Куди обходити?»", en: "Quiz “Which way to pass?”" },
+    buoyQuizSub:  { ru: "показываем буй — определи знак и сторону", pl: "pokazujemy boję — określ znak i stronę", ua: "показуємо буй — визнач знак і сторону", en: "we show a buoy — name the mark and side" },
+    buoyFoot:     { ru: "Учебный материал по IALA MBS (Region A); ритмы огней — по IALA R0110 (E-110). Не заменяет официальные карты и лоции.", pl: "Materiał edukacyjny wg IALA MBS (Region A); rytmy ogni wg IALA R0110 (E-110). Nie zastępuje oficjalnych map i locji.", ua: "Навчальний матеріал за IALA MBS (Region A); ритми вогнів за IALA R0110 (E-110). Не замінює офіційні карти та лоції.", en: "Study material per IALA MBS (Region A); light rhythms per IALA R0110 (E-110). Not a substitute for official charts and pilots." },
+    buoyCharTitle:{ ru: "Характер огня", pl: "Charakter światła", ua: "Характер вогню", en: "Light character" },
+    buoyFinish:   { ru: "Завершить", pl: "Zakończ", ua: "Завершити", en: "Finish" },
+    buoyScore:    { ru: "Верно: {ok} из {n}", pl: "Poprawnie: {ok} z {n}", ua: "Правильно: {ok} з {n}", en: "Correct: {ok} of {n}" },
+
+    /* ── lights.html — огни судов COLREG. Контент (названия/правила/ответы/
+       подсказки/тест) из lights_data.js остаётся на русском ── */
+    lightTitle:   { ru: "Огни судов · COLREG", pl: "Światła statków · COLREG", ua: "Вогні суден · COLREG", en: "Ship lights · COLREG" },
+    lightH1:      { ru: "Огни судов ночью", pl: "Światła statków nocą", ua: "Вогні суден уночі", en: "Ship lights at night" },
+    lightSub:     { ru: "Навигационные огни по COLREG (МППСС-72). Учись распознавать тип судна и ракурс.", pl: "Światła nawigacyjne wg COLREG (MPZZM-72). Ucz się rozpoznawać typ statku i ujęcie.", ua: "Навігаційні вогні за COLREG (МПЗЗС-72). Вчися розпізнавати тип судна і ракурс.", en: "Navigation lights per COLREG (COLREGs-72). Learn to recognise vessel type and aspect." },
+    lightCapMenu: { ru: "что это за судно?", pl: "co to za statek?", ua: "що це за судно?", en: "what vessel is this?" },
+    lightRefSub:  { ru: "все типы судов и их огни, с разбором", pl: "wszystkie typy statków i ich światła, z analizą", ua: "усі типи суден та їхні вогні, з розбором", en: "all vessel types and their lights, explained" },
+    lightQuizBtn: { ru: "Тест «Что за судно?»", pl: "Test „Co to za statek?”", ua: "Тест «Що за судно?»", en: "Quiz “What vessel is it?”" },
+    lightQuizSub: { ru: "показываем огни — угадай тип и ракурс", pl: "pokazujemy światła — zgadnij typ i ujęcie", ua: "показуємо вогні — вгадай тип і ракурс", en: "we show the lights — guess the type and aspect" },
+    lightFoot:    { ru: "Учебный материал по открытому тексту COLREG-72. Не заменяет официальные правила.", pl: "Materiał edukacyjny wg otwartego tekstu COLREG-72. Nie zastępuje oficjalnych przepisów.", ua: "Навчальний матеріал за відкритим текстом COLREG-72. Не замінює офіційні правила.", en: "Study material based on the open text of COLREG-72. Not a substitute for the official rules." },
+    lightNight:   { ru: "🌙 Ночь", pl: "🌙 Noc", ua: "🌙 Ніч", en: "🌙 Night" },
+    lightDay:     { ru: "☀️ День", pl: "☀️ Dzień", ua: "☀️ День", en: "☀️ Day" },
+    lightNext:    { ru: "Следующее →", pl: "Następne →", ua: "Наступне →", en: "Next →" },
+    lightDaySign: { ru: "дневной знак", pl: "znak dzienny", ua: "денний знак", en: "day shape" },
+    qSize:        { ru: "Судно какой длины показано?", pl: "Statek jakiej długości pokazano?", ua: "Судно якої довжини показано?", en: "What length is the vessel shown?" },
+    qAspect:      { ru: "Каков ракурс судна?", pl: "Jakie jest ujęcie statku?", ua: "Який ракурс судна?", en: "What is the vessel's aspect?" },
+    qSide:        { ru: "Какой борт вы видите?", pl: "Którą burtę widzisz?", ua: "Який борт ви бачите?", en: "Which side are you seeing?" },
+    qWhat:        { ru: "Что это за судно?", pl: "Co to za statek?", ua: "Що це за судно?", en: "What vessel is this?" },
+
+    /* ── navtasks.html — задачи TVMDC + компас-песочница. Контент задач
+       (текст/решение) из content_data.js остаётся на русском ── */
+    navTitle:     { ru: "Задачи T-V-M-D-C", pl: "Zadania T-V-M-D-C", ua: "Задачі T-V-M-D-C", en: "T-V-M-D-C tasks" },
+    navBarCorr:   { ru: "Поправки компаса", pl: "Poprawki kompasu", ua: "Поправки компаса", en: "Compass corrections" },
+    navTabTasks:  { ru: "Задачи", pl: "Zadania", ua: "Задачі", en: "Tasks" },
+    navTabCompass:{ ru: "Компас", pl: "Kompas", ua: "Компас", en: "Compass" },
+    navTrick:     { ru: "С подвохом (>360°)", pl: "Z podchwytem (>360°)", ua: "З підступом (>360°)", en: "Tricky (>360°)" },
+    navPh:        { ru: "напр. 046°", pl: "np. 046°", ua: "напр. 046°", en: "e.g. 046°" },
+    navFoot:      { ru: "Допуск ±1°. Правило (вниз): East −, West +. Не является официальным материалом ISSA.", pl: "Tolerancja ±1°. Reguła (w dół): East −, West +. Nie jest oficjalnym materiałem ISSA.", ua: "Допуск ±1°. Правило (вниз): East −, West +. Не є офіційним матеріалом ISSA.", en: "Tolerance ±1°. Rule (down): East −, West +. Not official ISSA material." },
+    navSpin:      { ru: "Крути диск пальцем", pl: "Kręć tarczę palcem", ua: "Крути диск пальцем", en: "Spin the dial with your finger" },
+    navSpinSub:   { ru: "True задаёшь диском, Variation и Deviation — ползунками. MC и CC считаются вживую.", pl: "True ustawiasz tarczą, Variation i Deviation — suwakami. MC i CC liczą się na żywo.", ua: "True задаєш диском, Variation і Deviation — повзунками. MC і CC рахуються наживо.", en: "Set True with the dial, Variation and Deviation with the sliders. MC and CC update live." },
+    navArcsLabel: { ru: "дуги на картушке:", pl: "łuki na róży:", ua: "дуги на картушці:", en: "arcs on the card:" },
+    navAnd:       { ru: "и", pl: "i", ua: "і", en: "and" },
+    navHowCalc:   { ru: "Как считается", pl: "Jak się liczy", ua: "Як рахується", en: "How it's calculated" },
+    navVarLabel:  { ru: "Variation (склонение)", pl: "Variation (deklinacja)", ua: "Variation (схилення)", en: "Variation (declination)" },
+    navDevLabel:  { ru: "Deviation (девиация)", pl: "Deviation (dewiacja)", ua: "Deviation (девіація)", en: "Deviation (deviation)" },
+    navCompassFoot:{ ru: "Вниз по цепочке (T→C): West прибавляем, East вычитаем («Error East — Compass least; Error West — Compass best»).", pl: "W dół łańcucha (T→C): West dodajemy, East odejmujemy („Error East — Compass least; Error West — Compass best”).", ua: "Вниз ланцюжком (T→C): West додаємо, East віднімаємо («Error East — Compass least; Error West — Compass best»).", en: "Down the chain (T→C): add West, subtract East (“Error East — Compass least; Error West — Compass best”)." },
+    navEmpty:     { ru: "Нет задач в этом режиме.", pl: "Brak zadań w tym trybie.", ua: "Немає задач у цьому режимі.", en: "No tasks in this mode." },
+    navNaN:       { ru: "Введи ответ числом (градусы).", pl: "Wpisz odpowiedź liczbą (stopnie).", ua: "Введи відповідь числом (градуси).", en: "Enter the answer as a number (degrees)." },
+    navCorrect:   { ru: "Верно! Ответ {a}°.", pl: "Dobrze! Odpowiedź {a}°.", ua: "Правильно! Відповідь {a}°.", en: "Correct! Answer {a}°." },
+    navWrong:     { ru: "Не то. Проверь знаки (вниз: East −, West +) и переход через 360°.", pl: "Nie to. Sprawdź znaki (w dół: East −, West +) i przejście przez 360°.", ua: "Не те. Перевір знаки (вниз: East −, West +) і перехід через 360°.", en: "Not quite. Check the signs (down: East −, West +) and the wrap past 360°." }
   };
 
   return { LANGS: LANGS, DICT: DICT };

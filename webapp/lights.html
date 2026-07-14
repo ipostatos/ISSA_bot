@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Огни судов · COLREG</title>
+<title data-i18n="lightTitle">Огни судов · COLREG</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="icons.js"></script>
 <script src="lights_data.js"></script>
 <style>
@@ -100,27 +102,27 @@
 <body>
   <!-- ── МЕНЮ ── -->
   <section id="menu">
-    <h1>🚢 Огни судов ночью</h1>
-    <p class="sub">Навигационные огни по COLREG (МППСС-72). Учись распознавать тип судна и ракурс.</p>
+    <h1>🚢 <span data-i18n="lightH1"></span></h1>
+    <p class="sub" data-i18n="lightSub"></p>
     <div class="scene" style="margin-bottom:14px">
       <canvas id="shipMenu"></canvas>
-      <div class="scene-cap">что это за судно?</div>
+      <div class="scene-cap" data-i18n="lightCapMenu"></div>
     </div>
     <button class="big" id="toLearn">
       <span class="bic" data-icon="book-open"></span>
-      <span>Справочник<small>все типы судов и их огни, с разбором</small></span>
+      <span><span data-i18n="buoyRef"></span><small data-i18n="lightRefSub"></small></span>
     </button>
     <button class="big" id="toQuiz">
       <span class="bic" data-icon="target"></span>
-      <span>Тест «Что за судно?»<small>показываем огни — угадай тип и ракурс</small></span>
+      <span><span data-i18n="lightQuizBtn"></span><small data-i18n="lightQuizSub"></small></span>
     </button>
-    <p class="foot">Учебный материал по открытому тексту COLREG-72. Не заменяет официальные правила.</p>
+    <p class="foot" data-i18n="lightFoot"></p>
   </section>
 
   <!-- ── СПРАВОЧНИК ── -->
   <section id="learn" class="hidden">
     <div class="row" style="margin:0 0 12px">
-      <button class="btn ghost" id="learnBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Меню</button>
+      <button class="btn ghost" id="learnBack" style="flex:0 0 auto; width:auto; padding:9px 14px" data-i18n="shapeMenu"></button>
       <div style="flex:1"></div>
     </div>
     <div class="chips" id="chips"></div>
@@ -130,11 +132,11 @@
   <!-- ── ПРОСМОТР ТИПА (из справочника) ── -->
   <section id="view" class="hidden">
     <div class="row" style="margin:0 0 12px; align-items:center">
-      <button class="btn ghost" id="viewBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Список</button>
+      <button class="btn ghost" id="viewBack" style="flex:0 0 auto; width:auto; padding:9px 14px" data-i18n="shapeList"></button>
       <div style="flex:1"></div>
       <div class="daynight" id="viewToggle">
-        <span data-mode="night" class="on">🌙 Ночь</span>
-        <span data-mode="day">☀️ День</span>
+        <span data-mode="night" class="on" data-i18n="lightNight"></span>
+        <span data-mode="day" data-i18n="lightDay"></span>
       </div>
     </div>
     <div class="scene">
@@ -152,7 +154,7 @@
   <!-- ── ТЕСТ ── -->
   <section id="quiz" class="hidden">
     <div class="row" style="margin:0 0 12px; align-items:center">
-      <button class="btn ghost" id="quizBack" style="flex:0 0 auto; width:auto; padding:9px 14px">← Меню</button>
+      <button class="btn ghost" id="quizBack" style="flex:0 0 auto; width:auto; padding:9px 14px" data-i18n="shapeMenu"></button>
       <div class="daynight" id="quizToggle">
         <span data-mode="night" class="on">🌙</span>
         <span data-mode="day">☀️</span>
@@ -169,7 +171,7 @@
       <div id="qeText"></div>
     </div>
     <div class="row" id="quizCtrl" style="display:none">
-      <button class="btn" id="quizNext">Следующее →</button>
+      <button class="btn" id="quizNext" data-i18n="lightNext"></button>
     </div>
     <div class="score" id="quizScore"></div>
   </section>
@@ -669,7 +671,7 @@ function renderMenu(){
 let curCat = "all";
 function renderChips(){
   const box = $("chips");
-  const cats = [{key:"all",name:"Все"}].concat(DATA.categories||[]);
+  const cats = [{key:"all",name:I18N.t("glossAll")}].concat(DATA.categories||[]);
   box.innerHTML = cats.map(c=>
     '<span class="chip'+(c.key===curCat?' on':'')+'" data-cat="'+c.key+'">'+c.name+'</span>'
   ).join("");
@@ -706,7 +708,7 @@ function openView(id){
   $("viewTitle").textContent = v.title;
   $("viewAnswer").textContent = v.answer;
   $("viewHint").textContent = v.hint;
-  $("viewCap").textContent = v.title + (curMode==="day" ? " · дневной знак" : "");
+  $("viewCap").textContent = v.title + (curMode==="day" ? " · " + I18N.t("lightDaySign") : "");
   curViewId = id;
   startShipAnim($("shipView"), v, curMode);
 }
@@ -741,10 +743,10 @@ function renderQuiz(){
 }
 function questionText(v){
   switch(v.quiz.type){
-    case "size":   return "Судно какой длины показано?";
-    case "aspect": return "Каков ракурс судна?";
-    case "side":   return "Какой борт вы видите?";
-    default:       return "Что это за судно?";
+    case "size":   return I18N.t("qSize");
+    case "aspect": return I18N.t("qAspect");
+    case "side":   return I18N.t("qSide");
+    default:       return I18N.t("qWhat");
   }
 }
 function answerQuiz(i){
@@ -761,9 +763,9 @@ function answerQuiz(i){
   $("qeRule").textContent = v.rule;
   $("qeText").textContent = v.answer + ". " + v.hint;
   show("quizExpl");
-  $("quizScore").textContent = "Верно: " + qScore + " из " + (qIdx+1);
+  $("quizScore").textContent = I18N.t("buoyScore", {ok: qScore, n: qIdx+1});
   $("quizCtrl").style.display = "flex";
-  $("quizNext").textContent = (qIdx < qQueue.length-1) ? "Следующее →" : "Завершить";
+  $("quizNext").textContent = (qIdx < qQueue.length-1) ? I18N.t("lightNext") : I18N.t("buoyFinish");
 }
 $("quizNext").onclick = ()=>{
   if (qIdx < qQueue.length-1){ qIdx++; renderQuiz(); }
@@ -794,7 +796,7 @@ function haptic(t){ try{ tg?.HapticFeedback?.notificationOccurred(t); }catch(e){
 // тумблеры: в просмотре перерисовать текущее судно, в тесте — текущий вопрос
 setupDayNight("viewToggle", ()=>{
   const v = DATA.vessels.find(x=>x.id===curViewId);
-  if (v){ $("viewCap").textContent = v.title + (curMode==="day"?" · дневной знак":""); startShipAnim($("shipView"), v, curMode); }
+  if (v){ $("viewCap").textContent = v.title + (curMode==="day"?" · " + I18N.t("lightDaySign"):""); startShipAnim($("shipView"), v, curMode); }
 });
 setupDayNight("quizToggle", ()=>{ if (qQueue[qIdx]) startShipAnim($("shipQuiz"), qQueue[qIdx], curMode); });
 

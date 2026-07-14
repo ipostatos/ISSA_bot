@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Задачи T-V-M-D-C</title>
+<title data-i18n="navTitle">Задачи T-V-M-D-C</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="icons.js"></script>
 <script src="content_data.js"></script>
 <style>
@@ -153,48 +155,46 @@
 </style>
 </head>
 <body>
-  <h1><span class="emi" data-icon="compass"></span> Задачи T-V-M-D-C</h1>
+  <h1><span class="emi" data-icon="compass"></span> <span data-i18n="navTitle"></span></h1>
   <div class="bar">
-    <span>Поправки компаса</span>
-    <span id="streak"><span class="emi" data-icon="flame"></span> серия: 0</span>
+    <span data-i18n="navBarCorr"></span>
+    <span id="streak"><span class="emi" data-icon="flame"></span> </span>
   </div>
 
   <!-- главные табы: Задачи (ввод ответа) / Компас (интерактивная песочница) -->
   <div class="seg" id="tabs">
-    <button data-t="tasks" class="active">Задачи</button>
-    <button data-t="compass"><span class="emi" data-icon="compass"></span> Компас</button>
+    <button data-t="tasks" class="active" data-i18n="navTabTasks"></button>
+    <button data-t="compass"><span class="emi" data-icon="compass"></span> <span data-i18n="navTabCompass"></span></button>
   </div>
 
   <!-- ── ЗАДАЧИ ── -->
   <section id="tasksPanel">
     <div class="seg" id="modes">
-      <button data-m="all" class="active">Все</button>
-      <button data-m="star"><span class="emi" data-icon="star"></span> С подвохом (&gt;360°)</button>
+      <button data-m="all" class="active" data-i18n="glossAll"></button>
+      <button data-m="star"><span class="emi" data-icon="star"></span> <span data-i18n="navTrick"></span></button>
     </div>
 
     <div class="card">
       <div class="q" id="q">…</div>
       <div class="ans">
-        <input id="inp" type="text" inputmode="decimal" placeholder="напр. 046°" autocomplete="off">
+        <input id="inp" type="text" inputmode="decimal" autocomplete="off">
         <button class="btn" id="check">OK</button>
       </div>
       <div class="fb" id="fb"></div>
       <div class="sol" id="sol"></div>
       <div class="row">
-        <button class="btn ghost" id="solveBtn"><span class="emi" data-icon="lightbulb"></span> Решение</button>
-        <button class="btn" id="next">Новая →</button>
+        <button class="btn ghost" id="solveBtn"><span class="emi" data-icon="lightbulb"></span> <span data-i18n="taskSolve"></span></button>
+        <button class="btn" id="next" data-i18n="taskNext"></button>
       </div>
     </div>
-    <p class="foot">Допуск ±1°. Правило (вниз): East −, West +. Не является официальным материалом ISSA.</p>
+    <p class="foot" data-i18n="navFoot"></p>
   </section>
 
   <!-- ── КОМПАС-ПЕСОЧНИЦА ── -->
   <section id="compassPanel" class="hidden">
     <div class="card">
-      <div class="q" style="margin-bottom:6px">Крути диск пальцем</div>
-      <p class="sub" style="color:var(--hint); font-size:13px; margin:0 0 6px">
-        True задаёшь диском, Variation и Deviation — ползунками. MC и CC считаются вживую.
-      </p>
+      <div class="q" style="margin-bottom:6px" data-i18n="navSpin"></div>
+      <p class="sub" style="color:var(--hint); font-size:13px; margin:0 0 6px" data-i18n="navSpinSub"></p>
 
       <div class="stage">
         <div class="cwrap" id="cwrap">
@@ -225,7 +225,7 @@
         </div>
       </div>
       <p class="sub" style="color:var(--hint); font-size:12px; margin:8px 0 0; text-align:center">
-        дуги на картушке: <b style="color:var(--c-mag)">Variation</b> (T→M) и
+        <span data-i18n="navArcsLabel"></span> <b style="color:var(--c-mag)">Variation</b> (T→M) <span data-i18n="navAnd"></span>
         <b style="color:var(--c-comp)">Deviation</b> (M→C)
       </p>
 
@@ -238,7 +238,7 @@
     </div>
 
     <div class="card">
-      <div class="q" style="margin-bottom:8px">Как считается</div>
+      <div class="q" style="margin-bottom:8px" data-i18n="navHowCalc"></div>
       <div class="cfrow"><span>True</span><strong id="cfT">000°</strong></div>
       <div class="cfrow"><span>Variation <span class="op" id="cfVarOp">+</span></span><strong id="cfVar">0°W</strong></div>
       <div class="cfrow"><span>Magnetic</span><strong id="cfM">000°</strong></div>
@@ -246,17 +246,14 @@
       <div class="cfrow"><span>Compass</span><strong id="cfC">000°</strong></div>
 
       <div class="cctl">
-        <label><span>Variation (склонение)</span><output id="cVarOut">3°W</output></label>
+        <label><span data-i18n="navVarLabel"></span><output id="cVarOut">3°W</output></label>
         <input id="cVar" type="range" min="-20" max="20" value="3" step="1">
       </div>
       <div class="cctl">
-        <label><span>Deviation (девиация)</span><output id="cDevOut">5°W</output></label>
+        <label><span data-i18n="navDevLabel"></span><output id="cDevOut">5°W</output></label>
         <input id="cDev" type="range" min="-20" max="20" value="5" step="1">
       </div>
-      <p class="foot" style="margin-top:14px; text-align:left">
-        Вниз по цепочке (T→C): <b>West прибавляем, East вычитаем</b>
-        («Error East — Compass least; Error West — Compass best»).
-      </p>
+      <p class="foot" style="margin-top:14px; text-align:left" data-i18n="navCompassFoot"></p>
     </div>
   </section>
 
@@ -271,7 +268,8 @@ const $ = id => document.getElementById(id);
 let MODE = "all", cur = null, streak = 0;
 try { streak = parseInt(localStorage.getItem("issa_nav_streak")||"0",10)||0; } catch(e){}
 const FLAME = window.Icons ? Icons.svg("flame") : "";
-$("streak").innerHTML = `${FLAME} серия: ${streak}`;
+$("streak").innerHTML = `${FLAME} ${I18N.t("taskStreak", {n: streak})}`;
+$("inp").placeholder = I18N.t("navPh");  // hydrate не трогает атрибуты
 
 function pool(){ return MODE==="star" ? ALL.filter(t=>t.starred) : ALL; }
 
@@ -281,8 +279,7 @@ function pick(){
   const p = pool();
   if (!p.length){
     cur=null;
-    $("q").textContent = ALL.length ? "Нет задач в этом режиме."
-      : "Не удалось загрузить задачи (content_data.js не найден). Запусти deploy/update_webapp.sh.";
+    $("q").textContent = ALL.length ? I18N.t("navEmpty") : I18N.t("taskLoadFail");
     $("sol").textContent=""; return;
   }
   cur = p[Math.floor(Math.random()*p.length)];
@@ -302,19 +299,19 @@ function check(){
   const raw = $("inp").value.trim().replace("°","").replace(",",".").trim();
   const val = parseFloat(raw);
   const fb = $("fb");
-  if (Number.isNaN(val)){ fb.className="fb bad"; fb.textContent="Введи ответ числом (градусы)."; return; }
+  if (Number.isNaN(val)){ fb.className="fb bad"; fb.textContent=I18N.t("navNaN"); return; }
   const ok = angleDiff(val, cur.answer) <= 1.0;
   if (ok){
     streak++; fb.className="fb ok";
-    fb.innerHTML = `${window.Icons?Icons.svg("check-circle"):""} Верно! Ответ ${Math.round(cur.answer)}°.`;
+    fb.innerHTML = `${window.Icons?Icons.svg("check-circle"):""} ${I18N.t("navCorrect", {a: Math.round(cur.answer)})}`;
     haptic("success");
   } else {
     streak=0; fb.className="fb bad";
-    fb.innerHTML = `${window.Icons?Icons.svg("x-circle"):""} Не то. Проверь знаки (вниз: East −, West +) и переход через 360°.`;
+    fb.innerHTML = `${window.Icons?Icons.svg("x-circle"):""} ${I18N.t("navWrong")}`;
     haptic("error");
   }
   try { localStorage.setItem("issa_nav_streak", String(streak)); } catch(e){}
-  $("streak").innerHTML = `${FLAME} серия: ${streak}`;
+  $("streak").innerHTML = `${FLAME} ${I18N.t("taskStreak", {n: streak})}`;
 }
 
 $("check").onclick = check;
