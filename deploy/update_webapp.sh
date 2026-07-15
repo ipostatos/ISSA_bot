@@ -143,6 +143,12 @@ mkdir -p "$DST/images/zj" "$DST/images/st"
 cp -f "$SRC/images/zj/"*.png "$DST/images/zj/" 2>/dev/null && echo "  zj: $(ls "$SRC/images/zj/"*.png 2>/dev/null | wc -l) знаков" || true
 cp -f "$SRC/images/st/"*.png "$DST/images/st/" 2>/dev/null && echo "  st: $(ls "$SRC/images/st/"*.png 2>/dev/null | wc -l) знаков" || true
 
+echo "→ публикуем промо-сайт (site/ → /opt/issa-site)"
+if [ -d "$APP_DIR/site" ]; then
+  mkdir -p /opt/issa-site
+  cp -rf "$APP_DIR/site/." /opt/issa-site/
+fi
+
 echo "✅ опубликовано:"
 ls -1 "$DST"
 echo

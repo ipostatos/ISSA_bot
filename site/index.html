@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISSA Trainer — подготовка к экзамену Inshore Skipper + SRC в Telegram</title>
+<meta name="description" content="Бесплатный тренажёр в Telegram: 605 вопросов с разбором, экзамен с таймером, интервальное повторение, польские лицензии Żeglarz и Sternik, тренажёры буёв IALA и огней COLREG, 2D-симулятор швартовок, аудио-повторение с нейроголосом.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%93%3C/text%3E%3C/svg%3E">
+<meta property="og:title" content="ISSA Trainer — тренажёр яхтенного шкипера в Telegram">
+<meta property="og:description" content="605 вопросов с разбором, экзамен как настоящий, тренажёры буёв и огней, симулятор швартовок, аудио-повторение с нейроголосом. Бесплатно.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/scr-home.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"ISSA Trainer",
+"applicationCategory":"EducationalApplication","operatingSystem":"Telegram",
+"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+"description":"Тренажёр подготовки к экзамену яхтенного шкипера ISSA Inshore Skipper + SRC и польским лицензиям Żeglarz jachtowy / Sternik motorowodny."}
+</script>
+<style>
+  :root{
+    --bg0:#071224; --bg1:#10304d; --bg2:#061c2e;
+    --card:rgba(255,255,255,.06); --border:rgba(255,255,255,.12);
+    --text:#eaf3fb; --hint:#9fc4e0; --accent:#50a8eb; --gold:#e3b341; --ok:#4caf72;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:var(--text); line-height:1.6; background:linear-gradient(175deg,var(--bg0) 0%,var(--bg1) 45%,var(--bg2) 100%);
+    background-attachment:fixed}
+  a{color:var(--accent)}
+  .wrap{max-width:1040px; margin:0 auto; padding:0 20px}
+
+  /* hero */
+  header{padding:64px 0 40px; text-align:center; position:relative; overflow:hidden}
+  .stars{position:absolute; inset:0; pointer-events:none}
+  h1{font-size:clamp(30px,6vw,52px); letter-spacing:-.02em; margin:14px 0 10px}
+  .tagline{font-size:clamp(16px,2.6vw,21px); color:var(--hint); max-width:640px; margin:0 auto 26px}
+  .anchor{font-size:56px; filter:drop-shadow(0 4px 16px rgba(80,168,235,.45))}
+  .cta{display:inline-block; padding:16px 34px; border-radius:16px; background:var(--accent);
+    color:#fff; font-weight:700; font-size:18px; text-decoration:none;
+    box-shadow:0 8px 30px rgba(80,168,235,.35); transition:transform .15s}
+  .cta:hover{transform:translateY(-2px)}
+  .cta small{display:block; font-weight:400; font-size:12px; opacity:.85}
+  .free{margin-top:14px; color:var(--hint); font-size:14px}
+  .free b{color:var(--ok)}
+
+  /* фичи */
+  .section-t{font-size:clamp(22px,4vw,30px); text-align:center; margin:56px 0 8px}
+  .section-sub{text-align:center; color:var(--hint); margin-bottom:28px}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px}
+  .f{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px;
+    backdrop-filter:blur(6px)}
+  .f .ic{font-size:26px; margin-bottom:8px}
+  .f b{display:block; font-size:16px; margin-bottom:4px}
+  .f p{color:var(--hint); font-size:14px}
+
+  /* скриншоты */
+  .phones{display:flex; gap:22px; overflow-x:auto; padding:10px 4px 26px; scroll-snap-type:x mandatory}
+  .phone{flex:0 0 auto; width:min(64vw,250px); scroll-snap-align:center}
+  .phone img{width:100%; border-radius:22px; border:1px solid var(--border);
+    box-shadow:0 16px 44px rgba(0,0,0,.5); display:block}
+  .phone figcaption{text-align:center; color:var(--hint); font-size:13px; margin-top:10px}
+
+  /* как учит */
+  .how{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-bottom:10px}
+  .how .f b{color:var(--gold)}
+
+  footer{margin-top:64px; padding:28px 0 40px; border-top:1px solid var(--border);
+    text-align:center; color:var(--hint); font-size:13px}
+  footer p{margin:4px 0}
+</style>
+</head>
+<body>
+
+<header>
+  <canvas class="stars" id="stars"></canvas>
+  <div class="wrap">
+    <div class="anchor">⚓</div>
+    <h1>ISSA Trainer</h1>
+    <p class="tagline">Подготовка к экзамену яхтенного шкипера <b>ISSA Inshore Skipper + SRC</b>
+      и польским лицензиям <b>Żeglarz&nbsp;jachtowy</b> / <b>Sternik&nbsp;motorowodny</b> — прямо в Telegram.</p>
+    <a class="cta" href="https://t.me/issa_test_bot">Открыть в Telegram
+      <small>@issa_test_bot · Mini App, ничего устанавливать не нужно</small></a>
+    <p class="free"><b>Бесплатно.</b> Без регистрации. Работает офлайн.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <h2 class="section-t">Что внутри</h2>
+  <p class="section-sub">Не сборник вопросов, а полный тренажёрный зал шкипера</p>
+  <div class="grid">
+    <div class="f"><div class="ic">🎓</div><b>605 вопросов с разбором</b>
+      <p>Темы по порядку, случайная тренировка, режим «различение» для похожих вопросов — кардинальные знаки и огни рядом, чтобы перестать их путать.</p></div>
+    <div class="f"><div class="ic">⏱</div><b>Экзамен как настоящий</b>
+      <p>100 вопросов, таймер, проходной балл 90% — репетиция без нервов и по-честному.</p></div>
+    <div class="f"><div class="ic">🔁</div><b>Интервальное повторение</b>
+      <p>Система SRS возвращает вопрос ровно тогда, когда он вот-вот забудется. Ошибки попадают в журнал и дожимаются отдельно.</p></div>
+    <div class="f"><div class="ic">🇵🇱</div><b>Польские лицензии</b>
+      <p>Билеты Żeglarz jachtowy и Sternik motorowodny с переводом: привыкаешь к экзаменационным формулировкам заранее.</p></div>
+    <div class="f"><div class="ic">🔆</div><b>Буи IALA и огни COLREG</b>
+      <p>Интерактивные тренажёры: буй мигает своей характеристикой на ночном море, огни судов собираются в картинку — учишься читать море, а не зубрить.</p></div>
+    <div class="f"><div class="ic">⚓</div><b>Симулятор швартовок</b>
+      <p>2D-физика: инерция, ветер, заброс винта, течение. Яхта, катамаран или катер; лагом, в бокс между сваями или кормой. День, ночь, дождь и туман.</p></div>
+    <div class="f"><div class="ic">🎧</div><b>Аудио-повторение</b>
+      <p>Вопросы и термины читает нейроголос: вопрос → пауза на подумать → ответ. Самооценка «знал / не знал» кормит расписание повторений.</p></div>
+    <div class="f"><div class="ic">🗺</div><b>Навигация и задачи</b>
+      <p>Поправки компаса T-V-M-D-C, задачи на скорость-время-расстояние, приливы, морской калькулятор.</p></div>
+    <div class="f"><div class="ic">📖</div><b>Конспект и словарь</b>
+      <p>16 тем по учебнику, 182 морских термина, шпаргалка, дневные фигуры и флаги МСС.</p></div>
+    <div class="f"><div class="ic">🏆</div><b>Прогресс и мотивация</b>
+      <p>Готовность к экзамену по темам, дневная цель, серия дней, достижения — видно, где слабина и сколько осталось.</p></div>
+    <div class="f"><div class="ic">🌍</div><b>4 языка интерфейса</b>
+      <p>Русский, польский, украинский, английский. Учебный контент — на русском.</p></div>
+    <div class="f"><div class="ic">📵</div><b>Офлайн-режим</b>
+      <p>PWA-кэш: страницы и вопросы работают без сети — тренируйся хоть на переходе.</p></div>
+  </div>
+
+  <h2 class="section-t">Как это выглядит</h2>
+  <p class="section-sub">Живые экраны приложения</p>
+  <div class="phones">
+    <figure class="phone"><img src="assets/scr-home.png" alt="Главный экран ISSA Trainer" loading="lazy"><figcaption>Главная: готовность и тренажёры</figcaption></figure>
+    <figure class="phone"><img src="assets/scr-quiz.png" alt="Тесты ISSA" loading="lazy"><figcaption>Тесты с разбором ответов</figcaption></figure>
+    <figure class="phone"><img src="assets/scr-dock.png" alt="Симулятор швартовок" loading="lazy"><figcaption>Швартовки: физика и ветер</figcaption></figure>
+    <figure class="phone"><img src="assets/scr-buoys.png" alt="Буи IALA" loading="lazy"><figcaption>Буи IALA на ночном море</figcaption></figure>
+    <figure class="phone"><img src="assets/scr-shapes.png" alt="Дневные фигуры и флаги МСС" loading="lazy"><figcaption>Фигуры и флаги МСС</figcaption></figure>
+    <figure class="phone"><img src="assets/scr-audio.png" alt="Аудио-повторение" loading="lazy"><figcaption>Аудио-повторение с нейроголосом</figcaption></figure>
+  </div>
+
+  <h2 class="section-t">Почему это работает</h2>
+  <div class="how">
+    <div class="f"><b>Активное вспоминание</b>
+      <p>Пауза «на подумать» перед ответом заставляет мозг доставать знание, а не узнавать его. Так запоминается в разы прочнее.</p></div>
+    <div class="f"><b>Повторение по расписанию</b>
+      <p>Каждый ответ двигает вопрос по коробкам Лейтнера: выученное не мозолит глаза, забываемое возвращается вовремя.</p></div>
+    <div class="f"><b>Тренажёры вместо зубрёжки</b>
+      <p>Буи мигают, огни плывут в темноте, лодка дрейфует под ветром — навык складывается из практики, как в море.</p></div>
+  </div>
+
+  <div style="text-align:center; margin-top:48px">
+    <a class="cta" href="https://t.me/issa_test_bot">Начать подготовку
+      <small>открывается в Telegram за секунду</small></a>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Учебный тренажёр. Не является официальным материалом ISSA и не содержит экзаменационных ключей.</p>
+    <p>Вопросы и предложения: <a href="https://t.me/ipostatos">@ipostatos</a></p>
+  </div>
+</footer>
+
+<script>
+// звёзды в шапке — лёгкое мерцание, в духе сцен приложения
+(function(){
+  var cv=document.getElementById("stars"), ctx=cv.getContext("2d");
+  function fit(){ cv.width=cv.offsetWidth; cv.height=cv.offsetHeight; }
+  fit(); window.addEventListener("resize",fit);
+  function draw(ts){
+    requestAnimationFrame(draw);
+    ctx.clearRect(0,0,cv.width,cv.height);
+    for(var i=0;i<40;i++){
+      var x=(i*167.3)%cv.width, y=(i*97.7)%(cv.height*0.9);
+      var a=0.15+0.35*Math.abs(Math.sin(ts/1000*0.8+i*1.7));
+      ctx.fillStyle="rgba(220,235,255,"+a.toFixed(2)+")";
+      ctx.fillRect(x,y,1.6,1.6);
+    }
+  }
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>

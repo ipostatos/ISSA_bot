@@ -117,6 +117,7 @@
         <div class="muted" style="font-size:12px; margin-top:8px" id="weakLine"></div>
         <!-- план к дате экзамена: обратный отсчёт + честная дневная норма -->
         <div id="examPlanLine" style="font-size:12px; margin-top:8px; cursor:pointer"></div>
+        <input type="date" id="examDateInput" style="position:absolute; width:1px; height:1px; opacity:0; border:0; padding:0">
       </div>
 
       <!-- слайды польских лицензий (заполняются JS) -->
@@ -391,23 +392,32 @@ function renderExamPlan(questions, boxOf){
     const col = plan.onTrack ? "var(--ok)" : "var(--warn)";
     const dayWord = plan.daysLeft === 0 ? I18N.t("examToday")
       : I18N.t("daysLeft", {n: plan.daysLeft});
-    el.innerHTML = `${ic("calendar")} ${I18N.t("examOn", {date: d + "." + m, left: dayWord})}` +
-      (plan.reviewsLeft === 0
-        ? ` · <span style="color:var(--ok)">${I18N.t("bankReady")} ${ic("check")}</span>`
-        : ` · <span style="color:${col}">${I18N.t("needPerDay", {n: plan.needPerDay})}</span>` +
-          (plan.onTrack ? "" : ` ${I18N.t("raiseGoal", {g: Progress.getGoal()})}`));
+    // крупный отсчёт — «виджет»: до экзамена осталось N дней
+    el.innerHTML =
+      `<div style="font-weight:800; font-size:16px; margin-bottom:2px">` +
+        `${ic("calendar")} ${I18N.t("examOn", {date: d + "." + m, left: `<b style="color:${plan.daysLeft <= 7 ? "var(--warn)" : "var(--accent)"}">${dayWord}</b>`})}</div>` +
+      `<div>` + (plan.reviewsLeft === 0
+        ? `<span style="color:var(--ok)">${I18N.t("bankReady")} ${ic("check")}</span>`
+        : `<span style="color:${col}">${I18N.t("needPerDay", {n: plan.needPerDay})}</span>` +
+          (plan.onTrack ? "" : ` ${I18N.t("raiseGoal", {g: Progress.getGoal()})}`)) + `</div>`;
   }
+  // выбор даты: нативный пикер (prompt() в Telegram WebView часто заблокирован)
   el.onclick = ()=>{
-    const cur = Progress.getExamDate() || "";
-    const v = prompt(I18N.t("promptDate"), cur);
+    const inp = document.getElementById("examDateInput");
+    const apply = v => { Progress.setExamDate(v || null); render(); };
+    if (inp && inp.showPicker){
+      inp.value = Progress.getExamDate() || "";
+      inp.onchange = () => apply(inp.value);
+      try { inp.showPicker(); return; } catch (e) {}
+    }
+    const v = prompt(I18N.t("promptDate"), Progress.getExamDate() || "");
     if (v === null) return;
     const t = v.trim();
-    if (!t){ Progress.setExamDate(null); render(); return; }
+    if (!t){ apply(null); return; }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || isNaN(Date.parse(t))){
       alert(I18N.t("badDate")); return;
     }
-    Progress.setExamDate(t);
-    render();
+    apply(t);
   };
 }
 
