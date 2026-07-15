@@ -100,10 +100,14 @@
     justify-content:center; color:var(--accent-text); font-size:12px; font-weight:800}
   .lever .cap{position:absolute; top:5px; left:0; right:0; text-align:center; font-size:10px;
     color:#9fc4e0; white-space:pre-line; line-height:1.15}
+  .lever .capb{position:absolute; bottom:5px; left:0; right:0; text-align:center; font-size:9px;
+    color:#9fc4e0; white-space:pre-line; line-height:1.15}
   #stopBtn{height:50px; border-radius:13px; border:1px solid rgba(255,255,255,.22);
-    background:rgba(8,18,30,.72); color:#ffb3ad; font-size:14px; font-weight:800; cursor:pointer;
-    backdrop-filter:blur(4px); touch-action:manipulation}
-  #stopBtn:active{background:var(--bad); color:#fff}
+    background:rgba(8,18,30,.72); color:#dcecfa; cursor:pointer;
+    backdrop-filter:blur(4px); touch-action:manipulation; line-height:1.1}
+  #stopBtn b{font-size:17px; font-weight:800; display:block}
+  #stopBtn small{font-size:9px; color:#9fc4e0; display:block}
+  #stopBtn:active{background:var(--accent); color:var(--accent-text)}
 
   #leftCol{position:absolute; left:8px; bottom:calc(26px + env(safe-area-inset-bottom,0px));
     width:min(52vw,240px); display:flex; flex-direction:column; gap:6px}
@@ -248,7 +252,7 @@
 
       <div id="rightCol">
         <div id="levers"></div>
-        <button id="stopBtn" data-i18n="dockStop"></button>
+        <button id="stopBtn"><b>N</b><small data-i18n="dockNeutral"></small></button>
       </div>
       <div id="leftCol">
         <div id="thrWrap" class="hidden">
@@ -1049,9 +1053,10 @@ wireChips("wxChips","wx","wx");
 wireChips("todChips","tod","tod");
 
 /* ── рычаги ── */
-function Lever(parent, cap, onChange){
+function Lever(parent, cap, capBottom, onChange){
   var el=document.createElement("div"); el.className="lever";
-  el.innerHTML='<span class="cap">'+cap+'</span><div class="zero"></div><div class="knob">0</div>';
+  el.innerHTML='<span class="cap">'+cap+'</span><span class="capb">'+capBottom+'</span>'+
+               '<div class="zero"></div><div class="knob">0</div>';
   parent.appendChild(el);
   var knob=el.querySelector(".knob"), val=0, drag=null, KH=42;
   function set(v){
@@ -1076,11 +1081,12 @@ var levers=[], rudCtl=null;
 function buildControls(){
   var lv=document.getElementById("levers"); lv.innerHTML=""; levers=[];
   var h=HULLS[cfg.hull];
+  var rev = T("dockReverse");
   if (h.twin){
-    levers.push(Lever(lv, T("dockEngL"), function(v){ sim.thrT[0]=v; sim.started=true; }));
-    levers.push(Lever(lv, T("dockEngR"), function(v){ sim.thrT[1]=v; sim.started=true; }));
+    levers.push(Lever(lv, "L · "+T("dockThrottle"), rev, function(v){ sim.thrT[0]=v; sim.started=true; }));
+    levers.push(Lever(lv, "R · "+T("dockThrottle"), rev, function(v){ sim.thrT[1]=v; sim.started=true; }));
   } else {
-    levers.push(Lever(lv, T("dockThrottle"), function(v){ sim.thrT[0]=v; sim.thrT[1]=v; sim.started=true; }));
+    levers.push(Lever(lv, T("dockThrottle"), rev, function(v){ sim.thrT[0]=v; sim.thrT[1]=v; sim.started=true; }));
   }
   document.getElementById("thrWrap").classList.toggle("hidden", !h.thruster);
 }
