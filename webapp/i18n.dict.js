@@ -219,6 +219,7 @@
     audDoneList:  { ru: "Плейлист прослушан! Нажми ▶, чтобы пройти ещё раз, или собери новый.", pl: "Playlista odsłuchana! Naciśnij ▶, aby powtórzyć, albo ułóż nową.", ua: "Плейлист прослухано! Натисни ▶, щоб пройти ще раз, або збери новий.", en: "Playlist finished! Press ▶ to run it again or build a new one." },
     audSess:      { ru: "Прослушано {a} · Оценено {b} · Верно {c}", pl: "Odsłuchane {a} · Ocenione {b} · Poprawne {c}", ua: "Прослухано {a} · Оцінено {b} · Правильно {c}", en: "Listened {a} · Rated {b} · Correct {c}" },
     audTopicAll:  { ru: "Все", pl: "Wszystkie", ua: "Усі", en: "All" },
+    audNoSound:   { ru: "Не слышно голоса? На iPhone проверь боковой переключатель беззвучного режима (он глушит синтез речи) и громкость. Если не помогло — выбери голос вручную в настройках ниже.", pl: "Nie słychać głosu? Na iPhonie sprawdź boczny przełącznik trybu cichego (wycisza syntezę mowy) i głośność. Jeśli to nie pomoże — wybierz głos ręcznie w ustawieniach poniżej.", ua: "Не чути голосу? На iPhone перевір боковий перемикач беззвучного режиму (він глушить синтез мовлення) і гучність. Якщо не допомогло — обери голос вручну в налаштуваннях нижче.", en: "No voice? On iPhone check the side silent-mode switch (it mutes speech synthesis) and the volume. If that doesn't help, pick a voice manually in the settings below." },
 
     /* ── history.html (прогресс и история) ── */
     histTitle:    { ru: "История", pl: "Historia", ua: "Історія", en: "History" },

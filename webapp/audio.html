@@ -115,6 +115,7 @@
   <p class="sub" data-i18n="audSub"></p>
 
   <div id="noSupport" class="nosupport hidden" data-i18n="audNoSupport"></div>
+  <div id="sndHint" class="nosupport hidden" style="margin-bottom:10px" data-i18n="audNoSound"></div>
 
   <div id="app">
     <div class="src-row" id="srcRow">
@@ -425,21 +426,43 @@ function speakTrack(){
     if (v) u.voice = v;
     u.lang = part.lang === "pl" ? "pl-PL" : "ru-RU";
     u.rate = cfg.rate;
-    let done = false;
+    let done = false, started = false;
     const advance = () => { if (!done){ done = true; if (g === gen) step(); } };
+    u.onstart = () => {
+      started = true; heard = true;
+      const hint = document.getElementById("sndHint");
+      if (hint) hint.classList.add("hidden");
+    };
     u.onend = advance;
     u.onerror = advance;                     // битый голос не вешает плейлист
+    // Chrome: speak сразу после cancel иногда глохнет — не стартовал за 1 с → повторить раз
+    setTimeout(() => {
+      if (g === gen && playing && !started && !done){
+        try { SS.cancel(); } catch (e) {}
+        SS.speak(u);
+      }
+    }, 1000);
     // сторожевой таймер: некоторые синтезы «глотают» onend
-    const est = (part.text.length * 90) / cfg.rate + 4000;
+    const est = (part.text.length * 90) / cfg.rate + 5000;
     setTimeout(() => { if (g === gen && playing) advance(); }, est);
     SS.speak(u);
   };
-  setTimeout(step, 60);   // Chrome: speak сразу после cancel иногда глохнет
+  // ВАЖНО: синхронно — iOS/WebKit разрешает speak() только внутри жеста нажатия
+  step();
 }
 
+let heard = false, sndHintShown = false;
 function play(){
   playing = true; setPlayIcon(); renderNow(); speakTrack(); haptic("light");
   startSession(); applyWake();
+  // если через 3 c ни одна фраза не зазвучала — показать подсказку про звук
+  setTimeout(() => {
+    if (playing && !heard && !sndHintShown){
+      sndHintShown = true;
+      const el = document.getElementById("sndHint");
+      if (el) el.classList.remove("hidden");
+    }
+  }, 3000);
 }
 function pause(){
   playing = false; gen++; setPlayIcon(); hideThink();
