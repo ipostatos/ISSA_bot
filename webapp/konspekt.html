@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Конспект ISSA</title>
+<title data-i18n="konTitleTag">Конспект ISSA</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="icons.js"></script>
 <script src="lightbox.js" data-scope="#rBody"></script>
 <script src="konspekt_data.js"></script>
@@ -101,21 +103,20 @@
 <body>
 
 <section id="list">
-  <h1><span class="emi" data-icon="book-open"></span> Конспект</h1>
-  <div class="search"><input id="q" type="search" placeholder="Поиск по конспекту…" autocomplete="off"></div>
+  <h1><span class="emi" data-icon="book-open"></span> <span data-i18n="konTitle"></span></h1>
+  <div class="search"><input id="q" type="search" autocomplete="off"></div>
   <div id="tiles" class="tiles"></div>
   <div id="hits" class="hidden"></div>
-  <p class="foot">Учебный пересказ по открытым источникам.
-    Не является официальным материалом ISSA.</p>
+  <p class="foot" data-i18n="konFootFull"></p>
 </section>
 
 <section id="reader" class="hidden">
   <div class="topbar">
-    <button class="back" id="back">← Темы</button>
+    <button class="back" id="back" data-i18n="konBack"></button>
     <span class="reader-title" id="rTitle"></span>
   </div>
   <article id="rBody"></article>
-  <p class="foot">Учебный пересказ по открытым источникам.</p>
+  <p class="foot" data-i18n="konFootShort"></p>
 </section>
 
 <script>
@@ -135,6 +136,8 @@ document.addEventListener("touchend", e => {
 const DATA = (window.KONSPEKT_DATA && window.KONSPEKT_DATA.topics) || [];
 const SECTIONS = (window.KONSPEKT_DATA && window.KONSPEKT_DATA.sections) || [];
 const byKey = Object.fromEntries(DATA.map(t => [t.key, t]));
+
+document.getElementById("q").placeholder = I18N.t("konSearch");  // hydrate не трогает атрибуты
 
 const $ = id => document.getElementById(id);
 const show = id => $(id).classList.remove("hidden");
@@ -300,7 +303,7 @@ function doSearch(q){
   const found = DATA.filter(t => t.text.toLowerCase().includes(ql)
                               || t.title.toLowerCase().includes(ql));
   if (!found.length){
-    $("hits").innerHTML = `<div class="empty">Ничего не найдено по «${esc(q)}».<br>Попробуй другое слово.</div>`;
+    $("hits").innerHTML = `<div class="empty">${I18N.t("konNotFound", {q: esc(q)})}</div>`;
     return;
   }
   $("hits").innerHTML = "";

@@ -485,7 +485,67 @@
     wxLegendWave: { ru: "Волна, м: ", pl: "Fala, m: ", ua: "Хвиля, м: ", en: "Wave, m: " },
     wxLegendWind: { ru: "Ветер, узлы: ", pl: "Wiatr, węzły: ", ua: "Вітер, вузли: ", en: "Wind, knots: " },
     wxMs:         { ru: "м/с", pl: "m/s", ua: "м/с", en: "m/s" },
-    wxMeters:     { ru: "м", pl: "m", ua: "м", en: "m" }
+    wxMeters:     { ru: "м", pl: "m", ua: "м", en: "m" },
+
+    /* ── exam_pl.html — экзамен польских лицензий. Вопросы PL/RU из
+       zeglarz_data/sternik_data остаются как на экзаменационном листе ── */
+    pxTitleTag:   { ru: "Польские лицензии — экзамен", pl: "Polskie licencje — egzamin", ua: "Польські ліцензії — екзамен", en: "Polish licenses — exam" },
+    pxTitle:      { ru: "Польские лицензии", pl: "Polskie licencje", ua: "Польські ліцензії", en: "Polish licenses" },
+    pxPickSub:    { ru: "Вопросы PL/RU как на экзаменационном листе. Выбери лицензию.", pl: "Pytania PL/RU jak na arkuszu egzaminacyjnym. Wybierz licencję.", ua: "Питання PL/RU як на екзаменаційному листі. Обери ліцензію.", en: "PL/RU questions as on the exam sheet. Pick a license." },
+    pxZeglarzSub: { ru: "парусная · 150 вопросов", pl: "żaglowa · 150 pytań", ua: "вітрильна · 150 питань", en: "sailing · 150 questions" },
+    pxSternikSub: { ru: "моторная · 460 вопросов", pl: "motorowa · 460 pytań", ua: "моторна · 460 питань", en: "motor · 460 questions" },
+    pxNotOfficial:{ ru: "Не является официальным материалом.", pl: "Nie jest oficjalnym materiałem.", ua: "Не є офіційним матеріалом.", en: "Not official material." },
+    pxMenuSub:    { ru: "Гибридные вопросы PL/RU как на экзаменационном листе.", pl: "Hybrydowe pytania PL/RU jak na arkuszu egzaminacyjnym.", ua: "Гібридні питання PL/RU як на екзаменаційному листі.", en: "Hybrid PL/RU questions as on the exam sheet." },
+    pxTrainSub:   { ru: "все вопросы подряд · сразу видно правильный · разбор в конспекте", pl: "wszystkie pytania po kolei · od razu widać poprawne · analiza w notatkach", ua: "усі питання поспіль · одразу видно правильне · розбір у конспекті", en: "all questions in a row · correct one shown at once · notes for details" },
+    pxKonspekt:   { ru: "Конспект PL", pl: "Notatki PL", ua: "Конспект PL", en: "PL notes" },
+    pxKonspektSub:{ ru: "7 тем PL/RU · почему ответ правильный", pl: "7 tematów PL/RU · dlaczego odpowiedź jest poprawna", ua: "7 тем PL/RU · чому відповідь правильна", en: "7 topics PL/RU · why the answer is correct" },
+    pxChangeLic:  { ru: "← Сменить лицензию", pl: "← Zmień licencję", ua: "← Змінити ліцензію", en: "← Change license" },
+    pxExamSub:    { ru: "{n} вопросов · {min} мин · сдать {pass}", pl: "{n} pytań · {min} min · zaliczenie {pass}", ua: "{n} питань · {min} хв · скласти {pass}", en: "{n} questions · {min} min · pass {pass}" },
+    pxBankInfo:   { ru: "Банк: {n} вопросов ({img} со знаками). Не является официальным материалом.", pl: "Baza: {n} pytań ({img} ze znakami). Nie jest oficjalnym materiałem.", ua: "Банк: {n} питань ({img} зі знаками). Не є офіційним матеріалом.", en: "Bank: {n} questions ({img} with signs). Not official material." },
+    pxQuit:       { ru: "Выйти", pl: "Wyjdź", ua: "Вийти", en: "Exit" },
+    pxMenu:       { ru: "В меню", pl: "Do menu", ua: "У меню", en: "To menu" },
+    pxAgain:      { ru: "Ещё раз", pl: "Jeszcze raz", ua: "Ще раз", en: "Again" },
+    pxLampTitle:  { ru: "Разбор в конспекте", pl: "Analiza w notatkach", ua: "Розбір у конспекті", en: "Details in the notes" },
+    pxLampSub:    { ru: "почему этот ответ правильный", pl: "dlaczego ta odpowiedź jest poprawna", ua: "чому ця відповідь правильна", en: "why this answer is correct" },
+    pxBack:       { ru: "Назад", pl: "Wstecz", ua: "Назад", en: "Back" },
+    pxNextTrain:  { ru: "Следующий →", pl: "Następny →", ua: "Наступний →", en: "Next →" },
+    pxChooseOpt:  { ru: "Выбери вариант", pl: "Wybierz wariant", ua: "Обери варіант", en: "Pick an option" },
+    pxPassed:     { ru: "Сдано ✓", pl: "Zaliczone ✓", ua: "Складено ✓", en: "Passed ✓" },
+    pxFailed:     { ru: "Не сдано", pl: "Niezaliczone", ua: "Не складено", en: "Failed" },
+    pxThreshOk:   { ru: "Порог {pass} пройден.", pl: "Próg {pass} osiągnięty.", ua: "Поріг {pass} пройдено.", en: "Threshold {pass} reached." },
+    pxThreshFail: { ru: "Нужно {pass}. Не хватило {n}.", pl: "Potrzeba {pass}. Zabrakło {n}.", ua: "Потрібно {pass}. Не вистачило {n}.", en: "Need {pass}. Short by {n}." },
+    pxQuitConfirm:{ ru: "Выйти? Прогресс не сохранится.", pl: "Wyjść? Postęp nie zostanie zapisany.", ua: "Вийти? Прогрес не збережеться.", en: "Exit? Progress won't be saved." },
+    pxBackConfirm:{ ru: "Выйти в меню? Экзамен можно будет продолжить, тренировку — нет.", pl: "Wyjść do menu? Egzamin będzie można kontynuować, trening — nie.", ua: "Вийти в меню? Екзамен можна буде продовжити, тренування — ні.", en: "Exit to menu? The exam can be resumed, practice cannot." },
+    pxResumeInfo: { ru: "Экзамен · {done}/{total}", pl: "Egzamin · {done}/{total}", ua: "Екзамен · {done}/{total}", en: "Exam · {done}/{total}" },
+
+    /* ── reader.html — просмотрщик PDF. Содержимое книг (русские PDF) — не UI ── */
+    rdTitle:      { ru: "Чтение", pl: "Czytanie", ua: "Читання", en: "Reading" },
+    rdLoading:    { ru: "Загрузка книги…", pl: "Ładowanie książki…", ua: "Завантаження книги…", en: "Loading the book…" },
+    rdZoomOut:    { ru: "Меньше", pl: "Mniej", ua: "Менше", en: "Zoom out" },
+    rdZoomIn:     { ru: "Больше", pl: "Więcej", ua: "Більше", en: "Zoom in" },
+    rdBook:       { ru: "Книга", pl: "Książka", ua: "Книга", en: "Book" },
+    rdExternal:   { ru: "Открыть во внешнем просмотрщике", pl: "Otwórz w zewnętrznej przeglądarce", ua: "Відкрити в зовнішньому переглядачі", en: "Open in an external viewer" },
+    rdNoFile:     { ru: "Файл не указан.", pl: "Nie podano pliku.", ua: "Файл не вказано.", en: "No file specified." },
+    rdNoViewer:   { ru: "Не удалось загрузить просмотрщик PDF.", pl: "Nie udało się załadować przeglądarki PDF.", ua: "Не вдалося завантажити переглядач PDF.", en: "Couldn't load the PDF viewer." },
+    rd404:        { ru: "Файл книги не найден на сервере (404). Загрузите PDF в webapp/books/.", pl: "Nie znaleziono pliku książki na serwerze (404). Wgraj PDF do webapp/books/.", ua: "Файл книги не знайдено на сервері (404). Завантажте PDF у webapp/books/.", en: "Book file not found on the server (404). Upload the PDF to webapp/books/." },
+    rdServerErr:  { ru: "Сервер вернул {n} при запросе книги.", pl: "Serwer zwrócił {n} przy żądaniu książki.", ua: "Сервер повернув {n} під час запиту книги.", en: "The server returned {n} while requesting the book." },
+    rdFetchFail:  { ru: "Не удалось получить файл книги.", pl: "Nie udało się pobrać pliku książki.", ua: "Не вдалося отримати файл книги.", en: "Couldn't fetch the book file." },
+    rdOpenFail:   { ru: "PDF загружен, но не открылся: {msg}.", pl: "PDF pobrany, ale się nie otworzył: {msg}.", ua: "PDF завантажено, але не відкрився: {msg}.", en: "PDF downloaded but didn't open: {msg}." },
+    rdFormatUnknown:{ ru: "формат не распознан", pl: "format nierozpoznany", ua: "формат не розпізнано", en: "format not recognized" },
+
+    /* ── konspekt.html / konspekt_pl.html — учебные конспекты. Темы (title/html/
+       разделы) из konspekt_data/konspekt_pl_data остаются на русском ── */
+    konTitleTag:  { ru: "Конспект ISSA", pl: "Notatki ISSA", ua: "Конспект ISSA", en: "ISSA notes" },
+    konTitle:     { ru: "Конспект", pl: "Notatki", ua: "Конспект", en: "Notes" },
+    konSearch:    { ru: "Поиск по конспекту…", pl: "Szukaj w notatkach…", ua: "Пошук у конспекті…", en: "Search the notes…" },
+    konFootFull:  { ru: "Учебный пересказ по открытым источникам. Не является официальным материалом ISSA.", pl: "Edukacyjne opracowanie na podstawie otwartych źródeł. Nie jest oficjalnym materiałem ISSA.", ua: "Навчальний переказ за відкритими джерелами. Не є офіційним матеріалом ISSA.", en: "An educational summary from open sources. Not official ISSA material." },
+    konFootShort: { ru: "Учебный пересказ по открытым источникам.", pl: "Edukacyjne opracowanie na podstawie otwartych źródeł.", ua: "Навчальний переказ за відкритими джерелами.", en: "An educational summary from open sources." },
+    konBack:      { ru: "← Темы", pl: "← Tematy", ua: "← Теми", en: "← Topics" },
+    konNotFound:  { ru: "Ничего не найдено по «{q}».<br>Попробуй другое слово.", pl: "Nic nie znaleziono dla „{q}”.<br>Spróbuj innego słowa.", ua: "Нічого не знайдено за «{q}».<br>Спробуй інше слово.", en: "Nothing found for “{q}”.<br>Try another word." },
+    konplTitleTag:{ ru: "Конспект PL — Żeglarz + Sternik", pl: "Notatki PL — Żeglarz + Sternik", ua: "Конспект PL — Żeglarz + Sternik", en: "PL notes — Żeglarz + Sternik" },
+    konplTitle:   { ru: "Конспект PL", pl: "Notatki PL", ua: "Конспект PL", en: "PL notes" },
+    konplSub:     { ru: "Żeglarz jachtowy + Sternik motorowodny · разбор PL/RU: почему ответ верный.", pl: "Żeglarz jachtowy + Sternik motorowodny · analiza PL/RU: dlaczego odpowiedź jest poprawna.", ua: "Żeglarz jachtowy + Sternik motorowodny · розбір PL/RU: чому відповідь правильна.", en: "Żeglarz jachtowy + Sternik motorowodny · PL/RU walkthrough: why the answer is right." },
+    konplFoot:    { ru: "Учебный пересказ по открытым источникам и программе PZŻ. Не является официальным материалом школы или PZŻ.", pl: "Edukacyjne opracowanie na podstawie otwartych źródeł i programu PZŻ. Nie jest oficjalnym materiałem szkoły ani PZŻ.", ua: "Навчальний переказ за відкритими джерелами та програмою PZŻ. Не є офіційним матеріалом школи чи PZŻ.", en: "An educational summary from open sources and the PZŻ syllabus. Not official school or PZŻ material." }
   };
 
   return { LANGS: LANGS, DICT: DICT };

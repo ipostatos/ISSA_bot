@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Чтение</title>
+<title data-i18n="rdTitle">Чтение</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="icons.js"></script>
 <style>
   :root{
@@ -71,7 +73,7 @@
 
 <div id="status" class="status">
   <div class="spin"></div>
-  <div id="statusText">Загрузка книги…</div>
+  <div id="statusText" data-i18n="rdLoading"></div>
   <div class="bar"><i id="loadBar"></i></div>
 </div>
 
@@ -91,9 +93,13 @@ const tg = window.Telegram?.WebApp;
 
 const $ = id => document.getElementById(id);
 if (window.Icons) Icons.hydrate();
+// подписи-подсказки к кнопкам (hydrate не трогает атрибуты)
+$("zoomOut").title = I18N.t("rdZoomOut");
+$("zoomIn").title = I18N.t("rdZoomIn");
+$("dl").title = I18N.t("bookDownload");
 const params = new URLSearchParams(location.search);
 const rawFile = params.get("file") || "";
-const title = params.get("title") || "Книга";
+const title = params.get("title") || I18N.t("rdBook");
 document.title = title;
 
 // БЕЗОПАСНОСТЬ: разрешаем ТОЛЬКО свои книги из books/ (same-origin, без обхода
@@ -118,15 +124,15 @@ function fail(msg){
   $("pages").classList.add("hidden");
   $("status").innerHTML =
     `<div style="font-size:30px">${window.Icons?Icons.svg("file-text"):"📄"}</div><div>${msg}</div>` +
-    `<a id="ext">Открыть во внешнем просмотрщике</a>`;
+    `<a id="ext">${I18N.t("rdExternal")}</a>`;
   $("ext").onclick = () => {
     const url = new URL(file, location.href).href;
     if (tg && tg.openLink) tg.openLink(url); else window.open(url, "_blank");
   };
 }
 
-if (!file){ fail("Файл не указан."); }
-else if (!window.pdfjsLib){ fail("Не удалось загрузить просмотрщик PDF."); }
+if (!file){ fail(I18N.t("rdNoFile")); }
+else if (!window.pdfjsLib){ fail(I18N.t("rdNoViewer")); }
 else {
   pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdfjs/pdf.worker.min.js";
   startReader();
@@ -146,12 +152,12 @@ function startReader(){
   fetch(url, { method: "GET", headers: { Range: "bytes=0-0" } })
     .then(r => {
       if (!r.ok && r.status !== 206) {
-        if (r.status === 404) throw new Error("Файл книги не найден на сервере (404). Загрузите PDF в webapp/books/.");
-        throw new Error("Сервер вернул " + r.status + " при запросе книги.");
+        if (r.status === 404) throw new Error(I18N.t("rd404"));
+        throw new Error(I18N.t("rdServerErr", {n: r.status}));
       }
       loadPdf();
     })
-    .catch(e => fail(e.message || "Не удалось получить файл книги."));
+    .catch(e => fail(e.message || I18N.t("rdFetchFail")));
 
   function loadPdf(){
     // disableStream/Range: качаем файл целиком — надёжнее на простой статике (Caddy),
@@ -172,7 +178,7 @@ function startReader(){
       updateInfo();
     }).catch(err => {
       console.error(err);
-      fail("PDF загружен, но не открылся: " + (err && err.message ? err.message : "формат не распознан") + ".");
+      fail(I18N.t("rdOpenFail", {msg: (err && err.message ? err.message : I18N.t("rdFormatUnknown"))}));
     });
   }
 
