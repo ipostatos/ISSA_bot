@@ -609,6 +609,7 @@
     dockTodDay:  { ru: "День", pl: "Dzień", ua: "День", en: "Day" },
     dockTodDusk: { ru: "Сумерки", pl: "Zmierzch", ua: "Сутінки", en: "Dusk" },
     dockTodNight:{ ru: "Ночь", pl: "Noc", ua: "Ніч", en: "Night" },
+    shapeCapMenu:{ ru: "Фигуры и флаги на рейде", pl: "Znaki i flagi na redzie", ua: "Фігури і прапори на рейді", en: "Shapes and flags in the roadstead" },
     dockCurT:    { ru: "Течение", pl: "Prąd", ua: "Течія", en: "Current" },
     dockKn:      { ru: "уз", pl: "w.", ua: "вуз.", en: "kn" },
     dockMs:      { ru: "м/с", pl: "m/s", ua: "м/с", en: "m/s" },

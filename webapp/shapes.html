@@ -46,15 +46,32 @@
   .btn small{display:block; font-weight:400; font-size:12px; opacity:.85; margin-top:2px}
   .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--border)}
   .row{display:flex; gap:10px}
-  /* список справочника */
+
+  /* сцена: сумерки на море (единый стиль с «Буями») */
+  .scene{ position:relative; width:100%; aspect-ratio:1/1; max-height:320px; border-radius:16px;
+    overflow:hidden; border:1px solid var(--border);
+    background:linear-gradient(#071224 0%, #10304d 45%, #061c2e 100%) }
+  .scene canvas{ position:absolute; inset:0; width:100%; height:100%; display:block }
+  .scene-cap{ position:absolute; left:0; right:0; bottom:8px; text-align:center; font-size:12px;
+    color:#9fc4e0; text-shadow:0 1px 3px #000; pointer-events:none }
+
+  /* большие кнопки меню (как у «Буёв») */
+  .big{width:100%; padding:15px; margin-bottom:10px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); border-radius:14px; cursor:pointer;
+    font-size:16px; font-weight:600; text-align:left; display:flex; align-items:center; gap:12px}
+  .big .bic{flex:0 0 auto; color:var(--accent)}
+  .big small{display:block; font-weight:400; font-size:13px; opacity:.85; margin-top:2px}
+
+  /* список справочника: круглые иконки-«иллюминаторы» */
   .item{display:flex; align-items:center; gap:12px; width:100%; text-align:left;
     padding:10px 12px; margin-bottom:8px; border:1px solid var(--border);
     background:var(--card); color:var(--text); border-radius:12px; cursor:pointer}
-  .item canvas{flex:0 0 auto}
+  .item canvas{flex:0 0 auto; width:56px; height:56px; border-radius:50%;
+    border:1px solid var(--border)}
   .item .t{font-size:14px; font-weight:600}
   .item .m{font-size:12px; color:var(--hint)}
-  /* карточка */
-  .stage{display:flex; justify-content:center; padding:10px 0}
+  /* карточка: сцена вместо плоской подложки */
+  .stage{padding:0}
   .info{background:var(--bg); border:1px solid var(--border); border-radius:10px;
     padding:12px; font-size:14px; margin-top:10px}
   .info .note{color:var(--hint); font-size:13px; margin-top:6px}
@@ -73,12 +90,22 @@
 <section id="menu">
   <h1><span class="emi" data-icon="triangle"></span> <span data-i18n="shapeTitle"></span></h1>
   <p class="sub" data-i18n="shapeSub"></p>
-  <button class="btn" id="goShapes"><span class="emi" data-icon="triangle"></span> <span data-i18n="shapeDay"></span>
-    <small data-i18n="shapeDaySub"></small></button>
-  <button class="btn" id="goFlags"><span class="emi" data-icon="flag"></span> <span data-i18n="shapeFlags"></span>
-    <small data-i18n="shapeFlagsSub"></small></button>
-  <button class="btn ghost" id="goQuiz"><span class="emi" data-icon="graduation-cap"></span> <span data-i18n="shapeQuiz"></span>
-    <small data-i18n="shapeQuizSub"></small></button>
+  <div class="scene" style="margin-bottom:14px">
+    <canvas id="menuScene"></canvas>
+    <div class="scene-cap" data-i18n="shapeCapMenu"></div>
+  </div>
+  <button class="big" id="goShapes">
+    <span class="bic" data-icon="triangle"></span>
+    <span><span data-i18n="shapeDay"></span><small data-i18n="shapeDaySub"></small></span>
+  </button>
+  <button class="big" id="goFlags">
+    <span class="bic" data-icon="flag"></span>
+    <span><span data-i18n="shapeFlags"></span><small data-i18n="shapeFlagsSub"></small></span>
+  </button>
+  <button class="big" id="goQuiz">
+    <span class="bic" data-icon="graduation-cap"></span>
+    <span><span data-i18n="shapeQuiz"></span><small data-i18n="shapeQuizSub"></small></span>
+  </button>
 </section>
 
 <!-- СПРАВОЧНИК (список) -->
@@ -97,7 +124,7 @@
     <div style="flex:1; align-self:center; font-weight:700" id="viewTitle"></div>
   </div>
   <div class="card">
-    <div class="stage"><canvas id="viewCanvas" width="220" height="240"></canvas></div>
+    <div class="stage"><div class="scene"><canvas id="viewCanvas"></canvas></div></div>
     <div class="info">
       <div id="viewMeaning" style="font-weight:600"></div>
       <div class="note" id="viewNote"></div>
@@ -112,7 +139,7 @@
     <div style="flex:1; text-align:right; color:var(--hint); font-size:13px; align-self:center" id="quizCounter"></div>
   </div>
   <div class="card">
-    <div class="stage"><canvas id="quizCanvas" width="220" height="240"></canvas></div>
+    <div class="stage"><div class="scene"><canvas id="quizCanvas"></canvas></div></div>
     <div style="margin-top:6px; font-weight:600" id="quizQ" data-i18n="shapeWhat"></div>
     <div id="quizOpts" style="margin-top:10px"></div>
     <div class="row" id="quizCtrl" style="display:none">
@@ -127,34 +154,60 @@
 if (window.Icons) Icons.hydrate();
 const D = window.SHAPES_DATA || { dayshapes: [], flags: [] };
 
-// ─────────────────────── Рендер: дневные фигуры ───────────────────────
-// Фигуры чёрные (как в море), на светлой подложке-небе; рисуем «фалом» сверху
-// вниз в порядке figures.
-function drawShapes(canvas, figures, scale){
+// ─────────────────── Единая сцена: сумерки на море (стиль «Буёв») ───────────────────
+function fitCanvas(canvas, fixW, fixH){
   const dpr = window.devicePixelRatio || 1;
-  const W = canvas.width / dpr || canvas.width, H = canvas.height / dpr || canvas.height;
-  canvas.width = W * dpr; canvas.height = H * dpr;
+  let W = fixW, H = fixH;
+  if (!W){
+    const r = canvas.getBoundingClientRect();
+    W = Math.max(40, r.width); H = Math.max(40, r.height);
+  }
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
   const ctx = canvas.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, W, H);
-  // подложка-небо, чтобы чёрное читалось в тёмной теме
-  ctx.fillStyle = "#cfe3f0";
-  roundRect(ctx, 0, 0, W, H, 12); ctx.fill();
-  const cx = W / 2;
-  const s = (scale || 1) * Math.min(W, H) / 5.2;      // базовый размер фигуры
-  const gap = s * 0.35;
-  const totalH = figures.reduce((acc, f) => acc + figH(f, s), 0) + gap * (figures.length - 1);
-  let y = (H - totalH) / 2;
-  // фал
-  ctx.strokeStyle = "#5a6b78"; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(cx, 6); ctx.lineTo(cx, y); ctx.stroke();
-  ctx.fillStyle = "#14181c";
-  figures.forEach(f => {
-    const h = figH(f, s);
-    drawFigure(ctx, f, cx, y, s, h);
-    y += h + gap;
-  });
+  return { ctx, W, H };
 }
+function sceneBG(ctx, W, H, t){
+  const hor = H * 0.72;
+  const sky = ctx.createLinearGradient(0, 0, 0, hor);
+  sky.addColorStop(0, "#071224"); sky.addColorStop(0.55, "#10304d");
+  sky.addColorStop(0.85, "#1b4869"); sky.addColorStop(1, "#28597b");
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hor + 1);
+  const sea = ctx.createLinearGradient(0, hor, 0, H);
+  sea.addColorStop(0, "#175074"); sea.addColorStop(0.16, "#0f3d5c");
+  sea.addColorStop(0.55, "#0a2c44"); sea.addColorStop(1, "#061c2e");
+  ctx.fillStyle = sea; ctx.fillRect(0, hor, W, H - hor);
+  for (let i = 0; i < 14; i++){                       // мерцающие звёзды
+    const sx = (i * 137.5) % W, sy = (i * 61) % (hor * 0.75);
+    const a = 0.20 + 0.35 * Math.abs(Math.sin(t * 0.9 + i * 1.7));
+    ctx.fillStyle = "rgba(220,235,255," + a.toFixed(2) + ")";
+    ctx.fillRect(sx, sy, 1.4, 1.4);
+  }
+  ctx.strokeStyle = "rgba(180,220,250,.18)"; ctx.lineWidth = 1;   // блики на воде
+  for (let i = 0; i < 7; i++){
+    const y = hor + 5 + i * 6, w2 = 16 + (i * 37) % (W * 0.30), x = (W - w2) / 2 + Math.sin(t * 0.7 + i) * 7;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w2, y); ctx.stroke();
+  }
+}
+// судно-силуэт на воде; возвращает координаты мачты
+function drawVessel(ctx, W, H){
+  const wl = H * 0.80, cx = W * 0.5;
+  ctx.fillStyle = "#0c1620";
+  ctx.beginPath();
+  ctx.moveTo(cx - W * 0.30, wl - H * 0.05); ctx.lineTo(cx + W * 0.30, wl - H * 0.05);
+  ctx.lineTo(cx + W * 0.235, wl + H * 0.012); ctx.lineTo(cx - W * 0.235, wl + H * 0.012);
+  ctx.closePath(); ctx.fill();
+  ctx.fillRect(cx + W * 0.09, wl - H * 0.105, W * 0.13, H * 0.058);   // надстройка
+  ctx.fillStyle = "rgba(8,18,28,.45)";                                 // отражение
+  ctx.fillRect(cx - W * 0.235, wl + H * 0.014, W * 0.47, H * 0.022);
+  return { mastX: cx - W * 0.03, mastTop: H * 0.09, deckY: wl - H * 0.05 };
+}
+function drawMastLine(ctx, x, y0, y1){
+  ctx.strokeStyle = "#5a6b78"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+}
+
+// ─────────────────── Дневные фигуры: чёрные силуэты с подсветкой ───────────────────
 function figH(f, s){ return f === "cones-apex" ? s * 1.7 : f === "cylinder" ? s * 1.6 : s; }
 function drawFigure(ctx, f, cx, top, s, h){
   const r = s / 2;
@@ -175,38 +228,36 @@ function drawFigure(ctx, f, cx, top, s, h){
   } else if (f === "cylinder"){
     ctx.rect(cx - r * 0.7, top, s * 0.7, h);
   }
-  ctx.closePath(); ctx.fill();
+  ctx.closePath();
+  ctx.fillStyle = "#0b0f14"; ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.28)"; ctx.lineWidth = 1.2; ctx.stroke();
 }
-function roundRect(ctx, x, y, w, h, r){
-  ctx.beginPath();
-  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+function drawFiguresOnMast(ctx, figures, mastX, yTop, s){
+  const gap = s * 0.35;
+  let y = yTop;
+  figures.forEach(f => {
+    const h = figH(f, s);
+    drawFigure(ctx, f, mastX, y, s, h);
+    y += h + gap;
+  });
 }
 
-// ─────────────────────── Рендер: флаги МСС ───────────────────────
-// Декларативные kind'ы из shapes_data.js. Флаг рисуем с «мачтой» слева.
-function drawFlag(canvas, flag){
+// ─────────────────── Флаг на ветру: слайсы с синусоидой ───────────────────
+let flagBuf = null;
+function paintFlagWavy(ctx, draw, x, y, w, h, t){
+  if (!flagBuf) flagBuf = document.createElement("canvas");
   const dpr = window.devicePixelRatio || 1;
-  const W = canvas.width / dpr || canvas.width, H = canvas.height / dpr || canvas.height;
-  canvas.width = W * dpr; canvas.height = H * dpr;
-  const ctx = canvas.getContext("2d");
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = "#cfe3f0";
-  roundRect(ctx, 0, 0, W, H, 12); ctx.fill();
-  const mastX = W * 0.16;
-  ctx.strokeStyle = "#5a6b78"; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(mastX, 10); ctx.lineTo(mastX, H - 10); ctx.stroke();
-
-  if (flag.draw.shape === "double"){
-    // N над C (сигнал бедствия) — два флага один под другим
-    const fw = W * 0.56, fh = H * 0.34;
-    const n = D.flags.find(f => f.key === "N"), c = D.flags.find(f => f.key === "C");
-    if (n) paintFlag(ctx, n.draw, mastX + 2, H * 0.10, fw, fh);
-    if (c) paintFlag(ctx, c.draw, mastX + 2, H * 0.54, fw, fh);
-    return;
+  flagBuf.width = Math.ceil(w * dpr); flagBuf.height = Math.ceil(h * dpr);
+  const b = flagBuf.getContext("2d");
+  b.setTransform(dpr, 0, 0, dpr, 0, 0);
+  b.clearRect(0, 0, w, h);
+  paintFlag(b, draw, 0, 0, w, h);
+  const slice = 4;
+  for (let sx = 0; sx < w; sx += slice){
+    const k = sx / w;                                    // у мачты не колышется
+    const dy = Math.sin(t * 3 + sx * 0.10) * 2.2 * k;
+    ctx.drawImage(flagBuf, sx * dpr, 0, slice * dpr, h * dpr, x + sx, y + dy, slice, h);
   }
-  paintFlag(ctx, flag.draw, mastX + 2, H * 0.22, W * 0.62, H * 0.5);
 }
 function paintFlag(ctx, draw, x, y, w, h){
   ctx.save();
@@ -260,11 +311,81 @@ function paintFlag(ctx, draw, x, y, w, h){
   if (draw.shape !== "swallowtail") ctx.strokeRect(x, y, w, h);
 }
 
-// единый рендер элемента (фигура или флаг) на канву
-function renderItem(canvas, item){
-  if (item.figures) drawShapes(canvas, item.figures);
-  else drawFlag(canvas, item);
+// ─────────────────── Рендер: большая сцена (карточка/тест/меню) ───────────────────
+// canvas.__item запоминается — анимационный цикл перерисовывает видимую сцену.
+function renderItem(canvas, item, ts){
+  canvas.__item = item;
+  const t = (ts || performance.now()) / 1000;
+  const { ctx, W, H } = fitCanvas(canvas);
+  sceneBG(ctx, W, H, t);
+  const v = drawVessel(ctx, W, H);
+  drawMastLine(ctx, v.mastX, v.deckY, v.mastTop);
+  if (item === "menu"){
+    // витрина: флаг на топе + фигуры ниже (судно на мели: шар-ромб-шар)
+    const fA = D.flags.find(f => f.key === "A");
+    if (fA) paintFlagWavy(ctx, fA.draw, v.mastX + 3, v.mastTop + 2, W * 0.30, H * 0.16, t);
+    drawFiguresOnMast(ctx, ["ball", "diamond", "ball"], v.mastX, v.mastTop + H * 0.20, Math.min(W, H) / 8);
+  } else if (item.figures){
+    const s = Math.min(W, H) / 6.4;
+    const totalH = item.figures.reduce((a, f) => a + figH(f, s), 0) + s * 0.35 * (item.figures.length - 1);
+    const yTop = Math.max(v.mastTop + 4, (v.deckY - totalH) * 0.45);
+    drawFiguresOnMast(ctx, item.figures, v.mastX, yTop, s);
+  } else if (item.draw.shape === "double"){
+    // N над C (сигнал бедствия)
+    const n = D.flags.find(f => f.key === "N"), c = D.flags.find(f => f.key === "C");
+    const fw = W * 0.44, fh = H * 0.22;
+    if (n) paintFlagWavy(ctx, n.draw, v.mastX + 3, v.mastTop + 4, fw, fh, t);
+    if (c) paintFlagWavy(ctx, c.draw, v.mastX + 3, v.mastTop + 10 + fh, fw, fh, t + 0.7);
+  } else {
+    paintFlagWavy(ctx, item.draw, v.mastX + 3, v.mastTop + 6, W * 0.50, H * 0.30, t);
+  }
 }
+
+// ─────────────────── Рендер: круглая мини-иконка списка ───────────────────
+function renderIcon(canvas, item){
+  const { ctx, W, H } = fitCanvas(canvas, 56, 56);
+  const hor = H * 0.68;
+  const sky = ctx.createLinearGradient(0, 0, 0, hor);
+  sky.addColorStop(0, "#0a1830"); sky.addColorStop(1, "#28597b");
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hor);
+  const sea = ctx.createLinearGradient(0, hor, 0, H);
+  sea.addColorStop(0, "#175074"); sea.addColorStop(1, "#061c2e");
+  ctx.fillStyle = sea; ctx.fillRect(0, hor, W, H - hor);
+  ctx.fillStyle = "rgba(220,235,255,.5)";
+  ctx.fillRect(W * 0.20, H * 0.14, 1.2, 1.2); ctx.fillRect(W * 0.75, H * 0.24, 1.2, 1.2);
+  if (item.figures){
+    const s = Math.min(W, H) / (item.figures.length > 1 ? 4.8 : 3.2);
+    const gap = s * 0.3;
+    const totalH = item.figures.reduce((a, f) => a + figH(f, s), 0) + gap * (item.figures.length - 1);
+    let y = (H - totalH) / 2;
+    ctx.strokeStyle = "#5a6b78"; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(W / 2, 2); ctx.lineTo(W / 2, y); ctx.stroke();
+    item.figures.forEach(f => { const h = figH(f, s); drawFigure(ctx, f, W / 2, y, s, h); y += h + gap; });
+  } else {
+    const mx = W * 0.20;
+    ctx.strokeStyle = "#5a6b78"; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(mx, 4); ctx.lineTo(mx, H - 6); ctx.stroke();
+    if (item.draw.shape === "double"){
+      const n = D.flags.find(f => f.key === "N"), c = D.flags.find(f => f.key === "C");
+      if (n) paintFlag(ctx, n.draw, mx + 1, H * 0.14, W * 0.55, H * 0.30);
+      if (c) paintFlag(ctx, c.draw, mx + 1, H * 0.52, W * 0.55, H * 0.30);
+    } else {
+      paintFlag(ctx, item.draw, mx + 1, H * 0.28, W * 0.58, H * 0.42);
+    }
+  }
+}
+
+// ─────────────────── Анимация: живут только видимые сцены ───────────────────
+(function tickLoop(){
+  function tick(ts){
+    requestAnimationFrame(tick);
+    ["menuScene", "viewCanvas", "quizCanvas"].forEach(id => {
+      const c = document.getElementById(id);
+      if (c && c.__item !== undefined && c.offsetParent !== null) renderItem(c, c.__item, ts);
+    });
+  }
+  requestAnimationFrame(tick);
+})();
 
 // ─────────────────────── Справочник ───────────────────────
 const show = id => document.getElementById(id).classList.remove("hidden");
@@ -283,7 +404,6 @@ function openLearn(kind){
     const b = document.createElement("button");
     b.className = "item";
     const c = document.createElement("canvas");
-    c.width = 64; c.height = 72;
     b.appendChild(c);
     const t = document.createElement("div");
     t.innerHTML = `<div class="t">${esc(item.title || (item.key + " · " + item.name))}</div>
@@ -291,7 +411,7 @@ function openLearn(kind){
     b.appendChild(t);
     b.onclick = () => openView(item);
     box.appendChild(b);
-    renderItem(c, item);
+    renderIcon(c, item);
   });
   hide("menu"); hide("view"); show("learn");
   window.scrollTo(0, 0);
@@ -306,6 +426,7 @@ function openView(item){
 }
 document.getElementById("goShapes").onclick = () => openLearn("shapes");
 document.getElementById("goFlags").onclick = () => openLearn("flags");
+renderItem(document.getElementById("menuScene"), "menu");   // витрина меню
 document.getElementById("learnBack").onclick = () => { hide("learn"); show("menu"); };
 document.getElementById("viewBack").onclick = () => { hide("view"); show("learn"); };
 

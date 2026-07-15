@@ -33,6 +33,7 @@
     }
   }
   *{box-sizing:border-box}
+  html,body{overscroll-behavior:none}
   body{margin:0; padding:14px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     background:var(--bg); color:var(--text); line-height:1.5; -webkit-tap-highlight-color:transparent;
     touch-action:manipulation}
@@ -1151,6 +1152,12 @@ function startGame(){
   document.getElementById("setup").classList.add("hidden");
   document.getElementById("game").classList.remove("hidden");
   document.body.classList.add("playing");
+  // Telegram: свайп по рычагам не должен сворачивать Mini App / скроллить его
+  try{
+    var TW=window.Telegram.WebApp;
+    TW.expand();
+    if (TW.disableVerticalSwipes) TW.disableVerticalSwipes();
+  }catch(e){}
   sim=newSim();
   buildControls(); rudCtl.set(0);
   document.getElementById("overlay").classList.add("hidden");
@@ -1173,6 +1180,10 @@ function restart(){
 }
 function toSetup(){
   if (raf) cancelAnimationFrame(raf); raf=null; sim=null;
+  try{
+    var TW=window.Telegram.WebApp;
+    if (TW.enableVerticalSwipes) TW.enableVerticalSwipes();
+  }catch(e){}
   document.body.classList.remove("playing");
   document.getElementById("game").classList.add("hidden");
   document.getElementById("setup").classList.remove("hidden");
@@ -1223,6 +1234,9 @@ window.addEventListener("resize", resizeCanvas);
 cv=document.getElementById("sea"); cx2=cv.getContext("2d");
 if (!cx2.roundRect) cx2.roundRect=function(x,y,w,h){ this.rect(x,y,w,h); return this; };
 if (window.Icons) Icons.hydrate();
+// страховка для браузеров без disableVerticalSwipes: гасим прокрутку жестов в игре
+document.getElementById("game").addEventListener("touchmove",
+  function(e){ e.preventDefault(); }, {passive:false});
 </script>
 </body>
 </html>
