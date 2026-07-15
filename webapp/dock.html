@@ -68,7 +68,10 @@
 
   /* ── игра ── */
   body.playing{padding:0; overflow:hidden}
-  #game{position:fixed; inset:0; display:flex; flex-direction:column; background:#0a1a2a}
+  /* touch-action:none на ВСЮ игру: иначе второе касание (газ + подрулька
+     одновременно) распознаётся как жест и получает pointercancel */
+  #game{position:fixed; inset:0; display:flex; flex-direction:column; background:#0a1a2a;
+    touch-action:none}
   #wrap{position:relative; flex:1; min-height:0}
   #sea{position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none}
 
@@ -1070,11 +1073,12 @@ function Lever(parent, cap, capBottom, onChange){
     knob.textContent=val;
     onChange(val/100);
   }
-  el.addEventListener("pointerdown",function(e){ drag=true; el.setPointerCapture(e.pointerId); move(e); });
+  el.addEventListener("pointerdown",function(e){ drag=e.pointerId; el.setPointerCapture(e.pointerId); move(e); });
   el.addEventListener("pointermove",move);
   el.addEventListener("pointerup",function(){ drag=null; });
+  el.addEventListener("pointercancel",function(){ drag=null; });
   function move(e){
-    if(!drag) return;
+    if(drag===null || e.pointerId!==drag) return;   // мультитач: чужой палец не дёргает рычаг
     var r=el.getBoundingClientRect(), rel=(r.top+r.height/2 - e.clientY)/((r.height-KH-8)/2);
     set(rel*100);
   }
@@ -1110,12 +1114,13 @@ function buildControls(){
     var now=Date.now();
     if (now-lastTap<350){ set(0); lastTap=0; return; }  // двойной тап = руль прямо
     lastTap=now;
-    drag=true; box.setPointerCapture(e.pointerId); move(e);
+    drag=e.pointerId; box.setPointerCapture(e.pointerId); move(e);
   });
   box.addEventListener("pointermove",move);
   box.addEventListener("pointerup",function(){ drag=null; });
+  box.addEventListener("pointercancel",function(){ drag=null; });
   function move(e){
-    if(!drag) return;
+    if(drag===null || e.pointerId!==drag) return;   // мультитач: чужой палец не крутит руль
     var r=box.getBoundingClientRect(), rel=(e.clientX-(r.left+r.width/2))/((r.width-KW-10)/2);
     set(rel*35);
   }
@@ -1123,8 +1128,12 @@ function buildControls(){
 /* подруливающее: держать */
 ["thrL","thrR"].forEach(function(id,ix){
   var b=document.getElementById(id), dir=ix===0?-1:1;
-  b.addEventListener("pointerdown",function(e){ e.preventDefault(); if(sim){sim.thrusterDir=dir; sim.started=true;} });
-  ["pointerup","pointerleave","pointercancel"].forEach(function(ev){
+  b.addEventListener("pointerdown",function(e){
+    e.preventDefault();
+    try{ b.setPointerCapture(e.pointerId); }catch(err){}   // мультитач: не терять палец
+    if(sim){ sim.thrusterDir=dir; sim.started=true; }
+  });
+  ["pointerup","pointercancel"].forEach(function(ev){
     b.addEventListener(ev,function(){ if(sim) sim.thrusterDir=0; });
   });
 });
