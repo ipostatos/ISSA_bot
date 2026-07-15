@@ -3,11 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Погода</title>
+<title data-i18n="wxTitle">Погода</title>
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="icons.js"></script>
 <script src="vendor/leaflet/leaflet.js"></script>
 <style>
@@ -106,15 +108,15 @@
 </style>
 </head>
 <body>
-  <h1>Погода</h1>
-  <p class="sub">Ветер и волна по точке · данные Open-Meteo</p>
+  <h1 data-i18n="wxTitle"></h1>
+  <p class="sub" data-i18n="wxSub"></p>
 
   <!-- мои точки (сохранённые места) -->
   <div class="spots" id="spots"></div>
 
   <!-- выбор точки -->
   <div class="searchbar">
-    <input id="q" type="text" placeholder="Город, марина, акватория…" autocomplete="off"
+    <input id="q" type="text" autocomplete="off"
       enterkeyhint="search">
     <button class="btn" id="geoBtn" title="Моя локация"><span class="emi" data-icon="map-pin"></span></button>
   </div>
@@ -137,22 +139,22 @@
 
     <div class="metrics">
       <div class="metric">
-        <div class="lab">Ветер</div>
+        <div class="lab" data-i18n="wxWind"></div>
         <div class="val" id="mWind">— <small>kn</small></div>
         <div class="ex" id="mWindDir">—</div>
       </div>
       <div class="metric">
-        <div class="lab">Порывы</div>
+        <div class="lab" data-i18n="wxGust"></div>
         <div class="val" id="mGust">— <small>kn</small></div>
         <div class="ex" id="mBeaufort">—</div>
       </div>
       <div class="metric">
-        <div class="lab">Волна</div>
-        <div class="val" id="mWave">— <small>м</small></div>
+        <div class="lab" data-i18n="wxWave"></div>
+        <div class="val" id="mWave">—</div>
         <div class="ex" id="mWavePer">—</div>
       </div>
       <div class="metric">
-        <div class="lab">Вода / воздух</div>
+        <div class="lab" data-i18n="wxWaterAir"></div>
         <div class="val" id="mTemp">—</div>
         <div class="ex" id="mTempAir">—</div>
       </div>
@@ -162,30 +164,27 @@
 
     <div class="save-row">
       <button class="btn ghost sm" id="saveBtn" style="width:auto">
-        <span class="emi" data-icon="bookmark"></span><span id="saveBtnText">Сохранить точку</span>
+        <span class="emi" data-icon="bookmark"></span><span id="saveBtnText"></span>
       </button>
     </div>
 
     <div class="u-toggle" style="margin-top:10px; text-align:right">
-      <a href="#" id="unitToggle" style="color:var(--accent); text-decoration:none">Показать в м/с</a>
+      <a href="#" id="unitToggle" style="color:var(--accent); text-decoration:none" data-i18n="wxShowMs"></a>
     </div>
   </div>
 
   <!-- почасовой -->
   <div class="card hidden" id="hourlyCard" style="margin-bottom:12px">
-    <div class="h2" style="margin-bottom:10px">Ближайшие 24 часа</div>
+    <div class="h2" style="margin-bottom:10px" data-i18n="wxNext24"></div>
     <div class="hourly" id="hourly"></div>
-    <div class="muted" style="font-size:11px; margin-top:8px">
-      Прокрути вбок. Жёлтым — часы с порывами выше 18 узлов.
-    </div>
+    <div class="muted" style="font-size:11px; margin-top:8px" data-i18n="wxHourlyHint"></div>
   </div>
 
   <!-- карта ветра (Windy-стиль): карта берегов + стрелки ветра по сетке -->
   <div class="card hidden" id="mapCard" style="margin-bottom:12px">
     <div class="map-head">
-      <div class="h2">Карта ветра</div>
-      <button class="btn ghost sm" id="mapRefresh" style="width:auto; padding:8px 10px"
-        title="Обновить стрелки"><span class="emi" data-icon="refresh-cw"></span></button>
+      <div class="h2" data-i18n="wxWindMap"></div>
+      <button class="btn ghost sm" id="mapRefresh" style="width:auto; padding:8px 10px"><span class="emi" data-icon="refresh-cw"></span></button>
     </div>
     <div class="map-wrap">
       <div id="windMap"></div>
@@ -194,27 +193,31 @@
     </div>
     <!-- переключатель слоёв -->
     <div class="layer-row" id="layerRow">
-      <span class="layer-chip on" data-layer="arrows"><span class="emi" data-icon="navigation"></span>Стрелки</span>
-      <span class="layer-chip on" data-layer="particles"><span class="emi" data-icon="wind"></span>Частицы</span>
-      <span class="layer-chip" data-layer="waves"><span class="emi" data-icon="waves"></span>Волны</span>
-      <span class="layer-chip" data-layer="rain"><span class="emi" data-icon="cloud-rain"></span>Осадки</span>
+      <span class="layer-chip on" data-layer="arrows"><span class="emi" data-icon="navigation"></span><span data-i18n="wxLayerArrows"></span></span>
+      <span class="layer-chip on" data-layer="particles"><span class="emi" data-icon="wind"></span><span data-i18n="wxLayerParticles"></span></span>
+      <span class="layer-chip" data-layer="waves"><span class="emi" data-icon="waves"></span><span data-i18n="wxLayerWaves"></span></span>
+      <span class="layer-chip" data-layer="rain"><span class="emi" data-icon="cloud-rain"></span><span data-i18n="wxLayerRain"></span></span>
     </div>
     <!-- таймлайн по часам прогноза -->
     <div class="tl-row" id="tlRow" style="display:none">
       <input type="range" id="tlRange" min="0" max="0" value="0" step="1">
-      <span class="tl-label" id="tlLabel">сейчас</span>
+      <span class="tl-label" id="tlLabel" data-i18n="wxNow"></span>
     </div>
     <div class="wind-legend" id="windLegend"></div>
-    <div class="map-hint">Стрелки/частицы — направление и сила ветра по сетке; «Волны» — высота волны.
-      Двигай и масштабируй карту, перематывай время. Данные Open-Meteo, карта © OpenStreetMap © CARTO.</div>
+    <div class="map-hint" data-i18n="wxMapHint"></div>
   </div>
 
-  <p class="foot">Открытые модели погоды Open-Meteo (ECMWF/GFS · Marine).
-    Учебный сервис, не заменяет официальные морские прогнозы и штормовые предупреждения.</p>
+  <p class="foot" data-i18n="wxFoot"></p>
 
 <script>
 "use strict";
 if (window.Icons) Icons.hydrate();
+
+// атрибуты (placeholder/title) — hydrate их не трогает, задаём из JS
+document.getElementById("q").placeholder = I18N.t("wxSearchPh");
+document.getElementById("geoBtn").title = I18N.t("wxGeoTitle");
+document.getElementById("refreshBtn").title = I18N.t("wxRefresh");
+document.getElementById("mapRefresh").title = I18N.t("wxRefreshArrows");
 
 // ────────────────────────────────────────────────────────────────────────
 // BETA: раздел «Погода». Вся логика самодостаточна и живёт в этом файле —
@@ -243,32 +246,28 @@ function fmtSpeed(ms){
   var v = useKnots ? knots(ms) : ms;
   return Math.round(v);
 }
-function speedUnit(){ return useKnots ? "kn" : "м/с"; }
+function speedUnit(){ return useKnots ? "kn" : I18N.t("wxMs"); }
 
 // румб по градусам направления (откуда дует)
-var DIRS = ["С","ССВ","СВ","ВСВ","В","ВЮВ","ЮВ","ЮЮВ","Ю","ЮЮЗ","ЮЗ","ЗЮЗ","З","ЗСЗ","СЗ","ССЗ"];
+var DIRS = I18N.t("wxDirs").split(",");
 function compass(deg){ return DIRS[Math.round(((deg%360)/22.5)) % 16]; }
 
 // шкала Бофорта по скорости (м/с) → номер и словесное описание
 function beaufort(ms){
-  var t = [ [0.3,0,"штиль"],[1.6,1,"тихий"],[3.4,2,"лёгкий"],[5.5,3,"слабый"],
-    [8.0,4,"умеренный"],[10.8,5,"свежий"],[13.9,6,"сильный"],[17.2,7,"крепкий"],
-    [20.8,8,"шторм"],[24.5,9,"сильный шторм"],[28.5,10,"буря"],[32.7,11,"жестокая буря"] ];
-  for (var i=0;i<t.length;i++){ if (ms < t[i][0]) return {n:t[i][1], name:t[i][2]}; }
-  return {n:12, name:"ураган"};
+  var names = I18N.t("wxBeaufort").split(",");
+  var th = [0.3,1.6,3.4,5.5,8.0,10.8,13.9,17.2,20.8,24.5,28.5,32.7];
+  for (var i=0;i<th.length;i++){ if (ms < th[i]) return {n:i, name:names[i]}; }
+  return {n:12, name:names[12]};
 }
 
 // вербальный вывод по ветру/волне
 function verdict(windMs, gustMs, waveM){
   var b = beaufort(gustMs || windMs).n;
   if (b >= 7 || (waveM != null && waveM >= 2.0))
-    return {cls:"bad", icon:"alert-triangle",
-      text:"Опасные условия — крепкий ветер и/или высокая волна. Выход не рекомендуется."};
+    return {cls:"bad", icon:"alert-triangle", text:I18N.t("wxVerdictBad")};
   if (b >= 5 || (waveM != null && waveM >= 1.0))
-    return {cls:"warn", icon:"alert-triangle",
-      text:"Свежо: усиление ветра/волны. Оцени опыт экипажа и запас по погоде."};
-  return {cls:"ok", icon:"check-circle",
-    text:"Комфортные условия для прибрежного плавания."};
+    return {cls:"warn", icon:"alert-triangle", text:I18N.t("wxVerdictWarn")};
+  return {cls:"ok", icon:"check-circle", text:I18N.t("wxVerdictOk")};
 }
 
 // — состояния экрана —
@@ -310,7 +309,7 @@ function removeSpot(spot){
 function renderSpots(){
   var box = $("spots");
   if (!savedSpots.length){
-    box.innerHTML = '<div class="spots-empty">Нет сохранённых точек. Открой прогноз и нажми «Сохранить точку».</div>';
+    box.innerHTML = '<div class="spots-empty">' + I18N.t("wxNoSpots") + '</div>';
     return;
   }
   var curKey = lastSpot ? spotKey(lastSpot) : null;
@@ -319,7 +318,7 @@ function renderSpots(){
     return '<span class="spot-chip'+(active?' active':'')+'" data-i="'+i+'">'
       + '<span class="emi" data-icon="map-pin"></span>'
       + esc(s.name)
-      + '<span class="x" data-del="'+i+'" title="Убрать">×</span></span>';
+      + '<span class="x" data-del="'+i+'" title="'+I18N.t("wxRemoveTitle")+'">×</span></span>';
   }).join("");
   if (window.Icons) Icons.hydrate();
   Array.prototype.forEach.call(box.querySelectorAll(".spot-chip"), function(chip){
@@ -336,13 +335,13 @@ function syncSaveBtn(){
   var btn = $("saveBtn"), txt = $("saveBtnText");
   if (!btn || !lastSpot) return;
   if (isSaved(lastSpot)){
-    txt.textContent = "Убрать из сохранённых";
+    txt.textContent = I18N.t("wxUnsave");
     btn.querySelector(".emi").setAttribute("data-icon", "check");
   } else if (savedSpots.length >= MAX_SPOTS){
-    txt.textContent = "Лимит точек ("+MAX_SPOTS+")";
+    txt.textContent = I18N.t("wxLimit", {n: MAX_SPOTS});
     btn.querySelector(".emi").setAttribute("data-icon", "bookmark");
   } else {
-    txt.textContent = "Сохранить точку";
+    txt.textContent = I18N.t("wxSavePoint");
     btn.querySelector(".emi").setAttribute("data-icon", "bookmark");
   }
   if (window.Icons) Icons.hydrate();
@@ -350,8 +349,12 @@ function syncSaveBtn(){
 
 // ─────────────────────────── Геокодинг (поиск места) ───────────────────────────
 function search(name){
+  // язык названий мест: open-meteo geocoder знает ru/en — берём ближайший к UI
+  var geoLang = "";
+  try { geoLang = localStorage.getItem("issa_lang") || ""; } catch(e){}
+  geoLang = geoLang === "ru" ? "ru" : "en";
   var url = "https://geocoding-api.open-meteo.com/v1/search?name="
-    + encodeURIComponent(name) + "&count=6&language=ru&format=json";
+    + encodeURIComponent(name) + "&count=6&language=" + geoLang + "&format=json";
   return fetch(url).then(function(r){ return r.json(); }).then(function(j){
     return (j && j.results) || [];
   });
@@ -377,13 +380,13 @@ function renderResults(list){
 
 // ─────────────────────────── Геолокация браузера ───────────────────────────
 function useGeo(){
-  if (!navigator.geolocation){ showState("Геолокация недоступна на этом устройстве. Введи место в поиске."); return; }
-  showState("Определяю местоположение…");
+  if (!navigator.geolocation){ showState(I18N.t("wxGeoUnavail")); return; }
+  showState(I18N.t("wxGeoLocating"));
   navigator.geolocation.getCurrentPosition(function(pos){
-    selectSpot({ name:"Моё местоположение", admin:"", country:"",
+    selectSpot({ name:I18N.t("wxMyLocation"), admin:"", country:"",
       lat:pos.coords.latitude, lon:pos.coords.longitude });
   }, function(){
-    showState("Не удалось получить геолокацию (нет доступа). Введи место в поиске выше.");
+    showState(I18N.t("wxGeoFail"));
   }, { enableHighAccuracy:false, timeout:8000, maximumAge:600000 });
 }
 
@@ -391,7 +394,7 @@ function useGeo(){
 function selectSpot(spot){
   lastSpot = spot;
   $("results").innerHTML = "";
-  $("q").value = spot.name === "Моё местоположение" ? "" : spot.name;
+  $("q").value = spot.name === I18N.t("wxMyLocation") ? "" : spot.name;
   try{ localStorage.setItem(LS_KEY, JSON.stringify(spot)); }catch(e){}
   renderSpots();     // перерисовать чипы, чтобы подсветить активную точку
   loadForecast(spot);
@@ -402,7 +405,7 @@ function loadForecast(spot){
   $("nowCard").classList.add("hidden");
   $("hourlyCard").classList.add("hidden");
   $("mapCard").classList.add("hidden");
-  showState("Загружаю прогноз…");
+  showState(I18N.t("wxLoading"));
 
   // Ветер/температура — Forecast API; всё в м/с, конвертируем в узлы на клиенте.
   var fUrl = "https://api.open-meteo.com/v1/forecast"
@@ -422,14 +425,14 @@ function loadForecast(spot){
     fetch(mUrl).then(function(r){ return r.json(); }).catch(function(){ return null; })
   ]).then(function(res){
     var f = res[0], m = res[1];
-    if (!f || !f.current){ showState("Не удалось получить прогноз. Попробуй ещё раз."); return; }
+    if (!f || !f.current){ showState(I18N.t("wxForecastFail")); return; }
     lastData = { spot:spot, f:f, m:m };   // запоминаем для смены единиц без нового запроса
     renderNow(spot, f, m);
     renderHourly(f);
     showWindMap(spot);
     hideState();
   }).catch(function(){
-    showState("Сеть недоступна или сервис не отвечает. Проверь соединение и обнови.");
+    showState(I18N.t("wxNetFail"));
   });
 }
 
@@ -451,25 +454,26 @@ function renderNow(spot, f, m){
 
   $("mGust").innerHTML = fmtSpeed(gustMs) + ' <small>'+speedUnit()+'</small>';
   var bf = beaufort(gustMs);
-  $("mBeaufort").textContent = bf.n + " Бофорта · " + bf.name;
+  $("mBeaufort").textContent = bf.n + " " + I18N.t("wxBeaufortLabel") + " · " + bf.name;
 
+  var mU = I18N.t("wxMeters");
   if (waveM != null){
-    $("mWave").innerHTML = round1(waveM) + ' <small>м</small>';
-    $("mWavePer").textContent = wavePer != null ? "период " + round1(wavePer) + " с" : "—";
+    $("mWave").innerHTML = round1(waveM) + ' <small>'+mU+'</small>';
+    $("mWavePer").textContent = wavePer != null ? I18N.t("wxWavePeriod", {n: round1(wavePer)}) : "—";
   } else {
-    $("mWave").innerHTML = '— <small>м</small>';
-    $("mWavePer").textContent = "нет морских данных";
+    $("mWave").innerHTML = '— <small>'+mU+'</small>';
+    $("mWavePer").textContent = I18N.t("wxNoMarine");
   }
 
   // Температура воды бывает только у морских точек; если её нет — крупно
   // показываем воздух, чтобы карточка не выглядела «без данных».
   var airT = c.temperature_2m;
   if (seaT != null){
-    $("mTemp").innerHTML = Math.round(seaT) + '<small>°C вода</small>';
-    $("mTempAir").textContent = (airT != null ? Math.round(airT) + "°C воздух" : "—");
+    $("mTemp").innerHTML = Math.round(seaT) + '<small>'+I18N.t("wxSeaWater")+'</small>';
+    $("mTempAir").textContent = (airT != null ? Math.round(airT) + I18N.t("wxAir") : "—");
   } else {
-    $("mTemp").innerHTML = (airT != null ? Math.round(airT) : "—") + '<small>°C воздух</small>';
-    $("mTempAir").textContent = "воды нет в этой точке";
+    $("mTemp").innerHTML = (airT != null ? Math.round(airT) : "—") + '<small>'+I18N.t("wxAir")+'</small>';
+    $("mTempAir").textContent = I18N.t("wxNoWaterHere");
   }
 
   var v = verdict(windMs, gustMs, waveM);
@@ -868,11 +872,11 @@ function updateTimelineMax(){
 }
 function updateTimeLabel(){
   var lab = $("tlLabel"); if (!lab) return;
-  if (hourIdx === 0){ lab.textContent = "сейчас"; return; }
+  if (hourIdx === 0){ lab.textContent = I18N.t("wxNow"); return; }
   // подпись «+Nч» и примерное время суток
   var d = new Date(Date.now() + hourIdx*3600*1000);
   var hh = String(d.getHours()).padStart(2,"0");
-  lab.textContent = "+" + hourIdx + "ч · " + hh + ":00";
+  lab.textContent = I18N.t("wxTimePlus", {n: hourIdx, hh: hh});
 }
 
 function renderLegend(){
@@ -880,20 +884,20 @@ function renderLegend(){
   if (layers.rain){
     var rsteps = [["<0.5","rgba(120,170,230,0.7)"],["0.5–2","rgba(70,130,220,0.8)"],
       ["2–5","rgba(50,90,210,0.85)"],["5+","rgba(110,60,200,0.9)"]];
-    box.innerHTML = "Осадки, мм/ч: " + rsteps.map(function(s){
+    box.innerHTML = I18N.t("wxLegendRain") + rsteps.map(function(s){
       return '<span><i style="background:'+s[1]+'"></i>'+s[0]+'</span>'; }).join("");
     return;
   }
   if (layers.waves){
     var wsteps = [["<0.5","rgba(80,180,220,0.6)"],["0.5–1","rgba(90,200,150,0.6)"],
       ["1–2","rgba(233,196,106,0.7)"],["2–3","rgba(244,162,97,0.75)"],["3+","rgba(229,84,75,0.8)"]];
-    box.innerHTML = "Волна, м: " + wsteps.map(function(s){
+    box.innerHTML = I18N.t("wxLegendWave") + wsteps.map(function(s){
       return '<span><i style="background:'+s[1]+'"></i>'+s[0]+'</span>'; }).join("");
     return;
   }
   var steps = [["<6","#8ecae6"],["6–12","#95d5b2"],["12–18","#e9c46a"],
     ["18–25","#f4a261"],["25+","#e5544b"]];
-  box.innerHTML = "Ветер, узлы: " + steps.map(function(s){
+  box.innerHTML = I18N.t("wxLegendWind") + steps.map(function(s){
     return '<span><i style="background:'+s[1]+'"></i>'+s[0]+'</span>';
   }).join("");
 }
@@ -929,7 +933,7 @@ $("saveBtn").onclick = function(){
 $("unitToggle").onclick = function(e){
   e.preventDefault();
   useKnots = !useKnots;
-  this.textContent = useKnots ? "Показать в м/с" : "Показать в узлах";
+  this.textContent = useKnots ? I18N.t("wxShowMs") : I18N.t("wxShowKn");
   // единицы клиентские — перерисовываем из уже загруженных данных, без сети
   if (lastData){ renderNow(lastData.spot, lastData.f, lastData.m); renderHourly(lastData.f); }
   drawOverlay();   // стрелки/волны — перерисовать под новые единицы
