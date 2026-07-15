@@ -39,6 +39,19 @@ echo "→ перегенерируем данные (вопросы, консп�
 "$APP_DIR/.venv/bin/python" "$SRC/build_sternik_data.py"      # польская лицензия Sternik
 "$APP_DIR/.venv/bin/python" "$SRC/build_konspekt_pl_data.py"  # польский конспект (Żeglarz+Sternik)
 
+echo "→ нейроозвучка (edge-tts): генерируем недостающие фразы"
+# Не валит деплой: без сети/пакета плеер работает на системном синтезе.
+"$APP_DIR/.venv/bin/pip" install -q edge-tts 2>/dev/null || true
+"$APP_DIR/.venv/bin/python" "$SRC/build_audio_tts.py" --cache "$APP_DIR/tts_cache" \
+  || echo "  (генерация неполная — плеер дочитает системным голосом)"
+mkdir -p "$DST/tts"
+if command -v rsync >/dev/null; then
+  rsync -a --delete "$APP_DIR/tts_cache/" "$DST/tts/"
+else
+  cp -f "$APP_DIR/tts_cache/"*.mp3 "$DST/tts/" 2>/dev/null || true
+fi
+[ -f "$SRC/tts_index.js" ] && cp -f "$SRC/tts_index.js" "$DST/tts_index.js"
+
 echo "→ публикуем страницы в $DST"
 mkdir -p "$DST"
 cp -f "$SRC/robots.txt"      "$DST/robots.txt"   # anti-AI-scraping + TDM opt-out

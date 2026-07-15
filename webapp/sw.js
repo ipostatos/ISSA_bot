@@ -85,6 +85,7 @@ self.addEventListener("fetch", function (e) {
     var p = url.pathname;
     if (p.indexOf("/api/") !== -1) return;      // живые данные — только сеть
     if (p.slice(-4) === ".pdf") return;         // книги не кэшируем (объём)
+    if (p.slice(-4) === ".mp3") return;         // нейроозвучка: десятки МБ, мимо кэша
     if (p.indexOf("/images/") !== -1 || p.indexOf("/vendor/") !== -1 ||
         p.slice(-4) === ".svg" || p.slice(-4) === ".png" || p.slice(-4) === ".jpg") {
       e.respondWith(staleWhileRevalidate(req));

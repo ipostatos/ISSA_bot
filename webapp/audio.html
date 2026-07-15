@@ -9,6 +9,7 @@
 <script src="nav.js"></script>
 <script src="quiz_data.js"></script>
 <script src="glossary_data.js"></script>
+<script src="tts_index.js"></script><!-- манифест нейроозвучки; без него — системный синтез -->
 <script src="migration.js"></script>
 <script src="srs.js"></script>
 <script src="mistakes.js"></script>
@@ -156,6 +157,14 @@
     </button>
     <div class="set-card hidden" id="setCard">
       <div class="set-row">
+        <div class="set-lbl">Озвучка</div>
+        <div class="seg" id="engSeg">
+          <button class="chip" data-e="neural">Нейроголос</button>
+          <button class="chip" data-e="system">Системный</button>
+        </div>
+        <p class="assess-hint hidden" id="engNote" style="margin:6px 0 0">Файлы нейроозвучки ещё не загружены на сервер — пока работает системный голос.</p>
+      </div>
+      <div class="set-row">
         <div class="set-lbl">Режим</div>
         <div class="seg" id="modeSeg">
           <button class="chip" data-mode="instant">Сразу ответ</button>
@@ -184,7 +193,7 @@
         <button class="sw" id="loopSw"></button>
       </div>
       <div class="set-row">
-        <div class="set-lbl">Голос</div>
+        <div class="set-lbl">Системный голос (запасной)</div>
         <select id="voiceRu"></select>
       </div>
       <div class="set-row swrow" id="wakeRow">
@@ -217,7 +226,7 @@ const GLOSS_CATS = (window.GLOSSARY_DATA ? GLOSSARY_DATA.categories : []).map(c 
 // ── настройки (персистентные) ──
 const CFG_KEY = "issa_audio_cfg";
 const cfg = { mode: "recall", pauseS: 4, len: 20, loop: false, topic: "", gcat: "",
-              voiceRu: "", wake: false, rate: 1, src: "weak" };
+              voiceRu: "", wake: false, rate: 1, src: "weak", engine: "neural" };
 try { const s = JSON.parse(localStorage.getItem(CFG_KEY) || "{}");
       for (const k in s) if (k in cfg) cfg[k] = s[k]; } catch (e) {}
 if (cfg.src !== "weak" && cfg.src !== "gloss") cfg.src = "weak";   // миграция: PL-источники убраны
@@ -227,25 +236,25 @@ function saveCfg(){ try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } 
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
 const LETTERS = ["А","Б","В","Г","Д"];
 
-// вопрос ISSA → трек по режиму
+// вопрос ISSA → трек по режиму; key — ключ фразы в манифесте нейроозвучки
 function trackRu(q){
   const ans = q.options[q.answer];
-  const parts = [ { text: q.q } ];
+  const parts = [ { text: q.q, key: "q:" + q.id } ];
   let optsShow = "";
   if (cfg.mode === "options"){
     const spoken = q.options.map((o,i)=>LETTERS[i]+". "+o).join(". ");
     optsShow = q.options.map((o,i)=>LETTERS[i]+". "+o).join("\n");
-    parts.push({ text: "Варианты. " + spoken });
+    parts.push({ text: "Варианты. " + spoken, key: "o:" + q.id });
   }
   if (cfg.mode !== "instant") parts.push({ pause: cfg.pauseS });
-  parts.push({ text: "Правильный ответ: " + ans, reveal: true });
+  parts.push({ text: "Правильный ответ: " + ans, key: "a:" + q.id, reveal: true });
   return { id: q.id, src: "weak", show: { q: q.q, opts: optsShow, a: ans }, parts };
 }
 // термин словаря → трек (режим options = recall)
 function trackGloss(g){
-  const parts = [ { text: g.term } ];
+  const parts = [ { text: g.term, key: "t:" + g.term } ];
   if (cfg.mode !== "instant") parts.push({ pause: cfg.pauseS });
-  parts.push({ text: g.def, reveal: true });
+  parts.push({ text: g.def, key: "d:" + g.term, reveal: true });
   return { id: g.id, src: "gloss", show: { q: g.term, opts: "", a: g.def }, parts };
 }
 
@@ -365,34 +374,78 @@ function speakTrack(){
       return;
     }
     if (part.reveal) revealAnswer();
-    const u = new SpeechSynthesisUtterance(part.text);
-    const v = currentVoice();
-    if (v) u.voice = v;
-    u.lang = "ru-RU";
-    u.rate = cfg.rate;
-    let done = false, started = false;
+    let done = false;
     const advance = () => { if (!done){ done = true; if (g === gen) step(); } };
-    u.onstart = () => {
-      started = true; heard = true;
+    preloadNext(t, p);
+    playPart(part, g, advance);
+  };
+  // ВАЖНО: синхронно — iOS/WebKit разрешает воспроизведение только внутри жеста нажатия
+  step();
+}
+
+// ── две озвучки: нейро (готовые mp3) и системный синтез ──
+function neuralReady(){
+  return cfg.engine !== "system" && window.TTS_INDEX && TTS_INDEX.files;
+}
+const NPLAYER = new Audio();          // единственный элемент: разблокируется первым жестом
+NPLAYER.preload = "auto";
+const PRELOADER = new Audio();
+PRELOADER.preload = "auto";
+PRELOADER.muted = true;
+function ttsUrl(key){
+  return (neuralReady() && key && TTS_INDEX.files[key]) ? "tts/" + TTS_INDEX.files[key] : null;
+}
+function preloadNext(t, p){
+  for (let i = p; i < t.parts.length; i++){
+    const url = ttsUrl(t.parts[i].key);
+    if (url){ PRELOADER.src = url; break; }
+    if (!t.parts[i].pause) break;
+  }
+}
+function playPart(part, g, advance){
+  const url = ttsUrl(part.key);
+  if (url){
+    NPLAYER.onended = advance;
+    NPLAYER.onerror = () => synthPart(part, g, advance);   // нет файла/сети → синтез
+    NPLAYER.src = url;
+    NPLAYER.playbackRate = cfg.rate;
+    const pr = NPLAYER.play();
+    if (pr) pr.then(() => {
+      heard = true;
       const hint = document.getElementById("sndHint");
       if (hint) hint.classList.add("hidden");
-    };
-    u.onend = advance;
-    u.onerror = advance;                     // битый голос не вешает плейлист
-    // Chrome: speak сразу после cancel иногда глохнет — не стартовал за 1 с → повторить раз
-    setTimeout(() => {
-      if (g === gen && playing && !started && !done){
-        try { SS.cancel(); } catch (e) {}
-        SS.speak(u);
-      }
-    }, 1000);
-    // сторожевой таймер: некоторые синтезы «глотают» onend
-    const est = (part.text.length * 90) / cfg.rate + 5000;
-    setTimeout(() => { if (g === gen && playing) advance(); }, est);
-    SS.speak(u);
+    }).catch(() => synthPart(part, g, advance));
+    return;
+  }
+  synthPart(part, g, advance);
+}
+function synthPart(part, g, advance){
+  if (!SS){ advance(); return; }
+  const u = new SpeechSynthesisUtterance(part.text);
+  const v = currentVoice();
+  if (v) u.voice = v;
+  u.lang = "ru-RU";
+  u.rate = cfg.rate;
+  let started = false, fin = false;
+  const fire = () => { if (!fin){ fin = true; advance(); } };
+  u.onstart = () => {
+    started = true; heard = true;
+    const hint = document.getElementById("sndHint");
+    if (hint) hint.classList.add("hidden");
   };
-  // ВАЖНО: синхронно — iOS/WebKit разрешает speak() только внутри жеста нажатия
-  step();
+  u.onend = fire;
+  u.onerror = fire;                        // битый голос не вешает плейлист
+  // Chrome: speak сразу после cancel иногда глохнет — не стартовал за 1 с → повторить раз
+  setTimeout(() => {
+    if (g === gen && playing && !started && !fin){
+      try { SS.cancel(); } catch (e) {}
+      SS.speak(u);
+    }
+  }, 1000);
+  // сторожевой таймер: некоторые синтезы «глотают» onend
+  const est = (part.text.length * 90) / cfg.rate + 5000;
+  setTimeout(() => { if (g === gen && playing) fire(); }, est);
+  SS.speak(u);
 }
 
 let heard = false, sndHintShown = false;
@@ -415,10 +468,14 @@ function checkRuVoice(){
 function play(){
   playing = true; setPlayIcon(); renderNow(); haptic("light");
   startSession(); applyWake();
-  // синхронный «замок» iOS: беззвучная фраза внутри жеста нажатия
-  try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; SS.speak(u); } catch (e) {}
-  // дождаться голосов (до 2.5 c) и только потом читать трек
-  waitVoices(2500).then(() => { if (playing){ checkRuVoice(); speakTrack(); } });
+  if (neuralReady()){
+    // нейроголос: первый play() уходит синхронно в жесте — разблокирует <audio>
+    speakTrack();
+  } else {
+    // системный синтез: беззвучный «замок» iOS + ждём загрузки голосов
+    try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; SS.speak(u); } catch (e) {}
+    waitVoices(2500).then(() => { if (playing){ checkRuVoice(); speakTrack(); } });
+  }
   // если фразы так и не зазвучали — подсказка про звук
   setTimeout(() => {
     if (playing && !heard && !sndHintShown){
@@ -430,6 +487,7 @@ function play(){
 }
 function pause(){
   playing = false; gen++; setPlayIcon(); hideThink();
+  try { NPLAYER.pause(); } catch (e) {}
   if (SS) SS.cancel();
   stopSession();
 }
@@ -551,9 +609,11 @@ function wireSeg(segId, attr, key, numeric){
     };
   });
 }
+wireSeg("engSeg", "e", "engine", false);
 wireSeg("modeSeg", "mode", "mode", false);
 wireSeg("pauseSeg", "p", "pauseS", true);
 wireSeg("lenSeg", "n", "len", true);
+if (!window.TTS_INDEX) document.getElementById("engNote").classList.remove("hidden");
 function wireSwitch(id, key, cb){
   const sw = document.getElementById(id);
   sw.classList.toggle("on", !!cfg[key]);
@@ -583,8 +643,11 @@ const SILENT_WAV = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAIlYAAE
 let silent = null;
 function startSession(){
   try {
-    if (!silent){ silent = new Audio(SILENT_WAV); silent.loop = true; silent.volume = 0.01; }
-    silent.play().catch(() => {});
+    // нейроголос — настоящее аудио, само держит аудио-сессию; тихий трек не нужен
+    if (!neuralReady()){
+      if (!silent){ silent = new Audio(SILENT_WAV); silent.loop = true; silent.volume = 0.01; }
+      silent.play().catch(() => {});
+    }
     if ("mediaSession" in navigator){
       navigator.mediaSession.playbackState = "playing";
       navigator.mediaSession.setActionHandler("play", play);
