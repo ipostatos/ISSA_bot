@@ -12,12 +12,17 @@
 
 from dataclasses import dataclass
 
-# ──────────────────────── Базовые расчёты ────────────────────────
+from bot_i18n import t
 
-def time_from(distance_nm: float, speed_kn: float) -> float:
+# ──────────────────────── Базовые расчёты ────────────────────────
+# lang="ru" по умолчанию: генератор практических задач (task_*) не передаёт
+# язык, поэтому тексты/решения задач (контент) остаются русскими. Живой
+# калькулятор в боте передаёт lang → единицы и ошибки локализуются.
+
+def time_from(distance_nm: float, speed_kn: float, lang: str = "ru") -> float:
     """Время в часах = дистанция / скорость."""
     if speed_kn <= 0:
-        raise ValueError("Скорость должна быть больше 0")
+        raise ValueError(t("err_speed_pos", lang))
     return distance_nm / speed_kn
 
 
@@ -26,20 +31,20 @@ def distance_from(speed_kn: float, time_h: float) -> float:
     return speed_kn * time_h
 
 
-def speed_from(distance_nm: float, time_h: float) -> float:
+def speed_from(distance_nm: float, time_h: float, lang: str = "ru") -> float:
     """Скорость (узлы) = дистанция / время."""
     if time_h <= 0:
-        raise ValueError("Время должно быть больше 0")
+        raise ValueError(t("err_time_pos", lang))
     return distance_nm / time_h
 
 
-def hours_to_hm(hours: float) -> str:
-    """0.5 -> «0 ч 30 мин», 2.25 -> «2 ч 15 мин»."""
+def hours_to_hm(hours: float, lang: str = "ru") -> str:
+    """0.5 -> «0 ч 30 мин», 2.25 -> «2 ч 15 мин» (единицы по языку)."""
     if hours < 0:
         hours = 0.0
     total_min = round(hours * 60)
     h, m = divmod(total_min, 60)
-    return f"{h} ч {m:02d} мин"
+    return t("dur_hm", lang, h=h, m=f"{m:02d}")
 
 
 def eta_clock(start_hhmm: str, travel_h: float) -> str:
@@ -78,12 +83,13 @@ class EtaResult:
 
 
 def plan_eta(distance_nm: float, speed_kn: float,
-             reserve_pct: float = 0.0, start_hhmm: str | None = None) -> EtaResult:
+             reserve_pct: float = 0.0, start_hhmm: str | None = None,
+             lang: str = "ru") -> EtaResult:
     """
     Время в пути и ETA. reserve_pct — добавочный запас на течения/манёвры
     (например 20 -> время ×1.2). start_hhmm — опционально время отхода.
     """
-    base = time_from(distance_nm, speed_kn)
+    base = time_from(distance_nm, speed_kn, lang)
     with_reserve = base * (1 + max(0.0, reserve_pct) / 100.0)
     eta = eta_clock(start_hhmm, with_reserve) if start_hhmm else None
     return EtaResult(base, with_reserve, reserve_pct, eta)

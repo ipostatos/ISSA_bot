@@ -14,6 +14,7 @@ solve() возвращает dict, пригодный и для текста в 
 
 from dataclasses import dataclass
 
+from bot_i18n import t
 from nav_tasks import (
     norm360,
     true_to_magnetic,
@@ -120,7 +121,5 @@ def _apply(seg, cur, var, vd, dev, dd, going_down) -> Step:
     return Step(text=f"{label}: {expr} = {res:.0f}", label=label, expr=expr, result=res)
 
 
-def rule_hint(direction: str) -> str:
-    if direction == "down":
-        return "Правило (вниз, True→Compass): East вычитаем (−), West прибавляем (+)."
-    return "Правило (вверх, Compass→True): East прибавляем (+), West вычитаем (−)."
+def rule_hint(direction: str, lang: str = "ru") -> str:
+    return t("calc_rule_down" if direction == "down" else "calc_rule_up", lang)

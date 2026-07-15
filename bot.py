@@ -1535,8 +1535,8 @@ def compute_marine(kind: str, text: str, lang: str = "ru") -> str:
         if len(nums) < 2:
             raise ValueError(t("err_need_speed_dist", lang))
         v, d = nums[0], nums[1]
-        h = marine.time_from(d, v)
-        return t("marine_res_time", lang, h=round(h, 2), hm=marine.hours_to_hm(h),
+        h = marine.time_from(d, v, lang)
+        return t("marine_res_time", lang, h=round(h, 2), hm=marine.hours_to_hm(h, lang),
                  d=marine._num(d), v=marine._num(v))
     if kind == "d":
         if len(nums) < 2:
@@ -1549,7 +1549,7 @@ def compute_marine(kind: str, text: str, lang: str = "ru") -> str:
         if len(nums) < 2:
             raise ValueError(t("err_need_dist_time", lang))
         d, tm = nums[0], nums[1]
-        v = marine.speed_from(d, tm)
+        v = marine.speed_from(d, tm, lang)
         return t("marine_res_speed", lang, v=round(v, 1),
                  d=marine._num(d), t=marine._num(tm))
     if kind == "e":
@@ -1561,7 +1561,7 @@ def compute_marine(kind: str, text: str, lang: str = "ru") -> str:
         reserve = nums[2] if len(nums) >= 3 else 0.0
         mt = re.search(r"\b(\d{1,2}[:.]\d{2})\b", text)
         start = mt.group(1).replace(".", ":") if mt else None
-        r = marine.plan_eta(d, v, reserve, start)
+        r = marine.plan_eta(d, v, reserve, start, lang)
         lines = [t("marine_eta_line_t", lang, d=marine._num(d), v=marine._num(v),
                    travel=round(r.travel_h, 2))]
         if reserve:
@@ -1569,7 +1569,7 @@ def compute_marine(kind: str, text: str, lang: str = "ru") -> str:
                            w=round(r.travel_h_reserve, 2)))
         body = "\n".join(lines)
         head = t("marine_eta_head", lang, w=round(r.travel_h_reserve, 2),
-                 hm=marine.hours_to_hm(r.travel_h_reserve))
+                 hm=marine.hours_to_hm(r.travel_h_reserve, lang))
         if r.eta:
             head += t("marine_eta_arrival", lang, eta=r.eta)
         return f"{head}\n\n<pre>{body}</pre>"
@@ -1647,12 +1647,12 @@ def _parse_calc_input(text: str, need_var: bool, need_dev: bool) -> dict | None:
     return res
 
 
-def _format_calc_result(res: dict) -> str:
+def _format_calc_result(res: dict, lang: str = "ru") -> str:
     steps = "\n".join(s["text"] for s in res["steps"])
     return (
         f"✅ <b>{res['from']} → {res['to']} = {res['answer']:03d}°</b>\n\n"
         f"<pre>{steps}</pre>\n"
-        f"<i>{calc.rule_hint(res['direction'])}</i>"
+        f"<i>{calc.rule_hint(res['direction'], lang)}</i>"
     )
 
 
@@ -1815,7 +1815,7 @@ async def on_text_answer(message: Message) -> None:
             CALC_STATE.pop(user_id, None)
             return
         CALC_STATE.pop(user_id, None)
-        await message.answer(_format_calc_result(res), reply_markup=calc_result_kb(lang))
+        await message.answer(_format_calc_result(res, lang), reply_markup=calc_result_kb(lang))
         return
 
     # 1) Режим поиска по словарю

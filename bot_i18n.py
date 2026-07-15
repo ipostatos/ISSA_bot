@@ -1158,4 +1158,32 @@ TR = {
         "ua": "Не зрозумів. Відкрийте меню: /menu",
         "en": "Didn't get it. Open the menu: /menu",
     },
+
+    # ─────────────── helper-модули marine.py / calc.py (единицы, правила, ошибки) ───────────────
+    # Длительность «{h} ч {m} мин» — {m} уже дополнен нулём вызывающей стороной.
+    "dur_hm": {"ru": "{h} ч {m} мин", "pl": "{h} h {m} min", "ua": "{h} год {m} хв", "en": "{h} h {m} min"},
+    "calc_rule_down": {
+        "ru": "Правило (вниз, True→Compass): East вычитаем (−), West прибавляем (+).",
+        "pl": "Reguła (w dół, True→Compass): East odejmujemy (−), West dodajemy (+).",
+        "ua": "Правило (вниз, True→Compass): East віднімаємо (−), West додаємо (+).",
+        "en": "Rule (down, True→Compass): subtract East (−), add West (+).",
+    },
+    "calc_rule_up": {
+        "ru": "Правило (вверх, Compass→True): East прибавляем (+), West вычитаем (−).",
+        "pl": "Reguła (w górę, Compass→True): East dodajemy (+), West odejmujemy (−).",
+        "ua": "Правило (вгору, Compass→True): East додаємо (+), West віднімаємо (−).",
+        "en": "Rule (up, Compass→True): add East (+), subtract West (−).",
+    },
+    "err_speed_pos": {
+        "ru": "Скорость должна быть больше 0",
+        "pl": "Prędkość musi być większa od 0",
+        "ua": "Швидкість має бути більше 0",
+        "en": "Speed must be greater than 0",
+    },
+    "err_time_pos": {
+        "ru": "Время должно быть больше 0",
+        "pl": "Czas musi być większy od 0",
+        "ua": "Час має бути більше 0",
+        "en": "Time must be greater than 0",
+    },
 }
