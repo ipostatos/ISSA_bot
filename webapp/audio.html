@@ -116,6 +116,7 @@
 
   <div id="noSupport" class="nosupport hidden" data-i18n="audNoSupport"></div>
   <div id="sndHint" class="nosupport hidden" style="margin-bottom:10px" data-i18n="audNoSound"></div>
+  <div id="voiceWarn" class="nosupport hidden" style="margin-bottom:10px" data-i18n="audNoRuVoice"></div>
 
   <div id="app">
     <div class="src-row" id="srcRow">
@@ -452,17 +453,37 @@ function speakTrack(){
 }
 
 let heard = false, sndHintShown = false;
+// голоса грузятся асинхронно: без ожидания первую фразу читает английский
+// голос по умолчанию (цифры по-английски, кириллица мимо)
+function waitVoices(timeoutMs){
+  return new Promise(res => {
+    const t0 = Date.now();
+    (function poll(){
+      voices = SS ? SS.getVoices() : [];
+      if (voices.length || Date.now() - t0 > timeoutMs){ buildVoiceSelects(); res(); return; }
+      setTimeout(poll, 120);
+    })();
+  });
+}
+function checkRuVoice(){
+  const warn = document.getElementById("voiceWarn");
+  if (warn) warn.classList.toggle("hidden", !(voices.length && !voicesFor("ru").length));
+}
 function play(){
-  playing = true; setPlayIcon(); renderNow(); speakTrack(); haptic("light");
+  playing = true; setPlayIcon(); renderNow(); haptic("light");
   startSession(); applyWake();
-  // если через 3 c ни одна фраза не зазвучала — показать подсказку про звук
+  // синхронный «замок» iOS: беззвучная фраза внутри жеста нажатия
+  try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; SS.speak(u); } catch (e) {}
+  // дождаться голосов (до 2.5 c) и только потом читать трек
+  waitVoices(2500).then(() => { if (playing){ checkRuVoice(); speakTrack(); } });
+  // если фразы так и не зазвучали — подсказка про звук
   setTimeout(() => {
     if (playing && !heard && !sndHintShown){
       sndHintShown = true;
       const el = document.getElementById("sndHint");
       if (el) el.classList.remove("hidden");
     }
-  }, 3000);
+  }, 4500);
 }
 function pause(){
   playing = false; gen++; setPlayIcon(); hideThink();
