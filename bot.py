@@ -53,6 +53,8 @@ import marine
 import nav_tasks
 import tides
 
+from bot_i18n import LANG_LABELS, SUPPORTED, norm_lang, t
+
 # ──────────────────────────── Конфигурация ────────────────────────────
 
 BASE_DIR = Path(__file__).parent
@@ -199,6 +201,24 @@ def save_progress(user_id: int, data: dict) -> None:
     tmp = path.with_suffix(f".{os.getpid()}.{random.randrange(1 << 32):08x}.tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     os.replace(tmp, path)
+
+
+# ── Язык интерфейса пользователя ──
+# Хранится в progress/<user_id>.json в поле "lang" (одно из bot_i18n.SUPPORTED).
+# Контент вопросов/конспекта/словаря остаётся русским; переводится только «хром».
+
+def user_lang(user_id: int) -> str:
+    """Выбранный язык интерфейса пользователя; по умолчанию 'ru'."""
+    lang = load_progress(user_id).get("lang")
+    return lang if lang in SUPPORTED else "ru"
+
+
+def set_user_lang(user_id: int, lang: str) -> None:
+    """Сохранить язык интерфейса в прогресс пользователя."""
+    with _lock_for(user_id):
+        data = load_progress(user_id)
+        data["lang"] = lang
+        save_progress(user_id, data)
 
 
 def pick_unseen(user_id: int, pool: list[dict], count: int = 1) -> list[dict]:
@@ -405,40 +425,48 @@ CALC_STATE: dict[int, dict] = {}
 
 # ──────────────────────────── Клавиатуры ────────────────────────────
 
-def main_menu_kb() -> InlineKeyboardMarkup:
+def main_menu_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     # Лаунчер-режим (Mini App подключён): приложение — ЕДИНСТВЕННЫЙ интерфейс.
     # Никаких чат-режимов/чат-тестов в меню — только запуск приложения. Весь
     # функционал (тесты с разбором, конспект, калькуляторы, повторение, прогресс,
     # статистика) живёт внутри Mini App.
     if WEBAPP_HOME_URL:
         rows = [
-            [InlineKeyboardButton(text="🚀 Открыть тренажёр",
+            [InlineKeyboardButton(text=t("mm_open_trainer", lang),
                                   web_app=WebAppInfo(url=WEBAPP_HOME_URL))],
         ]
         if WEBAPP_LICENSES_URL:
-            rows.append([InlineKeyboardButton(text="🇵🇱 Польские лицензии (Żeglarz / Sternik)",
+            rows.append([InlineKeyboardButton(text=t("mm_pl_licenses", lang),
                                               web_app=WebAppInfo(url=WEBAPP_LICENSES_URL))])
         return InlineKeyboardMarkup(inline_keyboard=rows)
     # Fallback без Mini App (URL не задан) — полное чат-меню, как было.
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🎯 Случайный вопрос", callback_data="mode:random")],
-            [InlineKeyboardButton(text="📚 Тренировка по темам", callback_data="mode:topics")],
-            [InlineKeyboardButton(text=f"📝 Экзамен ({EXAM_SIZE} вопросов)", callback_data="mode:exam")],
-            [InlineKeyboardButton(text="🔁 Работа над ошибками", callback_data="mode:mistakes")],
-            [InlineKeyboardButton(text="🧭 Решение задач (T-V-M-D-C)", callback_data="mode:tasks")],
-            [InlineKeyboardButton(text="🧮 Морской калькулятор", callback_data="mode:calc")],
-            [InlineKeyboardButton(text="📝 Практические задачи", callback_data="mode:ptasks")],
-            [InlineKeyboardButton(text="📖 Конспект", callback_data="mode:konspekt")],
-            [InlineKeyboardButton(text="📌 Шпаргалки", callback_data="mode:cheat")],
-            [InlineKeyboardButton(text="📚 Словарь яхтсмена", callback_data="mode:glossary")],
-            [InlineKeyboardButton(text="📊 Моя статистика", callback_data="mode:stats")],
-            [InlineKeyboardButton(text="♻️ Сбросить прогресс", callback_data="mode:reset")],
+            [InlineKeyboardButton(text=t("mm_random", lang), callback_data="mode:random")],
+            [InlineKeyboardButton(text=t("mm_topics", lang), callback_data="mode:topics")],
+            [InlineKeyboardButton(text=t("mm_exam", lang, n=EXAM_SIZE), callback_data="mode:exam")],
+            [InlineKeyboardButton(text=t("mm_mistakes", lang), callback_data="mode:mistakes")],
+            [InlineKeyboardButton(text=t("mm_tasks", lang), callback_data="mode:tasks")],
+            [InlineKeyboardButton(text=t("mm_calc", lang), callback_data="mode:calc")],
+            [InlineKeyboardButton(text=t("mm_ptasks", lang), callback_data="mode:ptasks")],
+            [InlineKeyboardButton(text=t("mm_konspekt", lang), callback_data="mode:konspekt")],
+            [InlineKeyboardButton(text=t("mm_cheat", lang), callback_data="mode:cheat")],
+            [InlineKeyboardButton(text=t("mm_glossary", lang), callback_data="mode:glossary")],
+            [InlineKeyboardButton(text=t("mm_stats", lang), callback_data="mode:stats")],
+            [InlineKeyboardButton(text=t("mm_reset", lang), callback_data="mode:reset")],
         ]
     )
 
 
-def quiz_app_reply_kb() -> ReplyKeyboardMarkup | None:
+def language_kb() -> InlineKeyboardMarkup:
+    """Пикер языка интерфейса: RU / PL / UA / EN → callback_data «lang:<code>»."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=LANG_LABELS[code], callback_data=f"lang:{code}")]
+        for code in SUPPORTED
+    ])
+
+
+def quiz_app_reply_kb(lang: str = "ru") -> ReplyKeyboardMarkup | None:
     """
     Постоянная reply-клавиатура с кнопкой запуска Mini App «Тесты».
     Только reply-кнопка WebApp умеет возвращать данные через sendData,
@@ -448,15 +476,15 @@ def quiz_app_reply_kb() -> ReplyKeyboardMarkup | None:
     if not WEBAPP_QUIZ_URL:
         return None
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="🎓 Тесты (приложение)",
+        keyboard=[[KeyboardButton(text=t("quiz_reply_btn", lang),
                                   web_app=WebAppInfo(url=WEBAPP_QUIZ_URL))]],
         resize_keyboard=True,
         is_persistent=True,
-        input_field_placeholder="Меню — /menu",
+        input_field_placeholder=t("quiz_placeholder", lang),
     )
 
 
-def topics_kb() -> InlineKeyboardMarkup:
+def topics_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     rows = []
     row = []
     for i, topic in enumerate(TOPICS, 1):
@@ -467,16 +495,18 @@ def topics_kb() -> InlineKeyboardMarkup:
             row = []
     if row:
         rows.append(row)
-    rows.append([InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")])
+    rows.append([InlineKeyboardButton(text=t("back_menu", lang), callback_data="mode:menu")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def next_question_kb(callback: str, label: str = "➡️ Следующий вопрос",
-                     study_qid: str | None = None) -> InlineKeyboardMarkup:
+def next_question_kb(callback: str, label: str | None = None,
+                     study_qid: str | None = None, lang: str = "ru") -> InlineKeyboardMarkup:
+    if label is None:
+        label = t("next_question", lang)
     rows = [[InlineKeyboardButton(text=label, callback_data=callback)]]
     if study_qid:
-        rows.append([InlineKeyboardButton(text="📖 Подробнее", callback_data=f"study:{study_qid}")])
-    rows.append([InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")])
+        rows.append([InlineKeyboardButton(text=t("more_details", lang), callback_data=f"study:{study_qid}")])
+    rows.append([InlineKeyboardButton(text=t("back_menu", lang), callback_data="mode:menu")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
@@ -531,18 +561,17 @@ dp = Dispatcher()
 @dp.message(~F.chat.type.in_({"private"}))
 async def group_redirect(message: Message) -> None:
     try:
+        lang = norm_lang(message.from_user.language_code)
         me = await message.bot.get_me()
-        await message.reply(
-            "👋 Я тренажёр для самоподготовки. Открой меня в личном чате: "
-            f"@{me.username} → /start"
-        )
+        await message.reply(t("group_redirect", lang, username=me.username))
     except Exception:  # noqa: BLE001
         pass
 
 
 @dp.callback_query(~F.message.chat.type.in_({"private"}))
 async def group_cb_redirect(cb: CallbackQuery) -> None:
-    await cb.answer("Открой бота в личном чате 🙂", show_alert=True)
+    lang = norm_lang(cb.from_user.language_code)
+    await cb.answer(t("group_cb_redirect", lang), show_alert=True)
 
 
 # ─────────────────────────── Благодарность автору (Telegram Stars) ───────────────────────────
@@ -550,47 +579,46 @@ async def group_cb_redirect(cb: CallbackQuery) -> None:
 # Поток: Mini App «Поддержать» → deep-link /start donate → выбор суммы → invoice →
 # pre_checkout approve → successful_payment → спасибо. Оплата опциональна.
 DONATE_TIERS = [
-    ("☕ Кофе", 50),
-    ("⭐ Спасибо", 100),
-    ("🚀 Щедро", 300),
+    ("donate_coffee", 50),
+    ("donate_thanks_tier", 100),
+    ("donate_generous", 300),
 ]
 
 
-def donate_kb() -> InlineKeyboardMarkup:
-    rows = [[InlineKeyboardButton(text=f"{label} · {amount} ⭐",
+def donate_kb(lang: str = "ru") -> InlineKeyboardMarkup:
+    rows = [[InlineKeyboardButton(text=f"{t(label_key, lang)} · {amount} ⭐",
                                   callback_data=f"donate:{amount}")]
-            for label, amount in DONATE_TIERS]
+            for label_key, amount in DONATE_TIERS]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 async def show_donate_options(message: Message) -> None:
+    lang = user_lang(message.from_user.id)
     await message.answer(
-        "💙 <b>Спасибо, что хочешь поддержать проект!</b>\n\n"
-        "Тренажёр — некоммерческий и делается в свободное время. "
-        "Любая поддержка мотивирует развивать его дальше. "
-        "Выбери сумму в Telegram Stars — это не обязательно и ни на что не влияет 🙂",
-        reply_markup=donate_kb(),
+        t("donate_intro", lang),
+        reply_markup=donate_kb(lang),
     )
 
 
 @dp.callback_query(F.data.startswith("donate:"))
 async def cb_donate(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     try:
         amount = int(cb.data.split(":", 1)[1])
     except (ValueError, IndexError):
-        await cb.answer("Некорректная сумма")
+        await cb.answer(t("donate_bad_amount", lang))
         return
     if amount < 1 or amount > 100000:
-        await cb.answer("Некорректная сумма")
+        await cb.answer(t("donate_bad_amount", lang))
         return
     await cb.answer()
     # Счёт в Stars: currency="XTR", provider_token="" (для Stars не требуется).
     await cb.message.answer_invoice(
-        title="Поддержка ISSA Trainer",
-        description="Благодарность автору тренажёра. Спасибо за поддержку! ⚓",
+        title=t("donate_invoice_title", lang),
+        description=t("donate_invoice_desc", lang),
         payload=f"donate_{amount}",
         currency="XTR",
-        prices=[LabeledPrice(label=f"{amount} Stars", amount=amount)],
+        prices=[LabeledPrice(label=t("donate_price", lang, amount=amount), amount=amount)],
         provider_token="",
     )
 
@@ -605,10 +633,8 @@ async def on_pre_checkout(pcq: PreCheckoutQuery) -> None:
 async def on_successful_payment(message: Message) -> None:
     sp = message.successful_payment
     stars = sp.total_amount if sp else 0
-    await message.answer(
-        f"💙 <b>Огромное спасибо за поддержку — {stars} ⭐!</b>\n\n"
-        "Это правда помогает развивать тренажёр. Попутного ветра! ⛵",
-    )
+    lang = user_lang(message.from_user.id)
+    await message.answer(t("donate_payment_thanks", lang, stars=stars))
 
 
 @dp.message(Command("donate"))
@@ -623,64 +649,50 @@ async def cmd_start(message: Message, command: CommandObject | None = None) -> N
         await show_donate_options(message)
         return
 
+    # Язык: если ещё не выбран — определяем по языку клиента Telegram и запоминаем.
+    uid = message.from_user.id
+    stored = load_progress(uid).get("lang")
+    if stored in SUPPORTED:
+        lang = stored
+    else:
+        lang = norm_lang(message.from_user.language_code)
+        set_user_lang(uid, lang)
+
     # Если развёрнут Mini App — делаем его ГЛАВНЫМ входом: крупная кнопка-приложение
     # первым сообщением. Весь тренажёр (тесты с разбором, конспект, калькуляторы,
     # повторение, прогресс) удобнее в приложении; чат-режимы — как быстрый доступ.
     if WEBAPP_HOME_URL:
         await message.answer(
-            "⚓ <b>ISSA Trainer</b> — подготовка к экзамену Inshore Skipper + SRC\n\n"
-            f"<b>{len(QUESTIONS)} вопросов</b> с разбором и источниками, конспект по "
-            "учебнику, морские калькуляторы, интервальное повторение, пробный экзамен "
-            "и отслеживание готовности.\n\n"
-            "👉 <b>Всё это — в приложении.</b> Нажми «Открыть тренажёр»:",
-            reply_markup=main_menu_kb(),
+            t("start_webapp", lang, n=len(QUESTIONS)),
+            reply_markup=main_menu_kb(lang),
         )
         return
 
     # Fallback без Mini App — как было: всё в чате.
     await message.answer(
-        "⚓ <b>Тренажёр ISSA Inshore Skipper + SRC</b>\n\n"
-        f"В банке <b>{len(QUESTIONS)}</b> вопросов по темам: "
-        "терминология, паруса, манёвры, якорение, навигация, "
-        "IALA, COLREG (МППСС), огни/знаки, звуковые сигналы, метео, "
-        "безопасность, VHF/SRC, планирование, практика.\n\n"
-        "Вопросы <b>не повторяются</b>, пока не пройдёшь весь круг.\n\n"
-        + DISCLAIMER +
-        "\n\nВыбери режим:",
-        reply_markup=main_menu_kb(),
+        t("start_fallback", lang, n=len(QUESTIONS), disclaimer=t("disclaimer", lang)),
+        reply_markup=main_menu_kb(lang),
     )
-    rk = quiz_app_reply_kb()
+    rk = quiz_app_reply_kb(lang)
     if rk:
-        await message.answer(
-            "🎓 Доступно приложение «Тесты» — кнопка снизу (тренировка и экзамен "
-            "с таймером; результат сохраняется в твой прогресс).",
-            reply_markup=rk,
-        )
+        await message.answer(t("start_quiz_note", lang), reply_markup=rk)
 
 
 @dp.message(Command("tests"))
 async def cmd_tests(message: Message) -> None:
-    rk = quiz_app_reply_kb()
+    lang = user_lang(message.from_user.id)
+    rk = quiz_app_reply_kb(lang)
     if rk:
-        await message.answer(
-            "🎓 <b>Приложение «Тесты»</b>\n"
-            "Нажми кнопку снизу — откроется тренажёр (тренировка/экзамен). "
-            "Результат вернётся в бота и сохранится в прогресс.",
-            reply_markup=rk,
-        )
+        await message.answer(t("tests_available", lang), reply_markup=rk)
     else:
-        await message.answer(
-            "Приложение «Тесты» пока не подключено. Тренироваться можно прямо "
-            "в чате: /menu → «🎯 Случайный вопрос» или «📝 Экзамен».",
-            reply_markup=main_menu_kb(),
-        )
+        await message.answer(t("tests_unavailable", lang), reply_markup=main_menu_kb(lang))
 
 
 @dp.message(Command("menu"))
 async def cmd_menu(message: Message) -> None:
-    text = ("👉 Открой тренажёр — весь функционал внутри приложения:"
-            if WEBAPP_HOME_URL else "Главное меню:")
-    await message.answer(text, reply_markup=main_menu_kb())
+    lang = user_lang(message.from_user.id)
+    text = t("menu_webapp", lang) if WEBAPP_HOME_URL else t("menu_plain", lang)
+    await message.answer(text, reply_markup=main_menu_kb(lang))
 
 
 @dp.message(Command("stats"))
@@ -690,53 +702,49 @@ async def cmd_stats(message: Message) -> None:
 
 @dp.message(Command("help"))
 async def cmd_help(message: Message) -> None:
-    await message.answer(
-        "<b>Команды:</b>\n"
-        "/start — главное меню\n"
-        "/menu — меню режимов\n"
-        "/stats — моя статистика\n"
-        "/calc — морской калькулятор (TVMDC, скорость/время/ETA)\n"
-        "/tests — приложение «Тесты» (если подключено)\n"
-        "/about — о боте\n"
-        "/privacy — конфиденциальность\n"
-        "/help — эта справка\n\n"
-        "В режиме quiz нажимай на вариант ответа — бот сразу покажет, "
-        "верно ли, и даст пояснение."
-    )
+    lang = user_lang(message.from_user.id)
+    await message.answer(t("help", lang))
+
+
+@dp.message(Command("language"))
+async def cmd_language(message: Message) -> None:
+    lang = user_lang(message.from_user.id)
+    await message.answer(t("language_pick", lang), reply_markup=language_kb())
+
+
+@dp.callback_query(F.data.startswith("lang:"))
+async def cb_lang(cb: CallbackQuery) -> None:
+    code = cb.data.split(":", 1)[1]
+    if code not in SUPPORTED:
+        await cb.answer(t("donate_bad_amount", user_lang(cb.from_user.id)))
+        return
+    set_user_lang(cb.from_user.id, code)
+    await cb.answer()
+    # Подтверждение и меню — уже на НОВОМ языке.
+    await cb.message.answer(t("language_changed", code), reply_markup=main_menu_kb(code))
 
 
 @dp.message(Command("about"))
 async def cmd_about(message: Message) -> None:
-    await message.answer(
-        "⚓ <b>Тренажёр ISSA Inshore Skipper + SRC</b>\n\n" + DISCLAIMER
-    )
+    lang = user_lang(message.from_user.id)
+    await message.answer(t("about_title", lang, disclaimer=t("disclaimer", lang)))
 
 
 @dp.message(Command("calc"))
 async def cmd_calc(message: Message) -> None:
+    lang = user_lang(message.from_user.id)
     CALC_STATE.pop(message.from_user.id, None)
-    await message.answer(
-        "🧮 <b>Калькулятор поправок компаса (TVMDC)</b>\n\n"
-        "Цепочка: <code>True ↔ Variation ↔ Magnetic ↔ Deviation ↔ Compass</code>\n"
-        "Выбери, что во что пересчитать:",
-        reply_markup=calc_menu_kb(),
-    )
+    await message.answer(t("calc_compass_intro", lang), reply_markup=calc_menu_kb(lang))
 
 
 @dp.message(Command("privacy"))
 async def cmd_privacy(message: Message) -> None:
-    await message.answer(
-        "🔒 <b>Конфиденциальность</b>\n\n"
-        "Бот хранит только <b>ваш Telegram ID</b> и <b>прогресс обучения</b> "
-        "(какие вопросы видели, ошибки, статистика) — чтобы вести вашу "
-        "тренировку отдельно.\n\n"
-        "❌ Не собираются: имя, телефон, переписка, геолокация, платежи.\n"
-        "Бот работает только в личном чате и не читает группы.\n\n"
-        "Удалить свои данные — кнопка «♻️ Сбросить прогресс» в меню."
-    )
+    lang = user_lang(message.from_user.id)
+    await message.answer(t("privacy", lang))
 
 
 async def show_stats(bot: Bot, chat_id: int, user_id: int) -> None:
+    lang = user_lang(user_id)
     prog = load_progress(user_id)
     answered = prog["stats"]["answered"]
     correct = prog["stats"]["correct"]
@@ -745,12 +753,9 @@ async def show_stats(bot: Bot, chat_id: int, user_id: int) -> None:
     seen_n = len(set(prog["seen"]) & set(QUESTIONS_BY_ID))
     await bot.send_message(
         chat_id,
-        "📊 <b>Твоя статистика</b>\n\n"
-        f"Отвечено: <b>{answered}</b>\n"
-        f"Правильно: <b>{correct}</b> ({pct}%)\n"
-        f"Вопросов на повтор (ошибки): <b>{wrong_n}</b>\n"
-        f"Пройдено из банка: <b>{seen_n}/{len(QUESTIONS)}</b>",
-        reply_markup=main_menu_kb(),
+        t("stats", lang, answered=answered, correct=correct, pct=pct,
+          wrong_n=wrong_n, seen_n=seen_n, total=len(QUESTIONS)),
+        reply_markup=main_menu_kb(lang),
     )
 
 
@@ -763,33 +768,35 @@ async def cb_menu(cb: CallbackQuery) -> None:
     GLOSSARY_SEARCH.discard(cb.from_user.id)
     ACTIVE_TASK.pop(cb.from_user.id, None)
     ACTIVE_PTASK.pop(cb.from_user.id, None)
-    text = ("👉 Открой тренажёр — весь функционал внутри приложения:"
-            if WEBAPP_HOME_URL else "Главное меню:")
-    await cb.message.answer(text, reply_markup=main_menu_kb())
+    lang = user_lang(cb.from_user.id)
+    text = t("menu_webapp", lang) if WEBAPP_HOME_URL else t("menu_plain", lang)
+    await cb.message.answer(text, reply_markup=main_menu_kb(lang))
     await cb.answer()
 
 
 @dp.callback_query(F.data == "mode:random")
 async def cb_random(cb: CallbackQuery) -> None:
     user_id = cb.from_user.id
+    lang = user_lang(user_id)
     chosen = pick_unseen(user_id, QUESTIONS, 1)
     if not chosen:
-        await cb.message.answer("Вопросы закончились 🤷", reply_markup=main_menu_kb())
+        await cb.message.answer(t("no_questions_left", lang), reply_markup=main_menu_kb(lang))
         await cb.answer()
         return
     await send_quiz(cb.bot, cb.message.chat.id, user_id, chosen[0], mode="random")
     left = remaining_in_pool(user_id, QUESTIONS)
     sq = chosen[0]["id"] if chosen[0].get("study") else None
     await cb.message.answer(
-        f"Осталось новых вопросов в круге: <b>{left}</b>",
-        reply_markup=next_question_kb("mode:random", study_qid=sq),
+        t("remaining_in_circle", lang, left=left),
+        reply_markup=next_question_kb("mode:random", study_qid=sq, lang=lang),
     )
     await cb.answer()
 
 
 @dp.callback_query(F.data == "mode:topics")
 async def cb_topics(cb: CallbackQuery) -> None:
-    await cb.message.answer("Выбери тему:", reply_markup=topics_kb())
+    lang = user_lang(cb.from_user.id)
+    await cb.message.answer(t("choose_topic", lang), reply_markup=topics_kb(lang))
     await cb.answer()
 
 
@@ -797,18 +804,19 @@ async def cb_topics(cb: CallbackQuery) -> None:
 async def cb_topic_question(cb: CallbackQuery) -> None:
     topic = cb.data.split(":", 1)[1]
     user_id = cb.from_user.id
+    lang = user_lang(user_id)
     pool = topic_questions(topic)
     chosen = pick_unseen(user_id, pool, 1)
     if not chosen:
-        await cb.message.answer("В этой теме вопросов нет.", reply_markup=topics_kb())
+        await cb.message.answer(t("topic_empty", lang), reply_markup=topics_kb(lang))
         await cb.answer()
         return
     await send_quiz(cb.bot, cb.message.chat.id, user_id, chosen[0], mode=f"topic:{topic}")
     left = remaining_in_pool(user_id, pool)
     sq = chosen[0]["id"] if chosen[0].get("study") else None
     await cb.message.answer(
-        f"Тема «{topic}». Осталось новых: <b>{left}</b>",
-        reply_markup=next_question_kb(f"topic:{topic}", "➡️ Ещё по этой теме", study_qid=sq),
+        t("topic_remaining", lang, topic=topic, left=left),
+        reply_markup=next_question_kb(f"topic:{topic}", t("next_topic", lang), study_qid=sq, lang=lang),
     )
     await cb.answer()
 
@@ -816,13 +824,11 @@ async def cb_topic_question(cb: CallbackQuery) -> None:
 @dp.callback_query(F.data == "mode:mistakes")
 async def cb_mistakes(cb: CallbackQuery) -> None:
     user_id = cb.from_user.id
+    lang = user_lang(user_id)
     prog = load_progress(user_id)
     wrong_ids = [qid for qid in prog["wrong"] if qid in QUESTIONS_BY_ID]
     if not wrong_ids:
-        await cb.message.answer(
-            "🎉 У тебя нет вопросов на повтор — ошибок не накоплено!",
-            reply_markup=main_menu_kb(),
-        )
+        await cb.message.answer(t("mistakes_none", lang), reply_markup=main_menu_kb(lang))
         await cb.answer()
         return
     qid = random.choice(wrong_ids)
@@ -830,8 +836,8 @@ async def cb_mistakes(cb: CallbackQuery) -> None:
     await send_quiz(cb.bot, cb.message.chat.id, user_id, question, mode="mistakes")
     sq = question["id"] if question.get("study") else None
     await cb.message.answer(
-        f"Вопросов на повтор осталось: <b>{len(wrong_ids)}</b>",
-        reply_markup=next_question_kb("mode:mistakes", "🔁 Следующая ошибка", study_qid=sq),
+        t("mistakes_remaining", lang, n=len(wrong_ids)),
+        reply_markup=next_question_kb("mode:mistakes", t("next_mistake", lang), study_qid=sq, lang=lang),
     )
     await cb.answer()
 
@@ -846,12 +852,13 @@ async def cb_stats(cb: CallbackQuery) -> None:
 async def cb_study(cb: CallbackQuery) -> None:
     """Показать расширенный учебный материал (study_material) к вопросу."""
     qid = cb.data.split(":", 1)[1]
+    lang = user_lang(cb.from_user.id)
     question = QUESTIONS_BY_ID.get(qid)
     study = (question or {}).get("study")
     if not study:
-        await cb.answer("Подробностей нет")
+        await cb.answer(t("no_details", lang))
         return
-    text = _truncate(f"📖 <b>Подробнее</b>\n\n{study}", 4000)
+    text = _truncate(t("study_more", lang, study=study), 4000)
     await cb.message.answer(text)
     await cb.answer()
 
@@ -860,23 +867,22 @@ async def cb_study(cb: CallbackQuery) -> None:
 async def cb_reset(cb: CallbackQuery) -> None:
     # Сброс необратим — требуем подтверждение вторым тапом, чтобы случайное
     # нажатие в меню не стёрло весь прогресс.
+    lang = user_lang(cb.from_user.id)
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⚠️ Да, стереть весь прогресс", callback_data="mode:reset_confirm")],
-        [InlineKeyboardButton(text="Отмена", callback_data="mode:menu")],
+        [InlineKeyboardButton(text=t("reset_confirm_btn", lang), callback_data="mode:reset_confirm")],
+        [InlineKeyboardButton(text=t("cancel", lang), callback_data="mode:menu")],
     ])
-    await cb.message.answer(
-        "♻️ <b>Сбросить прогресс?</b>\n\n"
-        "Будут стёрты пройденные вопросы, работа над ошибками и статистика. "
-        "Это действие необратимо.",
-        reply_markup=kb,
-    )
+    await cb.message.answer(t("reset_prompt", lang), reply_markup=kb)
     await cb.answer()
 
 
 @dp.callback_query(F.data == "mode:reset_confirm")
 async def cb_reset_confirm(cb: CallbackQuery) -> None:
-    save_progress(cb.from_user.id, {"seen": [], "wrong": [], "stats": {"answered": 0, "correct": 0}})
-    await cb.message.answer("♻️ Прогресс сброшен.", reply_markup=main_menu_kb())
+    # Сохраняем выбранный язык при сбросе прогресса — это настройка, не «прогресс».
+    lang = user_lang(cb.from_user.id)
+    save_progress(cb.from_user.id,
+                  {"seen": [], "wrong": [], "stats": {"answered": 0, "correct": 0}, "lang": lang})
+    await cb.message.answer(t("reset_done", lang), reply_markup=main_menu_kb(lang))
     await cb.answer()
 
 
@@ -895,10 +901,9 @@ async def cb_exam_start(cb: CallbackQuery) -> None:
         "ts": int(time.time()),   # для TTL-очистки при загрузке
     }
     _save_exams()
+    lang = user_lang(user_id)
     await cb.message.answer(
-        f"📝 <b>Экзамен начат</b>\n"
-        f"Вопросов: {len(chosen)} · Проходной балл: {EXAM_PASS_PERCENT}%\n"
-        "Отвечай на каждый вопрос — в конце будет результат и разбор ошибок.",
+        t("exam_started", lang, n=len(chosen), **{"pass": EXAM_PASS_PERCENT}),
     )
     await send_next_exam_question(cb.bot, cb.message.chat.id, user_id)
     await cb.answer()
@@ -914,7 +919,9 @@ async def send_next_exam_question(bot: Bot, chat_id: int, user_id: int) -> None:
     qid = exam["queue"][exam["idx"]]
     question = QUESTIONS_BY_ID[qid]
     # В экзамене показываем прогресс в подписи отдельным сообщением.
-    await bot.send_message(chat_id, f"Вопрос {exam['idx'] + 1} из {len(exam['queue'])}")
+    lang = user_lang(user_id)
+    await bot.send_message(chat_id, t("exam_question_counter", lang,
+                                      i=exam["idx"] + 1, n=len(exam["queue"])))
     await send_quiz(bot, chat_id, user_id, question, mode="exam", is_exam=True)
 
 
@@ -923,31 +930,30 @@ async def finish_exam(bot: Bot, chat_id: int, user_id: int) -> None:
     if not exam:
         return
     _save_exams()   # экзамен завершён — убираем из персистентного стора
+    lang = user_lang(user_id)
     total = len(exam["queue"])
     correct = exam["correct"]
     pct = round(correct / total * 100) if total else 0
     passed = pct >= EXAM_PASS_PERCENT
-    verdict = "✅ <b>СДАНО</b>" if passed else "❌ <b>НЕ СДАНО</b>"
+    verdict = t("exam_passed", lang) if passed else t("exam_failed", lang)
 
-    header = (
-        f"🏁 <b>Экзамен завершён</b>\n"
-        f"Результат: <b>{correct}/{total}</b> ({pct}%)\n"
-        f"{verdict} (нужно ≥ {EXAM_PASS_PERCENT}%)"
-    )
+    header = t("exam_finished_header", lang, correct=correct, total=total,
+               pct=pct, verdict=verdict, **{"pass": EXAM_PASS_PERCENT})
     wrong = [qid for qid, ok in exam["results"] if not ok]
     if not wrong:
-        await bot.send_message(chat_id, header + "\n\n🎉 Без ошибок!", reply_markup=main_menu_kb())
+        await bot.send_message(chat_id, header + "\n\n" + t("exam_no_errors", lang),
+                               reply_markup=main_menu_kb(lang))
         return
 
     # Разбор ошибок может быть длинным (до 100 вопросов) — режем на части
     # по лимиту Telegram, чтобы сообщение не упало.
-    blocks = [header, "\n<b>Разбор ошибок:</b>"]
+    blocks = [header, t("error_review_header", lang)]
     for qid in wrong:
         q = QUESTIONS_BY_ID[qid]
         correct_opt = q["options"][q["answer"]]
         blocks.append(f"• [{q['topic']}] {q['q']}\n  ✔️ {correct_opt}")
-    blocks.append("\nЭти вопросы добавлены в «Работу над ошибками».")
-    blocks.append("\n" + DISCLAIMER)
+    blocks.append(t("added_to_mistakes", lang))
+    blocks.append("\n" + t("disclaimer", lang))
 
     chunk = ""
     parts: list[str] = []
@@ -961,7 +967,7 @@ async def finish_exam(bot: Bot, chat_id: int, user_id: int) -> None:
         parts.append(chunk)
 
     for i, part in enumerate(parts):
-        kb = main_menu_kb() if i == len(parts) - 1 else None
+        kb = main_menu_kb(lang) if i == len(parts) - 1 else None
         await bot.send_message(chat_id, part, reply_markup=kb)
 
 
@@ -1004,9 +1010,7 @@ async def on_poll_answer(poll_answer: PollAnswer) -> None:
             # сообщаем, а не игнорируем молча ответ на «осиротевший» вопрос.
             with contextlib.suppress(Exception):
                 await poll_answer.bot.send_message(
-                    user_id,
-                    "Этот экзамен больше не активен (возможно, бот перезапускался). "
-                    "Начни заново: /menu → «📝 Экзамен».",
+                    user_id, t("exam_inactive", user_lang(user_id)),
                 )
 
 
@@ -1025,7 +1029,7 @@ async def send_images(bot: Bot, chat_id: int, files: list[str]) -> None:
 
 # ──────────────────────────── Конспект ────────────────────────────
 
-def konspekt_menu_kb() -> InlineKeyboardMarkup:
+def konspekt_menu_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     rows, row = [], []
     for i, key in enumerate(content.KONSPEKT_ORDER, 1):
         title = content.KONSPEKT_BTN.get(key, content.KONSPEKT[key][0])
@@ -1035,37 +1039,34 @@ def konspekt_menu_kb() -> InlineKeyboardMarkup:
             row = []
     if row:
         rows.append(row)
-    rows.append([InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")])
+    rows.append([InlineKeyboardButton(text=t("back_menu", lang), callback_data="mode:menu")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 @dp.callback_query(F.data == "mode:konspekt")
 async def cb_konspekt(cb: CallbackQuery) -> None:
-    await cb.message.answer(
-        "📖 <b>Конспект по теории ISSA Inshore Skipper + SRC</b>\n\n"
-        "Выбери тему. Жирным выделены термины и формулы, которые чаще всего "
-        "спрашивают на тесте.",
-        reply_markup=konspekt_menu_kb(),
-    )
+    lang = user_lang(cb.from_user.id)
+    await cb.message.answer(t("konspekt_intro", lang), reply_markup=konspekt_menu_kb(lang))
     await cb.answer()
 
 
 @dp.callback_query(F.data.startswith("kon:"))
 async def cb_konspekt_page(cb: CallbackQuery) -> None:
     key = cb.data.split(":", 1)[1]
+    lang = user_lang(cb.from_user.id)
     page = content.KONSPEKT.get(key)
     if not page:
-        await cb.answer("Тема не найдена")
+        await cb.answer(t("topic_not_found", lang))
         return
     await cb.message.answer(page[1])
     await send_images(cb.bot, cb.message.chat.id, content.KONSPEKT_IMAGES.get(key, []))
-    await cb.message.answer("⬆️ Тема выше. Выбери следующую:", reply_markup=konspekt_menu_kb())
+    await cb.message.answer(t("konspekt_next", lang), reply_markup=konspekt_menu_kb(lang))
     await cb.answer()
 
 
 # ──────────────────────────── Шпаргалки ────────────────────────────
 
-def cheat_menu_kb() -> InlineKeyboardMarkup:
+def cheat_menu_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     rows, row = [], []
     for i, key in enumerate(content.CHEATSHEET_ORDER, 1):
         title = content.CHEATSHEET_BTN.get(key, content.CHEATSHEETS[key][0])
@@ -1075,45 +1076,41 @@ def cheat_menu_kb() -> InlineKeyboardMarkup:
             row = []
     if row:
         rows.append(row)
-    rows.append([InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")])
+    rows.append([InlineKeyboardButton(text=t("back_menu", lang), callback_data="mode:menu")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 @dp.callback_query(F.data == "mode:cheat")
 async def cb_cheat(cb: CallbackQuery) -> None:
-    await cb.message.answer(
-        "📌 <b>Шпаргалки</b>\n\nКраткие выжимки по ключевым темам — удобно "
-        "повторить перед тестом или экзаменом.",
-        reply_markup=cheat_menu_kb(),
-    )
+    lang = user_lang(cb.from_user.id)
+    await cb.message.answer(t("cheat_intro", lang), reply_markup=cheat_menu_kb(lang))
     await cb.answer()
 
 
 @dp.callback_query(F.data.startswith("chs:"))
 async def cb_cheat_page(cb: CallbackQuery) -> None:
     key = cb.data.split(":", 1)[1]
+    lang = user_lang(cb.from_user.id)
     # Узлы — отдельное подменю с пошаговыми фото.
     if key == "knots":
         page = content.CHEATSHEETS["knots"]
         await cb.message.answer(page[1])
-        await cb.message.answer(
-            "Выбери узел — покажу пошагово с фото:", reply_markup=knots_menu_kb()
-        )
+        await cb.message.answer(t("choose_knot", lang), reply_markup=knots_menu_kb(lang))
         await cb.answer()
         return
     page = content.CHEATSHEETS.get(key)
     if not page:
-        await cb.answer("Шпаргалка не найдена")
+        await cb.answer(t("cheat_not_found", lang))
         return
     await cb.message.answer(page[1])
     await send_images(cb.bot, cb.message.chat.id, content.CHEATSHEET_IMAGES.get(key, []))
-    await cb.message.answer("⬆️ Шпаргалка выше. Ещё:", reply_markup=cheat_menu_kb())
+    await cb.message.answer(t("cheat_next", lang), reply_markup=cheat_menu_kb(lang))
     await cb.answer()
 
 
 # ── Узлы: подменю с фото по шагам ──
 
-def knots_menu_kb() -> InlineKeyboardMarkup:
+def knots_menu_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     rows, row = [], []
     for i, key in enumerate(content.KNOTS_ORDER, 1):
         title = content.KNOTS[key][0]
@@ -1123,21 +1120,22 @@ def knots_menu_kb() -> InlineKeyboardMarkup:
             row = []
     if row:
         rows.append(row)
-    rows.append([InlineKeyboardButton(text="⬅️ К шпаргалкам", callback_data="mode:cheat")])
+    rows.append([InlineKeyboardButton(text=t("back_cheat", lang), callback_data="mode:cheat")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 @dp.callback_query(F.data.startswith("knot:"))
 async def cb_knot(cb: CallbackQuery) -> None:
     key = cb.data.split(":", 1)[1]
+    lang = user_lang(cb.from_user.id)
     knot = content.KNOTS.get(key)
     if not knot:
-        await cb.answer("Узел не найден")
+        await cb.answer(t("knot_not_found", lang))
         return
     title, descr, steps = knot
     await cb.message.answer(f"{title}\n\n{descr}")
     await send_images(cb.bot, cb.message.chat.id, steps)
-    await cb.message.answer("Готово! Выбери другой узел:", reply_markup=knots_menu_kb())
+    await cb.message.answer(t("knot_done", lang), reply_markup=knots_menu_kb(lang))
     await cb.answer()
 
 
@@ -1146,7 +1144,7 @@ async def cb_knot(cb: CallbackQuery) -> None:
 GLOSSARY_PAGE = 8  # терминов на страницу
 
 
-def glossary_menu_kb() -> InlineKeyboardMarkup:
+def glossary_menu_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     rows, row = [], []
     i = 0
     for cat in glossary.CATEGORY_ORDER:
@@ -1163,12 +1161,12 @@ def glossary_menu_kb() -> InlineKeyboardMarkup:
             row = []
     if row:
         rows.append(row)
-    rows.append([InlineKeyboardButton(text="🔎 Поиск термина", callback_data="gl:search")])
-    rows.append([InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")])
+    rows.append([InlineKeyboardButton(text=t("glossary_search_btn", lang), callback_data="gl:search")])
+    rows.append([InlineKeyboardButton(text=t("back_menu", lang), callback_data="mode:menu")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def glossary_terms_kb(cat: str, page: int) -> InlineKeyboardMarkup:
+def glossary_terms_kb(cat: str, page: int, lang: str = "ru") -> InlineKeyboardMarkup:
     key = glossary.CATEGORY_KEY[cat]
     items = glossary.YACHTING_GLOSSARY.get(cat, [])
     start = page * GLOSSARY_PAGE
@@ -1182,25 +1180,24 @@ def glossary_terms_kb(cat: str, page: int) -> InlineKeyboardMarkup:
         nav.append(InlineKeyboardButton(text="▶️", callback_data=f"gl:cat:{key}:{page + 1}"))
     if nav:
         rows.append(nav)
-    rows.append([InlineKeyboardButton(text="⬅️ К категориям", callback_data="mode:glossary")])
+    rows.append([InlineKeyboardButton(text=t("back_categories", lang), callback_data="mode:glossary")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 @dp.callback_query(F.data == "mode:glossary")
 async def cb_glossary(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     GLOSSARY_SEARCH.discard(cb.from_user.id)
     await cb.message.answer(
-        f"📚 <b>Словарь яхтсмена</b> ({glossary.total_count()} терминов)\n\n"
-        "Морские и яхтенные термины простыми словами. Выбери категорию "
-        "или нажми «🔎 Поиск термина».\n\n"
-        "<i>Вспомогательный материал для подготовки, не официальный учебник.</i>",
-        reply_markup=glossary_menu_kb(),
+        t("glossary_intro", lang, n=glossary.total_count()),
+        reply_markup=glossary_menu_kb(lang),
     )
     await cb.answer()
 
 
 @dp.callback_query(F.data.startswith("gl:cat:"))
 async def cb_glossary_cat(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     rest = cb.data[len("gl:cat:"):]  # <key>[:page]
     if ":" in rest:
         key, page = rest.split(":", 1)
@@ -1209,16 +1206,17 @@ async def cb_glossary_cat(cb: CallbackQuery) -> None:
         key, page = rest, 0
     cat = glossary.KEY_CATEGORY.get(key)
     if not cat:
-        await cb.answer("Категория не найдена")
+        await cb.answer(t("category_not_found", lang))
         return
     icon = glossary.CATEGORY_ICONS.get(cat, "📚")
-    await cb.message.answer(f"{icon} <b>{cat}</b>\nВыбери термин:",
-                            reply_markup=glossary_terms_kb(cat, page))
+    await cb.message.answer(f"{icon} <b>{cat}</b>\n{t('choose_term', lang)}",
+                            reply_markup=glossary_terms_kb(cat, page, lang))
     await cb.answer()
 
 
 @dp.callback_query(F.data.startswith("gl:t:"))
 async def cb_glossary_term(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     rest = cb.data[len("gl:t:"):]  # <key>:<idx>
     key, idx = rest.rsplit(":", 1)
     cat = glossary.KEY_CATEGORY.get(key)
@@ -1226,11 +1224,11 @@ async def cb_glossary_term(cb: CallbackQuery) -> None:
     try:
         it = items[int(idx)]
     except (ValueError, IndexError):
-        await cb.answer("Термин не найден")
+        await cb.answer(t("term_not_found", lang))
         return
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⬅️ К списку", callback_data=f"gl:cat:{key}")],
-        [InlineKeyboardButton(text="📚 Категории", callback_data="mode:glossary")],
+        [InlineKeyboardButton(text=t("back_list", lang), callback_data=f"gl:cat:{key}")],
+        [InlineKeyboardButton(text=t("categories_btn", lang), callback_data="mode:glossary")],
     ])
     await cb.message.answer(glossary.render(cat, it), reply_markup=kb)
     await cb.answer()
@@ -1238,10 +1236,9 @@ async def cb_glossary_term(cb: CallbackQuery) -> None:
 
 @dp.callback_query(F.data == "gl:search")
 async def cb_glossary_search(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     GLOSSARY_SEARCH.add(cb.from_user.id)
-    await cb.message.answer(
-        "🔎 Напиши слово для поиска по словарю (например <code>киль</code>, "
-        "<code>mayday</code>, <code>галс</code>).")
+    await cb.message.answer(t("glossary_search_prompt", lang))
     await cb.answer()
 
 
@@ -1249,34 +1246,30 @@ async def cb_glossary_search(cb: CallbackQuery) -> None:
 
 # ──────────────────────────── Практические задачи (S-D-T / ETA) ────────────────────────────
 
-def ptask_kb() -> InlineKeyboardMarkup:
+def ptask_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🎲 Новая задача", callback_data="ptask:new")],
-        [InlineKeyboardButton(text="💡 Показать решение", callback_data="ptask:solve")],
-        [InlineKeyboardButton(text="📊 Статистика", callback_data="ptask:stats")],
-        [InlineKeyboardButton(text="🧮 Калькулятор", callback_data="mode:calc")],
-        [InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")],
+        [InlineKeyboardButton(text=t("ptask_new", lang), callback_data="ptask:new")],
+        [InlineKeyboardButton(text=t("ptask_solve_btn", lang), callback_data="ptask:solve")],
+        [InlineKeyboardButton(text=t("ptask_stats_btn", lang), callback_data="ptask:stats")],
+        [InlineKeyboardButton(text=t("calc_btn", lang), callback_data="mode:calc")],
+        [InlineKeyboardButton(text=t("back_menu", lang), callback_data="mode:menu")],
     ])
 
 
 async def _send_ptask(bot: Bot, chat_id: int, user_id: int, task: marine.MarineTask) -> None:
     ACTIVE_PTASK[user_id] = task.id
+    lang = user_lang(user_id)
     await bot.send_message(
         chat_id,
-        f"📝 <b>Практическая задача</b>\n\n{task.text}\n\n"
-        f"✍️ Напиши ответ числом (в {task.unit}). Допуск ±{marine._num(task.tol)}.",
-        reply_markup=ptask_kb(),
+        t("ptask_prompt", lang, text=task.text, unit=task.unit, tol=marine._num(task.tol)),
+        reply_markup=ptask_kb(lang),
     )
 
 
 @dp.callback_query(F.data == "mode:ptasks")
 async def cb_ptasks(cb: CallbackQuery) -> None:
-    await cb.message.answer(
-        "📝 <b>Практические задачи</b>\n\n"
-        "Скорость · дистанция · время · ETA. Реши задачу — бот проверит ответ "
-        "и покажет решение. Ведётся серия (streak).",
-        reply_markup=ptask_kb(),
-    )
+    lang = user_lang(cb.from_user.id)
+    await cb.message.answer(t("ptasks_intro", lang), reply_markup=ptask_kb(lang))
     await _send_ptask(cb.bot, cb.message.chat.id, cb.from_user.id, random.choice(marine.TASKS))
     await cb.answer()
 
@@ -1289,68 +1282,61 @@ async def cb_ptask_new(cb: CallbackQuery) -> None:
 
 @dp.callback_query(F.data == "ptask:solve")
 async def cb_ptask_solve(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     tid = ACTIVE_PTASK.get(cb.from_user.id)
     task = marine.TASKS_BY_ID.get(tid) if tid else None
     if not task:
-        await cb.answer("Сначала возьми задачу")
+        await cb.answer(t("take_task_first", lang))
         return
     await cb.message.answer(
-        f"💡 <b>Решение</b>\n\n{task.text}\n\n<pre>{task.solution}</pre>\n"
-        f"✅ Ответ: <b>{marine._num(task.answer)} {task.unit}</b>",
-        reply_markup=ptask_kb(),
+        t("ptask_solution", lang, text=task.text, solution=task.solution,
+          answer=marine._num(task.answer), unit=task.unit),
+        reply_markup=ptask_kb(lang),
     )
     await cb.answer()
 
 
 @dp.callback_query(F.data == "ptask:stats")
 async def cb_ptask_stats(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     p = load_progress(cb.from_user.id).get("ptasks", {"solved": 0, "attempts": 0, "streak": 0, "best": 0})
     att, solved = p["attempts"], p["solved"]
     acc = round(solved / att * 100) if att else 0
     await cb.message.answer(
-        "📊 <b>Статистика практических задач</b>\n\n"
-        f"Решено верно: <b>{solved}</b> из {att} ({acc}%)\n"
-        f"🔥 Текущая серия: <b>{p['streak']}</b>\n"
-        f"🏆 Лучшая серия: <b>{p['best']}</b>\n\n"
-        f"Всего задач в банке: {len(marine.TASKS)}.",
-        reply_markup=ptask_kb(),
+        t("ptask_stats", lang, solved=solved, att=att, acc=acc,
+          streak=p["streak"], best=p["best"], total=len(marine.TASKS)),
+        reply_markup=ptask_kb(lang),
     )
     await cb.answer()
 
 
-def task_kb() -> InlineKeyboardMarkup:
+def task_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🎲 Новая задача", callback_data="task:new"),
-             InlineKeyboardButton(text="⭐ Со звёздочкой", callback_data="task:star")],
-            [InlineKeyboardButton(text="💡 Показать решение", callback_data="task:solve")],
-            [InlineKeyboardButton(text="📊 Статистика задач", callback_data="task:stats")],
-            [InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")],
+            [InlineKeyboardButton(text=t("task_new", lang), callback_data="task:new"),
+             InlineKeyboardButton(text=t("task_star", lang), callback_data="task:star")],
+            [InlineKeyboardButton(text=t("task_solve_btn", lang), callback_data="task:solve")],
+            [InlineKeyboardButton(text=t("task_stats_btn", lang), callback_data="task:stats")],
+            [InlineKeyboardButton(text=t("back_menu", lang), callback_data="mode:menu")],
         ]
     )
 
 
 async def _send_task(bot: Bot, chat_id: int, user_id: int, task: nav_tasks.NavTask) -> None:
     ACTIVE_TASK[user_id] = task.id
-    star = " ⭐<i>(с подвохом — возможен переход через 360°)</i>" if task.starred else ""
+    lang = user_lang(user_id)
+    star = t("task_star_note", lang) if task.starred else ""
     await bot.send_message(
         chat_id,
-        f"🧭 <b>Задача T-V-M-D-C</b>{star}\n\n{task.text}\n\n"
-        "✍️ Напиши ответ числом (градусы), например <code>046</code>.",
-        reply_markup=task_kb(),
+        t("task_prompt", lang, star=star, text=task.text),
+        reply_markup=task_kb(lang),
     )
 
 
 @dp.callback_query(F.data == "mode:tasks")
 async def cb_tasks(cb: CallbackQuery) -> None:
-    await cb.message.answer(
-        "🧭 <b>Решение задач: поправки компаса (T-V-M-D-C)</b>\n\n"
-        "Цепочка: <code>True ↔ Variation ↔ Magnetic ↔ Deviation ↔ Compass</code>\n"
-        "Вниз (T→C): <b>East −, West +</b>. Вверх (C→T): наоборот.\n\n"
-        "Задачи можно повторять — цель научиться решать. "
-        "Есть задачи <b>со звёздочкой</b> (с подвохом, &gt;360°).",
-        reply_markup=task_kb(),
-    )
+    lang = user_lang(cb.from_user.id)
+    await cb.message.answer(t("tasks_intro", lang), reply_markup=task_kb(lang))
     task = random.choice(nav_tasks.TASKS)
     await _send_task(cb.bot, cb.message.chat.id, cb.from_user.id, task)
     await cb.answer()
@@ -1370,33 +1356,32 @@ async def cb_task_star(cb: CallbackQuery) -> None:
 
 @dp.callback_query(F.data == "task:solve")
 async def cb_task_solve(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     task_id = ACTIVE_TASK.get(cb.from_user.id)
     task = nav_tasks.TASKS_BY_ID.get(task_id) if task_id else None
     if not task:
         # активная задача живёт в памяти и сбрасывается при перезапуске бота
-        await cb.answer("Задача не активна (возможно, бот перезапускался). "
-                        "Возьми новую: /tasks", show_alert=True)
+        await cb.answer(t("task_inactive", lang), show_alert=True)
         return
     await cb.message.answer(
-        f"💡 <b>Решение</b>\n\n{task.text}\n\n<pre>{task.solution}</pre>\n"
-        f"✅ Ответ: <b>{task.answer:.0f}°</b>",
-        reply_markup=task_kb(),
+        t("task_solution", lang, text=task.text, solution=task.solution,
+          answer=f"{task.answer:.0f}"),
+        reply_markup=task_kb(lang),
     )
     await cb.answer()
 
 
 @dp.callback_query(F.data == "task:stats")
 async def cb_task_stats(cb: CallbackQuery) -> None:
-    t = load_progress(cb.from_user.id)["tasks"]
-    att, solved = t["attempts"], t["solved"]
+    lang = user_lang(cb.from_user.id)
+    tk = load_progress(cb.from_user.id)["tasks"]
+    att, solved = tk["attempts"], tk["solved"]
     acc = round(solved / att * 100) if att else 0
     await cb.message.answer(
-        "📊 <b>Статистика по задачам T-V-M-D-C</b>\n\n"
-        f"Решено верно: <b>{solved}</b> из {att} ({acc}%)\n"
-        f"🔥 Текущая серия: <b>{t['streak']}</b>\n"
-        f"🏆 Лучшая серия: <b>{t['best']}</b>\n\n"
-        f"Всего задач в банке: {len(nav_tasks.TASKS)} (⭐ с подвохом: {len(nav_tasks.starred_tasks())}).",
-        reply_markup=task_kb(),
+        t("task_stats", lang, solved=solved, att=att, acc=acc,
+          streak=tk["streak"], best=tk["best"], total=len(nav_tasks.TASKS),
+          starred=len(nav_tasks.starred_tasks())),
+        reply_markup=task_kb(lang),
     )
     await cb.answer()
 
@@ -1416,136 +1401,119 @@ CALC_DIRS = [
 ]
 
 
-def calc_menu_kb() -> InlineKeyboardMarkup:
+def calc_menu_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     rows = []
     # Если развёрнут Mini App — первой кнопкой даём удобный визуальный калькулятор.
     if WEBAPP_URL:
         rows.append([InlineKeyboardButton(
-            text="📱 Открыть приложение-калькулятор",
+            text=t("open_calc_app", lang),
             web_app=WebAppInfo(url=WEBAPP_URL))])
     rows += [[InlineKeyboardButton(text=label, callback_data=f"calc:dir:{s}{d}")]
              for s, d, label in CALC_DIRS]
-    rows.append([InlineKeyboardButton(text="⬅️ Разделы", callback_data="mode:calc")])
+    rows.append([InlineKeyboardButton(text=t("back_sections", lang), callback_data="mode:calc")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def calc_result_kb() -> InlineKeyboardMarkup:
+def calc_result_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔄 Другое направление", callback_data="calc:cat:compass")],
-        [InlineKeyboardButton(text="🧭 Потренироваться (задачи)", callback_data="mode:tasks")],
-        [InlineKeyboardButton(text="⬅️ Разделы", callback_data="mode:calc")],
+        [InlineKeyboardButton(text=t("calc_result_other", lang), callback_data="calc:cat:compass")],
+        [InlineKeyboardButton(text=t("calc_result_train", lang), callback_data="mode:tasks")],
+        [InlineKeyboardButton(text=t("back_sections", lang), callback_data="mode:calc")],
     ])
 
 
-def _calc_prompt(src: str, dst: str) -> str:
+def _calc_prompt(src: str, dst: str, lang: str = "ru") -> str:
     """Подсказка по вводу: какие поправки нужны для выбранного направления."""
     # T↔M использует Variation, M↔C — Deviation; для T↔C нужны обе.
     pair = {src, dst}
     if pair == {"T", "M"}:
-        fields, example = "<b>курс</b> и <b>Variation</b>", "100 6E"
-        hint = "Формат: <code>курс  variation(E/W)</code>"
+        fields, example, hint = t("calc_fields_var", lang), "100 6E", t("calc_hint_var", lang)
     elif pair == {"M", "C"}:
-        fields, example = "<b>курс</b> и <b>Deviation</b>", "120 4W"
-        hint = "Формат: <code>курс  deviation(E/W)</code>"
+        fields, example, hint = t("calc_fields_dev", lang), "120 4W", t("calc_hint_dev", lang)
     else:  # T↔C
-        fields, example = "<b>курс</b>, <b>Variation</b> и <b>Deviation</b>", "045 3W 2E"
-        hint = "Формат: <code>курс  variation(E/W)  deviation(E/W)</code>"
-    return (
-        f"Введи {fields} одной строкой.\n"
-        f"{hint}\n"
-        f"Пример: <code>{example}</code>\n\n"
-        "Направление поправки указывай буквой: <b>E</b> (восток) или <b>W</b> (запад). "
-        "Можно и русские: <b>В</b>/<b>З</b>."
-    )
+        fields, example, hint = t("calc_fields_both", lang), "045 3W 2E", t("calc_hint_both", lang)
+    return t("calc_prompt_body", lang, fields=fields, hint=hint, example=example)
 
 
-def calc_categories_kb() -> InlineKeyboardMarkup:
+def calc_categories_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     rows = []
     if WEBAPP_URL:
         rows.append([InlineKeyboardButton(
-            text="📱 Открыть приложение-калькулятор",
+            text=t("open_calc_app", lang),
             web_app=WebAppInfo(url=WEBAPP_URL))])
     rows += [
-        [InlineKeyboardButton(text="🧭 Поправки компаса (TVMDC)", callback_data="calc:cat:compass")],
-        [InlineKeyboardButton(text="⏱ Скорость · время · ETA", callback_data="calc:cat:marine")],
-        [InlineKeyboardButton(text="⬅️ В меню", callback_data="mode:menu")],
+        [InlineKeyboardButton(text=t("cat_compass", lang), callback_data="calc:cat:compass")],
+        [InlineKeyboardButton(text=t("cat_time_eta", lang), callback_data="calc:cat:marine")],
+        [InlineKeyboardButton(text=t("back_menu", lang), callback_data="mode:menu")],
     ]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 @dp.callback_query(F.data == "mode:calc")
 async def cb_calc(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     CALC_STATE.pop(cb.from_user.id, None)
-    await cb.message.answer(
-        "🧮 <b>Морской калькулятор</b>\n\nВыбери раздел:",
-        reply_markup=calc_categories_kb(),
-    )
+    await cb.message.answer(t("calc_sections", lang), reply_markup=calc_categories_kb(lang))
     await cb.answer()
 
 
 @dp.callback_query(F.data == "calc:cat:compass")
 async def cb_calc_compass(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     CALC_STATE.pop(cb.from_user.id, None)
-    await cb.message.answer(
-        "🧭 <b>Поправки компаса (TVMDC)</b>\n\n"
-        "Цепочка: <code>True ↔ Variation ↔ Magnetic ↔ Deviation ↔ Compass</code>\n"
-        "Выбери, что во что пересчитать:",
-        reply_markup=calc_menu_kb(),
-    )
+    await cb.message.answer(t("calc_compass_pick", lang), reply_markup=calc_menu_kb(lang))
     await cb.answer()
 
 
 # ── Раздел «Скорость · время · ETA» ──
-# kind: t=время, d=дистанция, v=скорость, e=ETA.
+# kind: t=время, d=дистанция, v=скорость, e=ETA, tide=прилив.
+# Значение: (title_key, need_key, пример ввода). Title/need локализуются через t().
 MARINE_KINDS = {
-    "t": ("⏱ Время в пути", "Скорость (узлы) и дистанцию (NM).", "5.5 13.2"),
-    "d": ("📏 Дистанция", "Скорость (узлы) и время (часы).", "6 2.5"),
-    "v": ("🚤 Средняя скорость", "Дистанцию (NM) и время (часы).", "15 3"),
-    "e": ("🎯 ETA / время прибытия", "Дистанцию (NM), скорость (узлы), запас % "
-          "и время старта ЧЧ:ММ.", "18 5 20 09:00"),
-    "tide": ("🌊 Прилив (правило 12)", "Малую воду LW, полную HW (м) и часы после "
-             "малой воды (0–6).", "2 8 3.5"),
+    "t": ("mk_t_title", "mk_t_need", "5.5 13.2"),
+    "d": ("mk_d_title", "mk_d_need", "6 2.5"),
+    "v": ("mk_v_title", "mk_v_need", "15 3"),
+    "e": ("mk_e_title", "mk_e_need", "18 5 20 09:00"),
+    "tide": ("mk_tide_title", "mk_tide_need", "2 8 3.5"),
 }
 
 
-def marine_menu_kb() -> InlineKeyboardMarkup:
-    rows = [[InlineKeyboardButton(text=MARINE_KINDS[k][0], callback_data=f"calc:m:{k}")]
+def marine_menu_kb(lang: str = "ru") -> InlineKeyboardMarkup:
+    rows = [[InlineKeyboardButton(text=t(MARINE_KINDS[k][0], lang), callback_data=f"calc:m:{k}")]
             for k in ("t", "d", "v", "e", "tide")]
-    rows.append([InlineKeyboardButton(text="⬅️ Разделы", callback_data="mode:calc")])
+    rows.append([InlineKeyboardButton(text=t("back_sections", lang), callback_data="mode:calc")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def marine_result_kb() -> InlineKeyboardMarkup:
+def marine_result_kb(lang: str = "ru") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔄 Ещё расчёт", callback_data="calc:cat:marine")],
-        [InlineKeyboardButton(text="📝 Практические задачи", callback_data="mode:ptasks")],
-        [InlineKeyboardButton(text="⬅️ Разделы", callback_data="mode:calc")],
+        [InlineKeyboardButton(text=t("marine_result_more", lang), callback_data="calc:cat:marine")],
+        [InlineKeyboardButton(text=t("mm_ptasks", lang), callback_data="mode:ptasks")],
+        [InlineKeyboardButton(text=t("back_sections", lang), callback_data="mode:calc")],
     ])
 
 
 @dp.callback_query(F.data == "calc:cat:marine")
 async def cb_calc_marine(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     CALC_STATE.pop(cb.from_user.id, None)
-    await cb.message.answer(
-        "⏱ <b>Скорость · время · ETA</b>\n\nЧто посчитать?",
-        reply_markup=marine_menu_kb(),
-    )
+    await cb.message.answer(t("marine_pick", lang), reply_markup=marine_menu_kb(lang))
     await cb.answer()
 
 
 @dp.callback_query(F.data.startswith("calc:m:"))
 async def cb_calc_marine_kind(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     kind = cb.data[len("calc:m:"):]
     if kind not in MARINE_KINDS:
-        await cb.answer("Неизвестный расчёт")
+        await cb.answer(t("unknown_calc", lang))
         return
     CALC_STATE[cb.from_user.id] = {"marine": kind}
-    title, need, example = MARINE_KINDS[kind]
+    title_key, need_key, example = MARINE_KINDS[kind]
     await cb.message.answer(
-        f"{title}\n\nВведи {need}\nОдной строкой через пробел.\n"
-        f"Пример: <code>{example}</code>",
+        t("marine_input_prompt", lang, title=t(title_key, lang),
+          need=t(need_key, lang), example=example),
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="⬅️ Назад", callback_data="calc:cat:marine")],
+            [InlineKeyboardButton(text=t("back", lang), callback_data="calc:cat:marine")],
         ]),
     )
     await cb.answer()
@@ -1556,82 +1524,87 @@ def _marine_numbers(text: str) -> list[float]:
     return [float(x.replace(",", ".")) for x in re.findall(r"[-+]?\d+(?:[.,]\d+)?", text)]
 
 
-def compute_marine(kind: str, text: str) -> str:
+def compute_marine(kind: str, text: str, lang: str = "ru") -> str:
     """
     Посчитать выбранный морской расчёт по строке ввода. Бросает ValueError
-    с понятным текстом, если данных не хватает или они некорректны.
+    с понятным (локализованным) текстом, если данных не хватает или они
+    некорректны.
     """
     nums = _marine_numbers(text)
     if kind == "t":
         if len(nums) < 2:
-            raise ValueError("Нужны скорость и дистанция, например «5.5 13.2».")
+            raise ValueError(t("err_need_speed_dist", lang))
         v, d = nums[0], nums[1]
         h = marine.time_from(d, v)
-        return (f"⏱ <b>Время в пути: {round(h,2)} ч</b> ({marine.hours_to_hm(h)})\n\n"
-                f"<pre>t = D / V = {marine._num(d)} / {marine._num(v)} = {round(h,2)} ч</pre>")
+        return t("marine_res_time", lang, h=round(h, 2), hm=marine.hours_to_hm(h),
+                 d=marine._num(d), v=marine._num(v))
     if kind == "d":
         if len(nums) < 2:
-            raise ValueError("Нужны скорость и время, например «6 2.5».")
-        v, t = nums[0], nums[1]
-        d = marine.distance_from(v, t)
-        return (f"📏 <b>Дистанция: {round(d,1)} NM</b>\n\n"
-                f"<pre>D = V × t = {marine._num(v)} × {marine._num(t)} = {round(d,1)} NM</pre>")
+            raise ValueError(t("err_need_speed_time", lang))
+        v, tm = nums[0], nums[1]
+        d = marine.distance_from(v, tm)
+        return t("marine_res_dist", lang, d=round(d, 1),
+                 v=marine._num(v), t=marine._num(tm))
     if kind == "v":
         if len(nums) < 2:
-            raise ValueError("Нужны дистанция и время, например «15 3».")
-        d, t = nums[0], nums[1]
-        v = marine.speed_from(d, t)
-        return (f"🚤 <b>Средняя скорость: {round(v,1)} узла</b>\n\n"
-                f"<pre>V = D / t = {marine._num(d)} / {marine._num(t)} = {round(v,1)} узла</pre>")
+            raise ValueError(t("err_need_dist_time", lang))
+        d, tm = nums[0], nums[1]
+        v = marine.speed_from(d, tm)
+        return t("marine_res_speed", lang, v=round(v, 1),
+                 d=marine._num(d), t=marine._num(tm))
     if kind == "e":
         # дистанция, скорость, [запас%], [старт ЧЧ:ММ]
         import re
         if len(nums) < 2:
-            raise ValueError("Нужны минимум дистанция и скорость, например «18 5 20 09:00».")
+            raise ValueError(t("err_need_dist_speed", lang))
         d, v = nums[0], nums[1]
         reserve = nums[2] if len(nums) >= 3 else 0.0
         mt = re.search(r"\b(\d{1,2}[:.]\d{2})\b", text)
         start = mt.group(1).replace(".", ":") if mt else None
         r = marine.plan_eta(d, v, reserve, start)
-        lines = [f"t = D / V = {marine._num(d)} / {marine._num(v)} = {round(r.travel_h,2)} ч"]
+        lines = [t("marine_eta_line_t", lang, d=marine._num(d), v=marine._num(v),
+                   travel=round(r.travel_h, 2))]
         if reserve:
-            lines.append(f"с запасом {marine._num(reserve)}% → {round(r.travel_h_reserve,2)} ч")
+            lines.append(t("marine_eta_line_reserve", lang, r=marine._num(reserve),
+                           w=round(r.travel_h_reserve, 2)))
         body = "\n".join(lines)
-        head = f"🎯 <b>В пути: {round(r.travel_h_reserve,2)} ч</b> ({marine.hours_to_hm(r.travel_h_reserve)})"
+        head = t("marine_eta_head", lang, w=round(r.travel_h_reserve, 2),
+                 hm=marine.hours_to_hm(r.travel_h_reserve))
         if r.eta:
-            head += f"\n🕒 <b>ETA: {r.eta}</b>"
+            head += t("marine_eta_arrival", lang, eta=r.eta)
         return f"{head}\n\n<pre>{body}</pre>"
     if kind == "tide":
         # LW, HW, часы после малой воды (по правилу двенадцатых)
         if len(nums) < 3:
-            raise ValueError("Нужны LW, HW и часы после малой воды, например «2 8 3.5».")
+            raise ValueError(t("err_need_tide", lang))
         lw, hw, hours = nums[0], nums[1], nums[2]
         water = tides.height_after_lw(hw, lw, hours)
         rng = hw - lw
-        rows = [f"Диапазон = {tides._num(hw)} − {tides._num(lw)} = {tides._num(rng)} м; "
-                f"1/12 = {tides._num(rng/12)} м"]
+        rows = [t("marine_tide_range", lang, hw=tides._num(hw), lw=tides._num(lw),
+                  rng=tides._num(rng), tw=tides._num(rng / 12))]
         acc = lw
         for i, part in enumerate(tides.TWELFTHS, start=1):
             acc += rng * part / 12
-            rows.append(f"{i}ч  +{part}/12 → {tides._num(acc)} м")
-        return (f"🌊 <b>Высота воды через {tides._num(hours)} ч: "
-                f"{tides._num(water)} м</b>\n\n<pre>" + "\n".join(rows) + "</pre>")
-    raise ValueError("Неизвестный расчёт")
+            rows.append(t("marine_tide_step", lang, i=i, part=part, acc=tides._num(acc)))
+        return t("marine_tide_header", lang, hours=tides._num(hours),
+                 water=tides._num(water), rows="\n".join(rows))
+    raise ValueError(t("unknown_calc", lang))
 
 
 @dp.callback_query(F.data.startswith("calc:dir:"))
 async def cb_calc_dir(cb: CallbackQuery) -> None:
+    lang = user_lang(cb.from_user.id)
     code = cb.data[len("calc:dir:"):]  # напр. "TC"
     src, dst = code[0], code[1]
     if src not in calc.POINTS or dst not in calc.POINTS or src == dst:
-        await cb.answer("Неизвестное направление")
+        await cb.answer(t("unknown_direction", lang))
         return
     CALC_STATE[cb.from_user.id] = {"src": src, "dst": dst}
     label = next((l for s, d, l in CALC_DIRS if s == src and d == dst), f"{src}→{dst}")
     await cb.message.answer(
-        f"🧮 <b>{label}</b>\n\n{_calc_prompt(src, dst)}",
+        t("calc_dir_header", lang, label=label, prompt=_calc_prompt(src, dst, lang)),
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="⬅️ Назад", callback_data="mode:calc")],
+            [InlineKeyboardButton(text=t("back", lang), callback_data="mode:calc")],
         ]),
     )
     await cb.answer()
@@ -1733,16 +1706,17 @@ def parse_webapp_quiz(payload) -> dict | None:
 @dp.message(F.web_app_data)
 async def on_webapp_data(message: Message) -> None:
     user_id = message.from_user.id
+    lang = user_lang(user_id)
     try:
         payload = json.loads(message.web_app_data.data)
     except (json.JSONDecodeError, TypeError):
         log.info("webapp_data: bad json from user=%s", user_id)
-        await message.answer("Не удалось прочитать результат из приложения 🤷")
+        await message.answer(t("webapp_bad_read", lang))
         return
 
     parsed = parse_webapp_quiz(payload)
     if not parsed:
-        await message.answer("Неизвестный или пустой результат из приложения.")
+        await message.answer(t("webapp_empty", lang))
         return
 
     is_exam = parsed["is_exam"]
@@ -1756,29 +1730,27 @@ async def on_webapp_data(message: Message) -> None:
     correct = len(parsed["ok_ids"])
     pct = round(correct / counted * 100)
     secs = parsed["secs"]
-    tline = f" · ⏱ {secs // 60}м {secs % 60}с" if is_exam and secs else ""
+    tline = t("webapp_time", lang, m=secs // 60, s=secs % 60) if is_exam and secs else ""
 
     if is_exam:
         passed = pct >= EXAM_PASS_PERCENT
-        verdict = "✅ <b>СДАНО</b>" if passed else "❌ <b>НЕ СДАНО</b>"
-        head = (f"🏁 <b>Экзамен (приложение) завершён</b>\n"
-                f"Результат: <b>{correct}/{counted}</b> ({pct}%){tline}\n"
-                f"{verdict} (нужно ≥ {EXAM_PASS_PERCENT}%)")
+        verdict = t("exam_passed", lang) if passed else t("exam_failed", lang)
+        head = t("webapp_exam_head", lang, correct=correct, counted=counted, pct=pct,
+                 tline=tline, verdict=verdict, **{"pass": EXAM_PASS_PERCENT})
     else:
-        label = mode.split(":", 1)[1] if mode.startswith("topic:") else "случайные"
-        head = (f"🎯 <b>Тренировка (приложение): {label}</b>\n"
-                f"Результат: <b>{correct}/{counted}</b> ({pct}%)")
+        label = mode.split(":", 1)[1] if mode.startswith("topic:") else t("random_label", lang)
+        head = t("webapp_train_head", lang, label=label, correct=correct, counted=counted, pct=pct)
 
     wrong = [QUESTIONS_BY_ID[qid] for qid in parsed["wrong_ids"]]
     if not wrong:
-        await message.answer(head + "\n\n🎉 Без ошибок! Результат сохранён.",
-                            reply_markup=main_menu_kb())
+        await message.answer(head + "\n\n" + t("webapp_no_errors", lang),
+                            reply_markup=main_menu_kb(lang))
         return
 
-    blocks = [head, "\n<b>Разбор ошибок:</b>"]
+    blocks = [head, t("error_review_header", lang)]
     for q in wrong:
         blocks.append(f"• [{q['topic']}] {q['q']}\n  ✔️ {q['options'][q['answer']]}")
-    blocks.append("\nЭти вопросы добавлены в «Работу над ошибками».")
+    blocks.append(t("added_to_mistakes", lang))
 
     chunk, parts = "", []
     for b in blocks:
@@ -1790,7 +1762,7 @@ async def on_webapp_data(message: Message) -> None:
     if chunk:
         parts.append(chunk)
     for i, part in enumerate(parts):
-        kb = main_menu_kb() if i == len(parts) - 1 else None
+        kb = main_menu_kb(lang) if i == len(parts) - 1 else None
         await message.answer(part, reply_markup=kb)
 
 
@@ -1801,23 +1773,24 @@ async def on_webapp_data(message: Message) -> None:
 @dp.message(F.text & ~F.text.startswith("/"))
 async def on_text_answer(message: Message) -> None:
     user_id = message.from_user.id
+    lang = user_lang(user_id)
 
     # 0) Калькулятор: ждём строку со значениями
     state = CALC_STATE.get(user_id)
     if state and "marine" in state:
         kind = state["marine"]
         try:
-            out = compute_marine(kind, message.text)
+            out = compute_marine(kind, message.text, lang)
         except ValueError as e:
             await message.answer(
                 f"🤔 {e}",
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text="⬅️ Назад", callback_data="calc:cat:marine")],
+                    [InlineKeyboardButton(text=t("back", lang), callback_data="calc:cat:marine")],
                 ]),
             )
             return
         CALC_STATE.pop(user_id, None)
-        await message.answer(out, reply_markup=marine_result_kb())
+        await message.answer(out, reply_markup=marine_result_kb(lang))
         return
     if state:
         src, dst = state["src"], state["dst"]
@@ -1827,9 +1800,9 @@ async def on_text_answer(message: Message) -> None:
         parsed = _parse_calc_input(message.text, need_var, need_dev)
         if not parsed:
             await message.answer(
-                "Не понял ввод 🤔 " + _calc_prompt(src, dst),
+                t("calc_not_understood", lang, prompt=_calc_prompt(src, dst, lang)),
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text="⬅️ Назад", callback_data="mode:calc")],
+                    [InlineKeyboardButton(text=t("back", lang), callback_data="mode:calc")],
                 ]),
             )
             return
@@ -1838,11 +1811,11 @@ async def on_text_answer(message: Message) -> None:
                              parsed["var"], parsed["var_dir"],
                              parsed["dev"], parsed["dev_dir"])
         except ValueError as e:
-            await message.answer(f"⚠️ {e}", reply_markup=calc_result_kb())
+            await message.answer(f"⚠️ {e}", reply_markup=calc_result_kb(lang))
             CALC_STATE.pop(user_id, None)
             return
         CALC_STATE.pop(user_id, None)
-        await message.answer(_format_calc_result(res), reply_markup=calc_result_kb())
+        await message.answer(_format_calc_result(res), reply_markup=calc_result_kb(lang))
         return
 
     # 1) Режим поиска по словарю
@@ -1850,9 +1823,8 @@ async def on_text_answer(message: Message) -> None:
         GLOSSARY_SEARCH.discard(user_id)
         hits = glossary.search(message.text)
         if not hits:
-            await message.answer(
-                "Ничего не нашёл 🤷 Попробуй другое слово или открой категории.",
-                reply_markup=glossary_menu_kb())
+            await message.answer(t("glossary_not_found", lang),
+                                 reply_markup=glossary_menu_kb(lang))
             return
         # первый результат — карточкой, остальные — кнопками
         cat0, it0 = hits[0]
@@ -1862,8 +1834,8 @@ async def on_text_answer(message: Message) -> None:
             key = glossary.CATEGORY_KEY[cat]
             rows.append([InlineKeyboardButton(text=f"{it['term']} ({cat})",
                                               callback_data=f"gl:t:{key}:{i}")])
-        rows.append([InlineKeyboardButton(text="📚 Категории", callback_data="mode:glossary")])
-        head = f"🔎 Найдено: {len(hits)}\n\n" if len(hits) > 1 else ""
+        rows.append([InlineKeyboardButton(text=t("categories_btn", lang), callback_data="mode:glossary")])
+        head = t("glossary_found", lang, n=len(hits)) if len(hits) > 1 else ""
         await message.answer(head + glossary.render(cat0, it0),
                              reply_markup=InlineKeyboardMarkup(inline_keyboard=rows))
         return
@@ -1874,57 +1846,53 @@ async def on_text_answer(message: Message) -> None:
         ptask = marine.TASKS_BY_ID.get(ptid)
         if not ptask:
             ACTIVE_PTASK.pop(user_id, None)
-            await message.answer("Задача не найдена. /menu", reply_markup=main_menu_kb())
+            await message.answer(t("task_not_found", lang), reply_markup=main_menu_kb(lang))
             return
         if ptask.check(message.text):
             ACTIVE_PTASK.pop(user_id, None)
             p = record_ptask(user_id, True)
-            streak_line = f"🔥 Серия: <b>{p['streak']}</b>"
+            streak_line = t("streak_line", lang, n=p["streak"])
             if p["streak"] == p["best"] and p["streak"] >= 3:
-                streak_line += " (рекорд!)"
+                streak_line += t("record_suffix", lang)
             await message.answer(
-                f"✅ <b>Верно!</b> Ответ {marine._num(ptask.answer)} {ptask.unit}.\n"
-                f"{streak_line}\n\n<pre>{ptask.solution}</pre>",
-                reply_markup=ptask_kb(),
+                t("ptask_correct", lang, answer=marine._num(ptask.answer),
+                  unit=ptask.unit, streak_line=streak_line, solution=ptask.solution),
+                reply_markup=ptask_kb(lang),
             )
         else:
             p = record_ptask(user_id, False)
             await message.answer(
-                "❌ Не то. Проверь формулу (t=D/V, D=V·t, V=D/t) и единицы.\n"
-                "Попробуй ещё раз или нажми «💡 Показать решение».\n"
-                f"<i>Серия сброшена. Лучшая: {p['best']}.</i>",
-                reply_markup=ptask_kb(),
+                t("ptask_wrong", lang, best=p["best"]),
+                reply_markup=ptask_kb(lang),
             )
         return
 
     # 3) Ответ на задачу T-V-M-D-C
     task_id = ACTIVE_TASK.get(user_id)
     if not task_id:
-        await message.answer("Не понял. Откройте меню: /menu", reply_markup=main_menu_kb())
+        await message.answer(t("not_understood_menu", lang), reply_markup=main_menu_kb(lang))
         return
     task = nav_tasks.TASKS_BY_ID.get(task_id)
     if not task:
         ACTIVE_TASK.pop(user_id, None)
-        await message.answer("Задача не найдена. /menu", reply_markup=main_menu_kb())
+        await message.answer(t("task_not_found", lang), reply_markup=main_menu_kb(lang))
         return
     if task.check(message.text):
         ACTIVE_TASK.pop(user_id, None)
-        t = record_task(user_id, True)
-        streak_line = f"🔥 Серия: <b>{t['streak']}</b>"
-        if t["streak"] == t["best"] and t["streak"] >= 3:
-            streak_line += " (рекорд!)"
+        tk = record_task(user_id, True)
+        streak_line = t("streak_line", lang, n=tk["streak"])
+        if tk["streak"] == tk["best"] and tk["streak"] >= 3:
+            streak_line += t("record_suffix", lang)
         await message.answer(
-            f"✅ <b>Верно!</b> Ответ {task.answer:.0f}°.\n{streak_line}\n\n"
-            f"<pre>{task.solution}</pre>",
-            reply_markup=task_kb(),
+            t("task_correct", lang, answer=f"{task.answer:.0f}",
+              streak_line=streak_line, solution=task.solution),
+            reply_markup=task_kb(lang),
         )
     else:
-        t = record_task(user_id, False)
+        tk = record_task(user_id, False)
         await message.answer(
-            "❌ Неверно. Проверь правило знаков (вниз: <b>East −, West +</b>) "
-            "и переход через 360°.\nПопробуй ещё раз или нажми «💡 Показать решение».\n"
-            f"<i>Серия сброшена. Лучшая серия: {t['best']}.</i>",
-            reply_markup=task_kb(),
+            t("task_wrong", lang, best=tk["best"]),
+            reply_markup=task_kb(lang),
         )
 
 
