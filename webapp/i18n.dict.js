@@ -607,7 +607,6 @@
     dockTip3:    { ru: "На заднем ходу винт уводит корму — используй это при швартовке.", pl: "Na wstecznym śruba ściąga rufę — wykorzystaj to przy cumowaniu.", ua: "На задньому ходу гвинт зводить корму — використовуй це під час швартування.", en: "In reverse the prop walks the stern — use it when docking." },
     dockFoot:    { ru: "Физика упрощена, но повадки лодки честные: инерция, ветер, заброс.", pl: "Fizyka uproszczona, ale nawyki łodzi prawdziwe: bezwładność, wiatr, odrzut.", ua: "Фізика спрощена, але повадки човна чесні: інерція, вітер, закид.", en: "Physics is simplified, but the boat's habits are honest: momentum, wind, prop walk." },
     dockSpeed:   { ru: "Скорость", pl: "Prędkość", ua: "Швидкість", en: "Speed" },
-    dockNeutral: { ru: "нейтраль", pl: "luz", ua: "нейтраль", en: "neutral" },
     dockThrusterLbl:{ ru: "Подрулька", pl: "Ster dziobowy", ua: "Підрулька", en: "Bow thruster" },
     dockRudder:  { ru: "Руль", pl: "Ster", ua: "Стерно", en: "Helm" },
     dockGoal:    { ru: "Зелёная зона — твоё место. Подойди и остановись в ней.", pl: "Zielona strefa to twoje miejsce. Podejdź i zatrzymaj się w niej.", ua: "Зелена зона — твоє місце. Підійди і зупинись у ній.", en: "The green zone is your berth. Get in and come to a stop." },
