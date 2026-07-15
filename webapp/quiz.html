@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Тесты ISSA</title>
+<title data-i18n="quizTitle">Тесты ISSA</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
 <script src="quiz_data.js"></script>
 <script src="migration.js"></script>
 <script src="srs.js"></script>
@@ -206,44 +208,44 @@
 
 <!-- ГЛАВНЫЙ ЭКРАН -->
 <section id="home">
-  <h1><span class="emi" data-icon="anchor"></span> Тесты ISSA</h1>
-  <p class="sub">Inshore Skipper + SRC · банк <span id="qcount">…</span> вопросов</p>
+  <h1><span class="emi" data-icon="anchor"></span> <span data-i18n="quizTitle"></span></h1>
+  <p class="sub">Inshore Skipper + SRC · <span data-i18n="quizBankPre"></span> <span id="qcount">…</span> <span data-i18n="quizBankPost"></span></p>
 
   <!-- баннер продолжения незавершённого теста (показывается, если есть сессия) -->
   <div class="card hidden" id="resumeCard" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
-    <div style="flex:1 1 100%; font-size:14px"><span class="emi" data-icon="pause"></span> Есть незавершённый тест: <b><span id="resumeInfo"></span></b></div>
-    <button class="next" id="resumeBtn" style="flex:1; min-width:130px"><span class="emi" style="color:var(--warn)" data-icon="play"></span> Продолжить</button>
-    <button class="next ghost" id="resumeDrop" style="flex:1; min-width:130px; margin:0"><span class="emi" data-icon="refresh-cw"></span> Начать заново</button>
+    <div style="flex:1 1 100%; font-size:14px"><span class="emi" data-icon="pause"></span> <span data-i18n="quizResume"></span> <b><span id="resumeInfo"></span></b></div>
+    <button class="next" id="resumeBtn" style="flex:1; min-width:130px"><span class="emi" style="color:var(--warn)" data-icon="play"></span> <span data-i18n="quizContinue"></span></button>
+    <button class="next ghost" id="resumeDrop" style="flex:1; min-width:130px; margin:0"><span class="emi" data-icon="refresh-cw"></span> <span data-i18n="quizRestart"></span></button>
   </div>
 
-  <button class="big" id="startReview"><span class="bic" data-icon="refresh-cw"></span>Повторить сегодня
-    <small id="reviewSub">вопросы к повторению по расписанию</small></button>
-  <button class="big ghost hidden" id="startMistakes"><span class="bic" data-icon="pencil"></span>Работа над ошибками
-    <small id="mistakesSub">вопросы, где ошибся не раз</small></button>
-  <button class="big ghost" id="startPath"><span class="bic" data-icon="map"></span>Путь обучения
-    <small>Темы по порядку, от основ к экзамену</small></button>
-  <button class="big ghost" id="startRandom"><span class="bic" data-icon="target"></span>Тренировка — случайные
-    <small>Вопросы вперемешку, с пояснениями</small></button>
-  <button class="big ghost" id="startContrast"><span class="bic" data-icon="shuffle"></span>Различение — похожие вопросы
-    <small>Кардинальные знаки, огни, сигналы — рядом, чтобы не путать</small></button>
-  <button class="big ghost" id="startTopic"><span class="bic" data-icon="list"></span>Все темы списком
-    <small>Выбрать любую тему</small></button>
-  <button class="big ghost" id="startExam"><span class="bic" data-icon="file-check"></span>Экзамен
-    <small id="examSub">100 вопросов · таймер · проходной балл</small></button>
+  <button class="big" id="startReview"><span class="bic" data-icon="refresh-cw"></span><span data-i18n="histRevTitle"></span>
+    <small id="reviewSub"></small></button>
+  <button class="big ghost hidden" id="startMistakes"><span class="bic" data-icon="pencil"></span><span data-i18n="quizMistakes"></span>
+    <small id="mistakesSub"></small></button>
+  <button class="big ghost" id="startPath"><span class="bic" data-icon="map"></span><span data-i18n="quizPath"></span>
+    <small data-i18n="quizPathSub"></small></button>
+  <button class="big ghost" id="startRandom"><span class="bic" data-icon="target"></span><span data-i18n="quizRandom"></span>
+    <small data-i18n="quizRandomSub"></small></button>
+  <button class="big ghost" id="startContrast"><span class="bic" data-icon="shuffle"></span><span data-i18n="quizContrast"></span>
+    <small data-i18n="quizContrastSub"></small></button>
+  <button class="big ghost" id="startTopic"><span class="bic" data-icon="list"></span><span data-i18n="quizAllTopics"></span>
+    <small data-i18n="quizAllTopicsSub"></small></button>
+  <button class="big ghost" id="startExam"><span class="bic" data-icon="file-check"></span><span data-i18n="modeExam"></span>
+    <small id="examSub"></small></button>
 
   <div class="card hidden" id="topicCard">
     <div class="topics" id="topics"></div>
   </div>
-  <p class="foot">Учебный тренажёр. Не является официальным материалом ISSA и не содержит экзаменационных ключей.</p>
+  <p class="foot" data-i18n="quizFoot"></p>
 </section>
 
 <!-- ЭКРАН «ПУТЬ ОБУЧЕНИЯ» (уровни-темы) -->
 <section id="path" class="hidden">
-  <h1 style="font-size:19px; margin:0 0 4px"><span class="emi" data-icon="map"></span> Путь обучения</h1>
-  <p class="sub" style="margin:0 0 14px">От основ к экзамену · уровень открывается, когда освоен предыдущий</p>
+  <h1 style="font-size:19px; margin:0 0 4px"><span class="emi" data-icon="map"></span> <span data-i18n="quizPath"></span></h1>
+  <p class="sub" style="margin:0 0 14px" data-i18n="quizPathHint"></p>
   <div id="pathRec" class="rec hidden"></div>
   <div id="pathList"></div>
-  <button class="next ghost" id="pathBack" style="margin-top:6px">← В меню</button>
+  <button class="next ghost" id="pathBack" style="margin-top:6px" data-i18n="quizToMenu"></button>
 </section>
 
 <!-- ЭКРАН ВОПРОСА -->
@@ -270,11 +272,11 @@
   <!-- экзамен: свободная навигация -->
   <div id="examNav" class="hidden">
     <div class="nav-row">
-      <button class="navbtn" id="prevBtn">← Назад</button>
+      <button class="navbtn" id="prevBtn" data-i18n="quizPrev"></button>
       <button class="navbtn" id="skipBtn">Пропустить →</button>
     </div>
     <button class="gridToggle" id="gridToggle" type="button">
-      <span><span class="emi" data-icon="list"></span> Список вопросов</span><span class="meta" id="gridMeta"></span>
+      <span><span class="emi" data-icon="list"></span> <span data-i18n="quizGridToggle"></span></span><span class="meta" id="gridMeta"></span>
     </button>
     <div class="strip collapsed" id="strip"></div>
     <button class="finishBtn" id="finishBtn">Завершить тест</button>
@@ -287,12 +289,12 @@
     <div class="score" id="rScore"></div>
     <div class="pct" id="rPct"></div>
     <div class="verdict" id="rVerdict"></div>
-    <button class="next" id="sendBtn"><span class="emi" data-icon="download"></span> Сохранить результат в боте</button>
+    <button class="next" id="sendBtn"><span class="emi" data-icon="download"></span> <span data-i18n="quizSave"></span></button>
   </div>
   <div id="cert" class="hidden"></div>
   <div id="feedback"></div>
   <div class="review" id="review"></div>
-  <button class="big ghost" id="againBtn">← В меню</button>
+  <button class="big ghost" id="againBtn" data-i18n="quizToMenu"></button>
   <p class="foot" id="sentNote"></p>
 </section>
 
@@ -311,7 +313,7 @@ function srcLinks(q){
 }
 document.getElementById("qcount").textContent = ALL.length;
 document.getElementById("examSub").textContent =
-  `${Math.min(DATA.examSize, ALL.length)} вопросов · таймер · проходной балл ${DATA.passPercent}%`;
+  I18N.t("quizExamSub", {n: Math.min(DATA.examSize, ALL.length), p: DATA.passPercent});
 
 // ── утилиты ──
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
@@ -325,8 +327,8 @@ function updateReviewLabel(){
   const due = SRS.dueCount(ALL.map(q=>q.id));
   const learned = SRS.stats(ALL.map(q=>q.id)).learned;
   sub.textContent = due
-    ? `${due} вопрос(ов) к повторению · закреплено ${learned}`
-    : `на сегодня всё повторено · закреплено ${learned}`;
+    ? I18N.t("quizReviewDue", {n: due, learned})
+    : I18N.t("quizReviewDone", {learned});
 }
 const show = id => document.getElementById(id).classList.remove("hidden");
 const hide = id => document.getElementById(id).classList.add("hidden");
@@ -397,13 +399,13 @@ function answeredCount(){ return S.answers.filter(a => a !== null).length; }
 
 function renderQ(){
   const q = S.queue[S.idx];
-  document.getElementById("counter").textContent = `Вопрос ${S.idx+1} / ${S.queue.length}`;
+  document.getElementById("counter").textContent = I18N.t("quizCounter", {i: S.idx+1, n: S.queue.length});
   document.getElementById("progBar").style.width = `${(answeredCount()/S.queue.length)*100}%`;
   document.getElementById("qtopic").textContent = q.topic;
   // чип сложности (если размечена)
   const dEl = document.getElementById("qdiff");
   if (q.diff){
-    const names = {1:"лёгкий", 2:"средний", 3:"сложный"};
+    const names = {1:I18N.t("quizDiff1"), 2:I18N.t("quizDiff2"), 3:I18N.t("quizDiff3")};
     dEl.textContent = names[q.diff] || "";
     dEl.className = "diff d" + q.diff;
   } else { dEl.className = "diff hidden"; }
@@ -453,9 +455,9 @@ function renderQ(){
       const ok = sel === q.answer;
       if (q.expl || q.ref){
         const e = document.getElementById("expl");
-        let html = (ok ? `<span style="color:var(--ok)">${Icons.svg("check-circle")}</span> Верно. `
-                       : `<span style="color:var(--bad)">${Icons.svg("x-circle")}</span> Неверно. `) + esc(q.expl || "");
-        if (q.ref) html += `<div class="ref">${Icons.svg("book")} Источник: ${esc(q.ref)}</div>`;
+        let html = (ok ? `<span style="color:var(--ok)">${Icons.svg("check-circle")}</span> ${I18N.t("quizVerdictOk")} `
+                       : `<span style="color:var(--bad)">${Icons.svg("x-circle")}</span> ${I18N.t("quizVerdictNo")} `) + esc(q.expl || "");
+        if (q.ref) html += `<div class="ref">${Icons.svg("book")} ${I18N.t("quizSourceLabel", {ref: esc(q.ref)})}</div>`;
         e.innerHTML = html;
         show("expl");
       }
@@ -463,19 +465,19 @@ function renderQ(){
       const links = srcLinks(q);
       if (links.length){
         const s = document.getElementById("src");
-        s.innerHTML = `<span class="lbl"><span style="color:var(--warn)">${Icons.svg("lightbulb")}</span> Где изучить:</span>`
+        s.innerHTML = `<span class="lbl"><span style="color:var(--warn)">${Icons.svg("lightbulb")}</span> ${I18N.t("quizWhereStudy")}</span>`
           + links.map(l => `<a href="konspekt.html#${encodeURIComponent(l.key)}">${Icons.svg("book-open")} ${esc(l.title)}</a>`).join("")
-          + `<a href="book.html">${Icons.svg("library")} Библиотека</a>`;
+          + `<a href="book.html">${Icons.svg("library")} ${I18N.t("bookTitle")}</a>`;
         show("src");
       }
       const nb = document.getElementById("nextBtn");
-      nb.textContent = last ? "Завершить" : "Далее →";
+      nb.textContent = last ? I18N.t("quizFinishShort") : I18N.t("quizNext");
       show("nextBtn");
     } else {
       // до ответа — можно пропустить (без раскрытия правильного)
       hide("nextBtn");
       const sk = document.getElementById("trainSkip");
-      sk.textContent = last ? "Пропустить и завершить" : "Пропустить →";
+      sk.textContent = last ? I18N.t("quizSkipFinish") : I18N.t("quizSkip");
       show("trainSkip");
     }
   }
@@ -487,8 +489,8 @@ function renderExamNav(){
   const skip = document.getElementById("skipBtn");
   const last = S.idx === S.queue.length - 1;
   const answered = S.answers[S.idx] !== null;
-  skip.innerHTML = last ? (answered ? `Готово ${Icons.svg("check")}` : "Дальше →")
-                          : (answered ? "Далее →" : "Пропустить →");
+  skip.innerHTML = last ? (answered ? `${I18N.t("quizDone")} ${Icons.svg("check")}` : I18N.t("quizForward"))
+                          : (answered ? I18N.t("quizNext") : I18N.t("quizSkip"));
   skip.disabled = last;
   // лента номеров (по умолчанию свёрнута; раскрывается кнопкой gridToggle)
   const strip = document.getElementById("strip");
@@ -502,10 +504,10 @@ function renderExamNav(){
   });
   // компактная сводка на кнопке-переключателе
   document.getElementById("gridMeta").textContent =
-    `вопрос ${S.idx+1}/${S.queue.length} · отвечено ${answeredCount()}`;
+    I18N.t("quizGridMeta", {i: S.idx+1, n: S.queue.length, a: answeredCount()});
   const fin = document.getElementById("finishBtn");
   const left = S.queue.length - answeredCount();
-  fin.textContent = left ? `Завершить (без ответа: ${left})` : "Завершить тест";
+  fin.textContent = left ? I18N.t("quizFinishLeft", {n: left}) : I18N.t("quizFinishBtn");
 }
 
 // переключатель ленты номеров (вешаем один раз)
@@ -556,7 +558,7 @@ document.getElementById("prevBtn").onclick = ()=>{ if (S.idx>0){ S.idx--; render
 document.getElementById("skipBtn").onclick = ()=>{ if (S.idx+1 < S.queue.length){ S.idx++; renderQ(); } };
 document.getElementById("finishBtn").onclick = ()=>{
   const left = S.queue.length - answeredCount();
-  if (left > 0 && !confirm(`Без ответа осталось ${left}. Завершить тест? Их зачтут как ошибки.`)) return;
+  if (left > 0 && !confirm(I18N.t("quizFinishConfirm", {n: left}))) return;
   finish();
 };
 
@@ -576,7 +578,7 @@ function renderFeedback(pct){
   })).sort((a,b)=> a.pct - b.pct || b.total - a.total);   // слабые сверху
 
   const color = p => p>=75 ? "var(--ok)" : p>=50 ? "#e0a13a" : "var(--bad)";
-  let html = `<div class="card"><h3 style="margin:0 0 10px">${Icons.svg("bar-chart")} По темам</h3><div class="fb">`;
+  let html = `<div class="card"><h3 style="margin:0 0 10px">${Icons.svg("bar-chart")} ${I18N.t("quizByTopic")}</h3><div class="fb">`;
   html += rows.map(r=>`
     <div class="fbrow">
       <span class="name" title="${esc(r.topic)}">${esc(r.topic)}</span>
@@ -593,11 +595,11 @@ function renderFeedback(pct){
       if (KTITLES[k] && !seen.has(k)){ seen.add(k); recs.push({key:k, title:KTITLES[k]}); }
     }));
     const names = weak.map(r=>r.topic).join(", ");
-    html += `<div class="recs"><div class="lbl">${Icons.svg("bookmark")} Стоит повторить: <b>${esc(names)}</b></div>`
+    html += `<div class="recs"><div class="lbl">${Icons.svg("bookmark")} ${I18N.t("quizShouldReview", {names: "<b>"+esc(names)+"</b>"})}</div>`
       + recs.map(l=>`<a href="konspekt.html#${encodeURIComponent(l.key)}">${Icons.svg("book-open")} ${esc(l.title)}</a>`).join("")
-      + `<a href="book.html">${Icons.svg("library")} Библиотека</a></div>`;
+      + `<a href="book.html">${Icons.svg("library")} ${I18N.t("bookTitle")}</a></div>`;
   } else {
-    html += `<div class="recs"><div class="lbl">${Icons.svg("award")} Слабых тем нет — отличная подготовка!</div></div>`;
+    html += `<div class="recs"><div class="lbl">${Icons.svg("award")} ${I18N.t("quizNoWeak")}</div></div>`;
   }
   html += '</div>';
   box.innerHTML = html;
@@ -617,7 +619,7 @@ function finish(){
   const pct = total ? Math.round(correct/total*100) : 0;
   document.getElementById("rScore").textContent = `${correct} / ${total}`;
   const secs = Math.floor((Date.now()-S.startTs)/1000);
-  const tstr = S.isExam ? ` · ${Icons.svg("history")} ${Math.floor(secs/60)}м ${secs%60}с` : "";
+  const tstr = S.isExam ? ` · ${Icons.svg("history")} ${Math.floor(secs/60)}${I18N.t("hMin")} ${secs%60}${I18N.t("hSec")}` : "";
   document.getElementById("rPct").innerHTML = `${pct}%${tstr}`;
 
   const v = document.getElementById("rVerdict");
@@ -625,7 +627,7 @@ function finish(){
   cert.classList.add("hidden");
   if (S.isExam){
     const passed = pct >= DATA.passPercent;
-    v.innerHTML = passed ? `${Icons.svg("check-circle")} СДАНО` : `${Icons.svg("x-circle")} НЕ СДАНО`;
+    v.innerHTML = passed ? `${Icons.svg("check-circle")} ${I18N.t("quizPassed")}` : `${Icons.svg("x-circle")} ${I18N.t("quizFailed")}`;
     v.className = "verdict " + (passed ? "pass" : "fail");
     // флаги достижений: сдан экзамен / без ошибок (для бейджей)
     if (window.Progress){
@@ -638,14 +640,14 @@ function finish(){
       const date = `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${d.getFullYear()}`;
       cert.innerHTML = `<div class="cert">
         <div class="seal">${Icons.svg("medal")}</div>
-        <div class="ct">Готов к экзамену ISSA Inshore Skipper</div>
-        <div class="cs">Пробный экзамен пройден на <b>${pct}%</b> (порог ${DATA.passPercent}%) · ${date}</div>
-        <div class="cnote">Сертификат самопроверки. Не является официальным документом ISSA.</div>
+        <div class="ct">${I18N.t("quizCertTitle")}</div>
+        <div class="cs">${I18N.t("quizCertSub", {pct: "<b>"+pct+"</b>", p: DATA.passPercent, date})}</div>
+        <div class="cnote">${I18N.t("quizCertNote")}</div>
       </div>`;
       cert.classList.remove("hidden");
     }
   } else {
-    v.innerHTML = `${Icons.svg("target")} Тренировка завершена`;
+    v.innerHTML = `${Icons.svg("target")} ${I18N.t("quizTrainDone")}`;
     v.className = "verdict";
   }
 
@@ -656,14 +658,14 @@ function finish(){
   const wrong = S.results.filter(([,ok])=>!ok).map(([id])=>byId[id]);
   const rev = document.getElementById("review");
   if (wrong.length){
-    rev.innerHTML = `<h3>Разбор ошибок (${wrong.length})</h3>` + wrong.map(q=>`
+    rev.innerHTML = `<h3>${I18N.t("quizErrReview", {n: wrong.length})}</h3>` + wrong.map(q=>`
       <div class="miss">
         <div class="t">${esc(q.topic)}</div>
         <div>${esc(q.q)}</div>
         <div class="a">${Icons.svg("check")} ${esc(q.options[q.answer])}</div>
       </div>`).join("");
   } else {
-    rev.innerHTML = `<div class="miss" style="border-color:var(--ok)">${Icons.svg("trophy")} Без ошибок!</div>`;
+    rev.innerHTML = `<div class="miss" style="border-color:var(--ok)">${Icons.svg("trophy")} ${I18N.t("quizNoErr")}</div>`;
   }
   document.getElementById("sentNote").textContent = "";
   haptic(S.isExam ? "warning" : "success");
@@ -690,8 +692,7 @@ document.getElementById("sendBtn").onclick = ()=>{
   if (tg && tg.sendData){
     tg.sendData(json);          // бот получит Message.web_app_data и закроет окно
   } else {
-    document.getElementById("sentNote").textContent =
-      "Открой через кнопку в боте, чтобы сохранить результат.";
+    document.getElementById("sentNote").textContent = I18N.t("quizSentHint");
   }
 };
 
@@ -702,13 +703,13 @@ const ALL_IDS = ALL.map(q=>q.id);
 // Каждый уровень — группа тем в учебном порядке. Темы внутри уровня берутся
 // из банка; темы, не попавшие ни в один уровень, добавляются в «Прочее».
 const LEVELS = [
-  { name: "Основы",                 icon: "anchor",        topics: ["Терминология","Принятие яхты"] },
-  { name: "Под парусом",            icon: "sailboat",      topics: ["Паруса","Маневры","Якорение"] },
-  { name: "Навигация",              icon: "compass",       topics: ["Навигация","Планирование","Метео"] },
-  { name: "Знаки и огни",           icon: "life-buoy",     topics: ["IALA","Огни и знаки","Звуковые сигналы"] },
-  { name: "Правила расхождения",    icon: "alert-triangle",topics: ["COLREG"] },
-  { name: "Связь и безопасность",   icon: "radio",         topics: ["VHF / SRC","Безопасность","Практика"] },
-  { name: "Пробный экзамен",        icon: "graduation-cap",topics: [], exam: true },
+  { name: I18N.t("lvlBasics"),  icon: "anchor",        topics: ["Терминология","Принятие яхты"] },
+  { name: I18N.t("lvlSail"),    icon: "sailboat",      topics: ["Паруса","Маневры","Якорение"] },
+  { name: I18N.t("lvlNav"),     icon: "compass",       topics: ["Навигация","Планирование","Метео"] },
+  { name: I18N.t("lvlMarks"),   icon: "life-buoy",     topics: ["IALA","Огни и знаки","Звуковые сигналы"] },
+  { name: I18N.t("lvlColreg"),  icon: "alert-triangle",topics: ["COLREG"] },
+  { name: I18N.t("lvlComm"),    icon: "radio",         topics: ["VHF / SRC","Безопасность","Практика"] },
+  { name: I18N.t("lvlExam"),    icon: "graduation-cap",topics: [], exam: true },
 ];
 
 // Собрать уровни с реально присутствующими темами + «Прочее» для незакреплённых.
@@ -725,7 +726,7 @@ function buildLevels(){
   if (extra.length){
     const examIdx = levels.findIndex(l => l.exam);
     levels.splice(examIdx < 0 ? levels.length : examIdx, 0,
-      { name: "Прочее", icon: "list", topics: extra });
+      { name: I18N.t("lvlOther"), icon: "list", topics: extra });
   }
   return levels;
 }
@@ -805,21 +806,21 @@ const STATUS_ICON = {
 function recommendation(levels, statuses){
   const dueCount = window.SRS ? SRS.pickDue(ALL_IDS, 999).length : 0;
   if (dueCount > 0)
-    return { kind: "review", title: "Повторить сегодня",
-             sub: dueCount + " " + plural(dueCount, "вопрос","вопроса","вопросов") + " ждут повторения" };
+    return { kind: "review", title: I18N.t("histRevTitle"),
+             sub: I18N.t("histRevSub", {n: dueCount}) };
   const ai = statuses.findIndex(s => s.status === "available");
   if (ai < 0) return null;
   const lvl = levels[ai];
-  if (lvl.exam) return { kind: "exam", title: "Пробный экзамен",
-                         sub: "Курс пройден — проверь себя на 100 вопросах" };
+  if (lvl.exam) return { kind: "exam", title: I18N.t("lvlExam"),
+                         sub: I18N.t("recExamSub") };
   // внутри доступного уровня — самая слабая незавершённая тема
   const weak = lvl.topics
     .map(t => ({ t, p: topicProgress(t) }))
     .filter(x => x.p < DONE)
     .sort((a, b) => a.p - b.p)[0];
   const t = weak ? weak.t : lvl.topics[0];
-  return { kind: "topic", topic: t, title: "Продолжить: " + t,
-           sub: "Уровень «" + lvl.name + "»" };
+  return { kind: "topic", topic: t, title: I18N.t("recTopic", {t}),
+           sub: I18N.t("recTopicSub", {name: lvl.name}) };
 }
 
 function plural(n, one, few, many){
@@ -852,7 +853,7 @@ function renderPath(){
   } else {
     banner.className = "rec done";
     banner.innerHTML = `<div class="rec-l"><span class="emi" data-icon="trophy"></span></div>` +
-      `<div class="rec-b"><div class="rec-t">Всё освоено!</div><div class="rec-s">Поддерживай форму повторениями</div></div>`;
+      `<div class="rec-b"><div class="rec-t">${I18N.t("recAllDone")}</div><div class="rec-s">${I18N.t("recAllDoneSub")}</div></div>`;
     banner.onclick = null;
     banner.classList.remove("hidden");
   }
@@ -867,10 +868,10 @@ function renderPath(){
               : st.status === "available" ? "next" : "locked";
     const qn = l.topics.reduce((s, t) => s + ALL.filter(q => q.topic === t).length, 0);
     let meta;
-    if (l.exam) meta = st.status === "locked" ? "Откроется после освоения курса" : "100 вопросов · готов";
-    else if (st.status === "locked") meta = "Сначала пройди предыдущий уровень";
-    else if (st.status === "available") meta = qn + " " + plural(qn,"вопрос","вопроса","вопросов") + " · рекомендуется";
-    else meta = qn + " " + plural(qn,"вопрос","вопроса","вопросов") + " · " + pct + "%";
+    if (l.exam) meta = st.status === "locked" ? I18N.t("lvlMetaExamLocked") : I18N.t("lvlMetaExamReady");
+    else if (st.status === "locked") meta = I18N.t("lvlMetaLocked");
+    else if (st.status === "available") meta = I18N.t("lvlMetaAvail", {n: qn});
+    else meta = I18N.t("lvlMetaProg", {n: qn, pct});
     return `<button class="lvl ${cls}" data-idx="${i}" ${st.status==='locked'?'data-locked="1"':''}>
       <span class="badge-num"><span class="emi" data-icon="${esc(l.icon)}"></span></span>
       <span class="lbody">
@@ -932,15 +933,14 @@ function updateMistakesLabel(){
   if (!window.Mistakes){ btn.classList.add("hidden"); return; }
   const n = Mistakes.count();
   btn.classList.toggle("hidden", n === 0);
-  if (n) document.getElementById("mistakesSub").textContent =
-    `${n} ${plural(n, "трудный вопрос", "трудных вопроса", "трудных вопросов")} · 2 верных подряд закрепляют`;
+  if (n) document.getElementById("mistakesSub").textContent = I18N.t("quizMistakesN", {n});
 }
 function startMistakes(){
   if (!window.Mistakes) return;
   const ids = Mistakes.list();
   const queue = shuffle(ids.map(id => byId[id]).filter(Boolean)).slice(0, 20);
   if (!queue.length){
-    alert("Журнал ошибок пуст — так держать! 💪");
+    alert(I18N.t("quizMistakesEmpty"));
     return;
   }
   startQuiz("mistakes", false, queue);
@@ -953,7 +953,7 @@ document.getElementById("startReview").onclick = ()=>{
   if (!window.SRS) return;
   const dueIds = SRS.pickDue(ALL_IDS, 20);
   if (!dueIds.length){
-    alert("На сегодня всё повторено 👍\nЗагляни позже или потренируйся в других режимах.");
+    alert(I18N.t("quizReviewEmpty"));
     return;
   }
   const queue = dueIds.map(id=>byId[id]).filter(Boolean);
@@ -995,7 +995,7 @@ function buildContrastQueue(limit){
 }
 document.getElementById("startContrast").onclick = ()=>{
   const queue = buildContrastQueue(20);
-  if (queue.length < 6){ alert("Недостаточно вопросов для режима различения."); return; }
+  if (queue.length < 6){ alert(I18N.t("quizContrastLow")); return; }
   startQuiz("contrast", false, queue);
 };
 
@@ -1025,7 +1025,7 @@ document.getElementById("startTopic").onclick = ()=>{
   DATA.topics.forEach(t=>{
     const cnt = ALL.filter(q=>q.topic===t).length;
     const b = document.createElement("button");
-    b.innerHTML = `${esc(t)}<br><span style="color:var(--hint);font-size:11px">${cnt} вопр.</span>`;
+    b.innerHTML = `${esc(t)}<br><span style="color:var(--hint);font-size:11px">${I18N.t("quizTopicCount", {n: cnt})}</span>`;
     b.onclick = ()=>{
       const pool = shuffle(ALL.filter(q=>q.topic===t)).slice(0, Math.min(20, cnt));
       startQuiz("topic:"+t, false, pool);
@@ -1047,7 +1047,7 @@ function maybeBadgeToast(){
     document.body.appendChild(el);
   }
   el.innerHTML = `<span class="em">${b.icon}</span>`
-    + `<span class="tt">Новое достижение!<b>${esc(b.title)}</b></span>`;
+    + `<span class="tt">${I18N.t("badgeNew")}<b>${esc(b.title)}</b></span>`;
   el.classList.add("show");
   haptic("success");
   clearTimeout(el._t);
@@ -1098,10 +1098,10 @@ function resumeQuiz(){
   renderQ();
 }
 
-const MODE_LABEL = m => m==="exam" ? "Экзамен"
-  : m==="random" ? "Тренировка" : m==="mistakes" ? "Работа над ошибками"
-  : m==="contrast" ? "Различение"
-  : m && m.startsWith("topic:") ? "Тема: "+m.slice(6) : "Тест";
+const MODE_LABEL = m => m==="exam" ? I18N.t("modeExam")
+  : m==="random" ? I18N.t("modeTrain") : m==="mistakes" ? I18N.t("quizModeMistakes")
+  : m==="contrast" ? I18N.t("quizModeContrast")
+  : m && m.startsWith("topic:") ? I18N.t("modeTopic", {t: m.slice(6)}) : I18N.t("quizModeGeneric");
 
 function renderResumeBanner(){
   const s = loadSession();
