@@ -31,6 +31,12 @@
   var DEFAULT_GOAL = 15;
   var DAY_MS = 24 * 60 * 60 * 1000;
 
+  // Локализация вердикта: i18n в браузере, русский фолбэк вне его (Node/тесты).
+  function tr(key, fallback) {
+    try { if (global.I18N && global.I18N.t) return global.I18N.t(key); } catch (e) {}
+    return fallback;
+  }
+
   function load() {
     try { return JSON.parse(global.localStorage.getItem(KEY)) || {}; }
     catch (e) { return {}; }
@@ -160,10 +166,10 @@
         totSum += (box == null ? 0 : Math.min(box, 5) / 5); totN += 1;
       });
       var percent = totN ? Math.round(totSum / totN * 100) : 0;
-      var verdict = percent >= 80 ? "Готов к экзамену"
-                  : percent >= 60 ? "Почти готов"
-                  : percent >= 30 ? "В процессе"
-                  : "В начале пути";
+      var verdict = percent >= 80 ? tr("verdictReady", "Готов к экзамену")
+                  : percent >= 60 ? tr("verdictAlmost", "Почти готов")
+                  : percent >= 30 ? tr("verdictInProg", "В процессе")
+                  : tr("verdictStart", "В начале пути");
       return { percent: percent, verdict: verdict, topics: topics };
     },
 

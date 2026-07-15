@@ -17,6 +17,12 @@
 
   var KEY = "issa_pl_progress_v1";
 
+  // Локализация вердикта: i18n в браузере, русский фолбэк вне его (Node/тесты).
+  function tr(key, fallback) {
+    try { if (global.I18N && global.I18N.t) return global.I18N.t(key); } catch (e) {}
+    return fallback;
+  }
+
   function load() {
     try { return JSON.parse(global.localStorage.getItem(KEY)) || {}; }
     catch (e) { return {}; }
@@ -30,10 +36,10 @@
   }
 
   function verdictFor(percent) {
-    return percent >= 80 ? "Готов к экзамену"
-         : percent >= 60 ? "Почти готов"
-         : percent >= 30 ? "В процессе"
-         : "В начале пути";
+    return percent >= 80 ? tr("verdictReady", "Готов к экзамену")
+         : percent >= 60 ? tr("verdictAlmost", "Почти готов")
+         : percent >= 30 ? tr("verdictInProg", "В процессе")
+         : tr("verdictStart", "В начале пути");
   }
 
   var PLProgress = {

@@ -545,7 +545,39 @@
     konplTitleTag:{ ru: "Конспект PL — Żeglarz + Sternik", pl: "Notatki PL — Żeglarz + Sternik", ua: "Конспект PL — Żeglarz + Sternik", en: "PL notes — Żeglarz + Sternik" },
     konplTitle:   { ru: "Конспект PL", pl: "Notatki PL", ua: "Конспект PL", en: "PL notes" },
     konplSub:     { ru: "Żeglarz jachtowy + Sternik motorowodny · разбор PL/RU: почему ответ верный.", pl: "Żeglarz jachtowy + Sternik motorowodny · analiza PL/RU: dlaczego odpowiedź jest poprawna.", ua: "Żeglarz jachtowy + Sternik motorowodny · розбір PL/RU: чому відповідь правильна.", en: "Żeglarz jachtowy + Sternik motorowodny · PL/RU walkthrough: why the answer is right." },
-    konplFoot:    { ru: "Учебный пересказ по открытым источникам и программе PZŻ. Не является официальным материалом школы или PZŻ.", pl: "Edukacyjne opracowanie na podstawie otwartych źródeł i programu PZŻ. Nie jest oficjalnym materiałem szkoły ani PZŻ.", ua: "Навчальний переказ за відкритими джерелами та програмою PZŻ. Не є офіційним матеріалом школи чи PZŻ.", en: "An educational summary from open sources and the PZŻ syllabus. Not official school or PZŻ material." }
+    konplFoot:    { ru: "Учебный пересказ по открытым источникам и программе PZŻ. Не является официальным материалом школы или PZŻ.", pl: "Edukacyjne opracowanie na podstawie otwartych źródeł i programu PZŻ. Nie jest oficjalnym materiałem szkoły ani PZŻ.", ua: "Навчальний переказ за відкритими джерелами та програмою PZŻ. Не є офіційним матеріалом школи чи PZŻ.", en: "An educational summary from open sources and the PZŻ syllabus. Not official school or PZŻ material." },
+
+    /* ── progress.js / pl_progress.js — лестница вердиктов готовности ── */
+    verdictReady: { ru: "Готов к экзамену", pl: "Gotowy do egzaminu", ua: "Готовий до екзамену", en: "Ready for the exam" },
+    verdictAlmost:{ ru: "Почти готов", pl: "Prawie gotowy", ua: "Майже готовий", en: "Almost ready" },
+    verdictInProg:{ ru: "В процессе", pl: "W trakcie", ua: "У процесі", en: "In progress" },
+    verdictStart: { ru: "В начале пути", pl: "Na początku drogi", ua: "На початку шляху", en: "Just starting" },
+
+    /* ── badges.js — морские достижения (title + desc) ── */
+    bdgFirstSteps:  { ru: "Юнга", pl: "Junga", ua: "Юнга", en: "Deckhand" },
+    bdgFirstStepsD: { ru: "Первый ответ в тренировке", pl: "Pierwsza odpowiedź w treningu", ua: "Перша відповідь у тренуванні", en: "First answer in practice" },
+    bdgSailor:      { ru: "Матрос", pl: "Marynarz", ua: "Матрос", en: "Sailor" },
+    bdgSailorD:     { ru: "100 ответов", pl: "100 odpowiedzi", ua: "100 відповідей", en: "100 answers" },
+    bdgBosun:       { ru: "Боцман", pl: "Bosman", ua: "Боцман", en: "Bosun" },
+    bdgBosunD:      { ru: "500 ответов", pl: "500 odpowiedzi", ua: "500 відповідей", en: "500 answers" },
+    bdgTailwind:    { ru: "Попутный ветер", pl: "Pomyślny wiatr", ua: "Попутний вітер", en: "Fair wind" },
+    bdgTailwindD:   { ru: "Серия 7 дней", pl: "Seria 7 dni", ua: "Серія 7 днів", en: "7-day streak" },
+    bdgSeaWolf:     { ru: "Морской волк", pl: "Wilk morski", ua: "Морський вовк", en: "Sea dog" },
+    bdgSeaWolfD:    { ru: "Серия 30 дней", pl: "Seria 30 dni", ua: "Серія 30 днів", en: "30-day streak" },
+    bdgNavigator:   { ru: "Штурман", pl: "Nawigator", ua: "Штурман", en: "Navigator" },
+    bdgNavigatorD:  { ru: "50 вопросов закреплено", pl: "50 pytań utrwalonych", ua: "50 питань закріплено", en: "50 questions mastered" },
+    bdgTopicMaster: { ru: "Знаток темы", pl: "Znawca tematu", ua: "Знавець теми", en: "Topic expert" },
+    bdgTopicMasterD:{ ru: "Тема закреплена на 80%+", pl: "Temat utrwalony na 80%+", ua: "Тема закріплена на 80%+", en: "Topic mastered to 80%+" },
+    bdgPilot:       { ru: "Лоцман", pl: "Pilot morski", ua: "Лоцман", en: "Pilot" },
+    bdgPilotD:      { ru: "Все темы закреплены на 80%+", pl: "Wszystkie tematy na 80%+", ua: "Усі теми закріплені на 80%+", en: "All topics mastered to 80%+" },
+    bdgReady:       { ru: "Готов к экзамену", pl: "Gotowy do egzaminu", ua: "Готовий до екзамену", en: "Exam-ready" },
+    bdgReadyD:      { ru: "Готовность 80%+", pl: "Gotowość 80%+", ua: "Готовність 80%+", en: "80%+ readiness" },
+    bdgSkipper:     { ru: "Шкипер", pl: "Szyper", ua: "Шкіпер", en: "Skipper" },
+    bdgSkipperD:    { ru: "Сдан пробный экзамен (≥75%)", pl: "Zdany egzamin próbny (≥75%)", ua: "Складено пробний екзамен (≥75%)", en: "Passed the mock exam (≥75%)" },
+    bdgFlawless:    { ru: "Без единой ошибки", pl: "Bez ani jednego błędu", ua: "Без жодної помилки", en: "Flawless" },
+    bdgFlawlessD:   { ru: "Экзамен на 100%", pl: "Egzamin na 100%", ua: "Екзамен на 100%", en: "100% on the exam" },
+    bdgAnchorWatch: { ru: "Якорная вахта", pl: "Wachta kotwiczna", ua: "Якірна вахта", en: "Anchor watch" },
+    bdgAnchorWatchD:{ ru: "Повторял 14 дней подряд", pl: "Powtarzał 14 dni z rzędu", ua: "Повторював 14 днів поспіль", en: "Reviewed 14 days in a row" }
   };
 
   return { LANGS: LANGS, DICT: DICT };
