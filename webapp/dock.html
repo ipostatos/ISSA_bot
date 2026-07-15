@@ -84,34 +84,48 @@
     background:rgba(8,18,30,.72); border:1px solid rgba(255,255,255,.16); overflow:hidden; pointer-events:none}
   #dmgBar{height:100%; width:0%; background:var(--bad); transition:width .2s}
 
-  /* рычаги газа (справа поверх канвы) */
-  #levers{position:absolute; right:8px; bottom:86px; display:flex; gap:8px}
-  .lever{position:relative; width:52px; height:min(34vh,240px); border-radius:14px;
+  /* ── управление: правая колонка = газ + СТОП (правый палец),
+        левая колонка = подрулька + руль (левый палец),
+        редкие кнопки (заново/выход) — наверху справа ── */
+  #rightCol{position:absolute; right:8px; bottom:calc(10px + env(safe-area-inset-bottom,0px));
+    display:flex; flex-direction:column; gap:8px; align-items:stretch}
+  #levers{display:flex; gap:8px; justify-content:flex-end}
+  .lever{position:relative; width:58px; height:min(36vh,250px); border-radius:16px;
     background:rgba(8,18,30,.66); border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(4px);
     touch-action:none}
   .lever .zero{position:absolute; left:6px; right:6px; top:50%; border-top:1px dashed rgba(255,255,255,.35)}
-  .lever .knob{position:absolute; left:4px; right:4px; height:34px; border-radius:10px; top:calc(50% - 17px);
+  .lever .knob{position:absolute; left:4px; right:4px; height:42px; border-radius:12px; top:calc(50% - 21px);
     background:var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.4); display:flex; align-items:center;
-    justify-content:center; color:var(--accent-text); font-size:11px; font-weight:800}
-  .lever .cap{position:absolute; top:4px; left:0; right:0; text-align:center; font-size:10px; color:#9fc4e0}
+    justify-content:center; color:var(--accent-text); font-size:12px; font-weight:800}
+  .lever .cap{position:absolute; top:5px; left:0; right:0; text-align:center; font-size:10px; color:#9fc4e0}
+  #stopBtn{height:50px; border-radius:13px; border:1px solid rgba(255,255,255,.22);
+    background:rgba(8,18,30,.72); color:#ffb3ad; font-size:14px; font-weight:800; cursor:pointer;
+    backdrop-filter:blur(4px); touch-action:manipulation}
+  #stopBtn:active{background:var(--bad); color:#fff}
 
-  /* руль (снизу по центру) */
-  #rudderBox{position:absolute; left:10px; right:70px; bottom:12px; height:56px; border-radius:14px;
-    background:rgba(8,18,30,.66); border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(4px); touch-action:none}
-  #rudderBox .mid{position:absolute; top:6px; bottom:6px; left:50%; border-left:1px dashed rgba(255,255,255,.35)}
-  #rudderKnob{position:absolute; top:5px; width:46px; height:46px; border-radius:12px; left:calc(50% - 23px);
-    background:var(--accent); color:var(--accent-text); display:flex; align-items:center; justify-content:center;
-    font-size:11px; font-weight:800; box-shadow:0 2px 8px rgba(0,0,0,.4)}
-  #rudderBox .cap{position:absolute; top:-16px; left:8px; font-size:10px; color:#9fc4e0}
-
-  /* кнопки слева */
-  #btnCol{position:absolute; left:8px; bottom:86px; display:flex; flex-direction:column; gap:8px}
-  .gbtn{width:52px; height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.2);
-    background:rgba(8,18,30,.66); color:#dcecfa; font-size:12px; font-weight:800; cursor:pointer;
+  #leftCol{position:absolute; left:8px; bottom:calc(10px + env(safe-area-inset-bottom,0px));
+    width:min(52vw,240px); display:flex; flex-direction:column; gap:8px}
+  #thrRow{display:flex; gap:8px}
+  .gbtn{flex:1; height:46px; border-radius:12px; border:1px solid rgba(255,255,255,.2);
+    background:rgba(8,18,30,.66); color:#dcecfa; font-size:15px; font-weight:800; cursor:pointer;
     backdrop-filter:blur(4px); touch-action:none}
   .gbtn:active{background:var(--accent); color:var(--accent-text)}
-  #thrRow{display:flex; gap:6px}
-  #thrRow .gbtn{width:23px; font-size:13px}
+
+  /* руль: крупный, под левым пальцем; двойной тап = прямо */
+  #rudderBox{position:relative; height:66px; border-radius:16px;
+    background:rgba(8,18,30,.66); border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(4px); touch-action:none}
+  #rudderBox .mid{position:absolute; top:7px; bottom:7px; left:50%; border-left:1px dashed rgba(255,255,255,.35)}
+  #rudderKnob{position:absolute; top:6px; width:54px; height:54px; border-radius:14px; left:calc(50% - 27px);
+    background:var(--accent); color:var(--accent-text); display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:800; box-shadow:0 2px 8px rgba(0,0,0,.4)}
+  #rudderBox .cap{position:absolute; top:-16px; left:8px; font-size:10px; color:#9fc4e0}
+
+  /* редкие кнопки — верхний правый угол, под шкалой повреждений */
+  #topBtns{position:absolute; right:10px; top:64px; display:flex; gap:8px}
+  .tbtn{width:40px; height:40px; border-radius:11px; border:1px solid rgba(255,255,255,.2);
+    background:rgba(8,18,30,.66); color:#dcecfa; font-size:15px; font-weight:800; cursor:pointer;
+    backdrop-filter:blur(4px)}
+  .tbtn:active{background:var(--accent); color:var(--accent-text)}
 
   /* оверлей результата */
   #overlay{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -183,6 +197,18 @@
     </div>
     <div class="dirs" id="windDirs"></div>
 
+    <div class="section-t" data-i18n="dockCondT"></div>
+    <div class="dirs" id="wxChips">
+      <button class="dir" data-wx="clear" data-i18n="dockWxClear"></button>
+      <button class="dir" data-wx="rain" data-i18n="dockWxRain"></button>
+      <button class="dir" data-wx="fog" data-i18n="dockWxFog"></button>
+    </div>
+    <div class="dirs" id="todChips" style="margin-top:6px">
+      <button class="dir" data-tod="day" data-i18n="dockTodDay"></button>
+      <button class="dir" data-tod="dusk" data-i18n="dockTodDusk"></button>
+      <button class="dir" data-tod="night" data-i18n="dockTodNight"></button>
+    </div>
+
     <div class="section-t" data-i18n="dockCurT"></div>
     <div class="envrow">
       <label data-i18n="dockCurT"></label>
@@ -217,20 +243,24 @@
       </div>
       <div id="dmgWrap"><div id="dmgBar"></div></div>
 
-      <div id="levers"></div>
-      <div id="btnCol">
-        <button class="gbtn" id="stopBtn" data-i18n="dockStop"></button>
+      <div id="rightCol">
+        <div id="levers"></div>
+        <button id="stopBtn" data-i18n="dockStop"></button>
+      </div>
+      <div id="leftCol">
         <div id="thrRow" class="hidden">
           <button class="gbtn" id="thrL">◀</button>
           <button class="gbtn" id="thrR">▶</button>
         </div>
-        <button class="gbtn" id="rstBtn">↺</button>
-        <button class="gbtn" id="exitBtn">✕</button>
+        <div id="rudderBox">
+          <span class="cap" data-i18n="dockRudder"></span>
+          <div class="mid"></div>
+          <div id="rudderKnob">0°</div>
+        </div>
       </div>
-      <div id="rudderBox">
-        <span class="cap" data-i18n="dockRudder"></span>
-        <div class="mid"></div>
-        <div id="rudderKnob">0°</div>
+      <div id="topBtns">
+        <button class="tbtn" id="rstBtn">↺</button>
+        <button class="tbtn" id="exitBtn">✕</button>
       </div>
 
       <div id="overlay" class="hidden">
@@ -260,6 +290,13 @@
    ============================================================ */
 var T = function(k, v){ return (window.I18N && I18N.t) ? I18N.t(k, v) : k; };
 var clamp = function(x,a,b){ return x<a?a:(x>b?b:x); };
+function hap(kind){ // хаптика Telegram, вне Telegram молчит
+  try{
+    var H=window.Telegram.WebApp.HapticFeedback;
+    if (kind==="hit") H.impactOccurred("medium");
+    else H.notificationOccurred(kind); // success | error
+  }catch(e){}
+}
 var DEG = Math.PI/180, KN = 0.5144;
 
 /* ── корпуса ──
@@ -327,7 +364,7 @@ function buildScenario(kind, hull){
 }
 
 /* ── состояние ── */
-var cfg = { hull:"sail", scen:"alongside", windKn:8, windDir:0, curKn:0, curDir:0 };
+var cfg = { hull:"sail", scen:"alongside", windKn:8, windDir:0, curKn:0, curDir:0, wx:"clear", tod:"day" };
 try { var saved = JSON.parse(localStorage.getItem("issa_dock_cfg")||"{}");
       for (var k in saved) if (k in cfg) cfg[k]=saved[k]; } catch(e){}
 
@@ -364,9 +401,10 @@ function step(S, dt){
   for (var i=0;i<2;i++) S.thr[i] += clamp(S.thrT[i]-S.thr[i], -2.6*dt, 2.6*dt);
   S.rud += clamp(S.rudT-S.rud, -70*DEG*dt, 70*DEG*dt);
 
-  // ветер: порывы по силе + медленное блуждание направления (±8°)
+  // ветер: порывы по силе + медленное блуждание направления (±8°); в дождь порывистее
   S.gust += dt;
-  var wSpd = S.windKn*KN * (1 + 0.22*Math.sin(S.gust*0.33) + 0.08*Math.sin(S.gust*1.7));
+  var gA = cfg.wx==="rain" ? 0.34 : 0.22;
+  var wSpd = S.windKn*KN * (1 + gA*Math.sin(S.gust*0.33) + 0.08*Math.sin(S.gust*1.7));
   var wDir = S.windDir + 8*Math.sin(S.gust*0.11) + 3*Math.sin(S.gust*0.47);
   var wind = blowVec(wDir, Math.max(0,wSpd));
   S.wDirNow = wDir; S.wSpdNow = wSpd/KN;
@@ -557,6 +595,7 @@ function resolveHit(S, p, n, depth, ob){
         S.spray.push({x:p.x, y:p.y, vx:Math.cos(an)*sv, vy:Math.sin(an)*sv, a:0.9});
       }
       S.shake=Math.min(0.35, S.shake+imp*0.12);
+      hap("hit");
     }
     // повреждения: не за мол, не чаще 0.5 c на препятствие, не за мягкое касание
     var now=S.time, last=S.lastHit[ob.id]||-9;
@@ -624,9 +663,17 @@ function makeWater(){
   }
   return t;
 }
+/* время суток: палитра воды, лампы на причалах, ходовые огни */
+var TOD={
+  day:  { w:["#2e6fa3","#1e4d7c","#173e64"], noise:1.0,  fog:"200,212,226", lights:false, tint:null },
+  dusk: { w:["#1d3f63","#142e4c","#0e2138"], noise:0.8,  fog:"140,140,165", lights:true,  tint:"rgba(255,140,80,.07)" },
+  night:{ w:["#0a1e33","#071627","#050f1c"], noise:0.5,  fog:"22,32,52",    lights:true,  tint:"rgba(20,40,90,.10)" }
+};
+function tod(){ return TOD[cfg.tod]||TOD.day; }
 function drawWater(ctx,w,hgt,S){
+  var P=tod();
   var g=ctx.createLinearGradient(0,0,0,hgt);
-  g.addColorStop(0,"#0e2f4c"); g.addColorStop(0.6,"#0b2540"); g.addColorStop(1,"#081c30");
+  g.addColorStop(0,P.w[0]); g.addColorStop(0.6,P.w[1]); g.addColorStop(1,P.w[2]);
   ctx.fillStyle=g; ctx.fillRect(0,0,w,hgt);
   if (!waterTile) waterTile=makeWater();
   var bv=blowVec(S.wDirNow,1), t=S.time;
@@ -634,16 +681,83 @@ function drawWater(ctx,w,hgt,S){
   [ {sp:6,  sc:1.0, al:0.55},
     {sp:14, sc:1.9, al:0.35} ].forEach(function(l){
     var ox=(t*l.sp*bv.x*view.s/10)%180, oy=(t*l.sp*bv.y*view.s/10)%180;
-    ctx.save(); ctx.globalAlpha=l.al;
+    ctx.save(); ctx.globalAlpha=l.al*P.noise;
     ctx.translate(ox,oy); ctx.scale(l.sc,l.sc);
     ctx.fillStyle=pat; ctx.fillRect(-360/l.sc,-360/l.sc,(w+720)/l.sc,(hgt+720)/l.sc);
     ctx.restore();
   });
 }
 
+/* частицы ветра как на карте погоды (Windy-стиль): отдельный канвас,
+   след — за счёт гашения прошлого кадра destination-out */
+var windCv=null, windParts=[];
+function windColor(kn){
+  return kn<6?"rgba(120,180,235,.6)" : kn<12?"rgba(110,220,170,.6)"
+       : kn<18?"rgba(255,209,102,.62)" : "rgba(255,143,107,.65)";
+}
+function drawWindParticles(S){
+  if (!windCv) windCv=document.createElement("canvas");
+  if (windCv.width!==cv.width||windCv.height!==cv.height){
+    windCv.width=cv.width; windCv.height=cv.height; windParts=[];
+  }
+  var g=windCv.getContext("2d"), w=windCv.width, h=windCv.height;
+  g.globalCompositeOperation="destination-out";
+  g.fillStyle="rgba(0,0,0,0.10)"; g.fillRect(0,0,w,h);
+  g.globalCompositeOperation="source-over";
+  if (S.windKn>=1){
+    var N=Math.round(80 + S.windKn*6);
+    while (windParts.length<N) windParts.push({x:Math.random()*w, y:Math.random()*h, age:Math.random()*90|0});
+    if (windParts.length>N) windParts.length=N;
+    var bv=blowVec(S.wDirNow,1), step=Math.max(0.5, S.wSpdNow*KN*0.5)*dpr;
+    g.lineWidth=1.3*dpr; g.lineCap="round"; g.strokeStyle=windColor(S.wSpdNow);
+    for (var i=0;i<windParts.length;i++){
+      var p=windParts[i];
+      var jx=Math.sin(p.y*0.011+p.x*0.007)*0.3, jy=Math.cos(p.x*0.009)*0.3;   // лёгкая курчавость поля
+      var nx=p.x+(bv.x+jx)*step, ny=p.y+(bv.y+jy)*step;
+      if (p.age>90||nx<0||ny<0||nx>w||ny>h){ windParts[i]={x:Math.random()*w, y:Math.random()*h, age:0}; continue; }
+      g.beginPath(); g.moveTo(p.x,p.y); g.lineTo(nx,ny); g.stroke();
+      p.x=nx; p.y=ny; p.age++;
+    }
+  }
+  cx2.globalAlpha=0.8; cx2.drawImage(windCv,0,0); cx2.globalAlpha=1;
+}
+
+/* дождь: косые штрихи по ветру */
+var rainParts=[];
+function drawRain(ctx,S,w,h){
+  var N=140;
+  while (rainParts.length<N) rainParts.push({x:Math.random()*w, y:Math.random()*h, v:6+Math.random()*5});
+  var bv=blowVec(S.wDirNow,1), wp=S.wSpdNow*0.35;
+  ctx.strokeStyle="rgba(190,215,240,.34)"; ctx.lineWidth=1*dpr; ctx.lineCap="round";
+  for (var i=0;i<rainParts.length;i++){
+    var p=rainParts[i];
+    var vx=bv.x*wp*2*dpr, vy=(p.v+Math.max(0,bv.y*wp*2))*dpr;
+    ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-vx*1.4, p.y-vy*1.4); ctx.stroke();
+    p.x+=vx; p.y+=vy;
+    if (p.y>h+20||p.x<-20||p.x>w+20){ p.x=Math.random()*w; p.y=-10; }
+  }
+}
+
+/* туман: видимость ~10 м вокруг лодки */
+function drawFog(ctx,S,w,h){
+  var c=W2S(S.x,S.y);
+  var g=ctx.createRadialGradient(c[0],c[1],8*view.s, c[0],c[1],19*view.s);
+  g.addColorStop(0,"rgba("+tod().fog+",0)");
+  g.addColorStop(1,"rgba("+tod().fog+",0.9)");
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+}
+
+function glowDot(ctx,x,y,r,rgb,a){
+  var g=ctx.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,"rgba("+rgb+","+a+")"); g.addColorStop(1,"rgba("+rgb+",0)");
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+  ctx.fillStyle="rgba("+rgb+",.95)"; ctx.beginPath(); ctx.arc(x,y,r*0.16,0,7); ctx.fill();
+}
+
 function draw(S){
   var w=cv.width, hgt=cv.height, ctx=cx2;
   drawWater(ctx,w,hgt,S);
+  drawWindParticles(S);   // частицы ветра как на карте погоды
 
   ctx.save();
   // тряска камеры при ударе
@@ -652,15 +766,6 @@ function draw(S){
   }
   ctx.translate(view.ox, view.oy); ctx.scale(view.s, view.s);
   ctx.lineJoin="round"; ctx.lineCap="round";
-
-  // штрихи ветра (живое направление)
-  var bv = blowVec(S.wDirNow,1);
-  ctx.strokeStyle="rgba(160,210,255,.14)"; ctx.lineWidth=0.10;
-  for (var i=0;i<26;i++){
-    var wx=((i*97)%S.sc.W)+ (S.time*S.windKn*0.35*bv.x)%S.sc.W, wy=((i*57)%S.sc.H)+(S.time*S.windKn*0.35*bv.y)%S.sc.H;
-    wx=(wx%S.sc.W+S.sc.W)%S.sc.W; wy=(wy%S.sc.H+S.sc.H)%S.sc.H;
-    ctx.beginPath(); ctx.moveTo(wx,wy); ctx.lineTo(wx+bv.x*2.2, wy+bv.y*2.2); ctx.stroke();
-  }
 
   // зона цели + «призрак» (пульсируют)
   var z=S.sc.zone, pulse=0.55+0.3*Math.sin(S.time*2.6);
@@ -701,6 +806,13 @@ function draw(S){
     ctx.strokeStyle="rgba(15,20,28,.65)"; ctx.lineWidth=0.14; ctx.strokeRect(wl.x,wl.y,wl.w,wl.h);
     ctx.fillStyle="#3c4757";
     for (var bx=wl.x+2; bx<wl.x+wl.w-1; bx+=4){ ctx.beginPath(); ctx.arc(bx, wl.y+1.1, 0.26, 0, 7); ctx.fill(); }
+    // фонари на причале в сумерках и ночью (свет ложится и на воду)
+    if (tod().lights){
+      for (var lx=wl.x+3; lx<wl.x+wl.w-1; lx+=9){
+        glowDot(ctx, lx, wl.y+0.55, 3.2, "255,200,120", 0.30);
+        glowDot(ctx, lx, wl.y-1.2, 2.2, "255,205,140", 0.12);
+      }
+    }
   });
 
   // сваи: тень на воде, дерево, белая отбойная полоса
@@ -750,6 +862,12 @@ function draw(S){
   ctx.restore();
 
   ctx.restore();
+
+  // атмосфера поверх мира: тон времени суток, дождь, туман
+  var tint=tod().tint;
+  if (tint){ ctx.fillStyle=tint; ctx.fillRect(0,0,w,hgt); }
+  if (cfg.wx==="rain") drawRain(ctx,S,w,hgt);
+  if (cfg.wx==="fog") drawFog(ctx,S,w,hgt);
 }
 function tracePoly(ctx, P){
   ctx.beginPath(); ctx.moveTo(P[0][0],P[0][1]);
@@ -781,6 +899,7 @@ function drawStaticBoat(ctx,L,B,idx){
     ctx.strokeStyle="rgba(70,83,107,.8)"; ctx.lineWidth=0.08;
     ctx.beginPath(); ctx.moveTo(L*0.05,0); ctx.lineTo(-L*0.32,0); ctx.stroke();
   }
+  if (tod().lights) glowDot(ctx, 0, 0, 1.6, "255,250,220", 0.5);   // якорный огонь
 }
 function drawPlayerBoat(ctx,S){
   var h=S.hull, P=hullPoly(h), L=h.L/2, B=h.B/2;
@@ -865,6 +984,14 @@ function drawPlayerBoat(ctx,S){
     ctx.strokeStyle="rgba(160,220,255,.8)"; ctx.lineWidth=0.14;
     ctx.beginPath(); ctx.moveTo(L*0.75, 0); ctx.lineTo(L*0.75, S.thrusterDir*1.3); ctx.stroke();
   }
+  // ходовые огни (судно с мех. двигателем): красный по левому борту,
+  // зелёный по правому, белый топовый и кормовой
+  if (tod().lights){
+    glowDot(ctx, L*0.42, -B*0.72, 1.9, "255,70,55", 0.55);
+    glowDot(ctx, L*0.42,  B*0.72, 1.9, "60,255,110", 0.5);
+    glowDot(ctx, L*0.05, 0, 2.2, "255,250,225", 0.5);
+    glowDot(ctx, -L*0.95, 0, 1.5, "255,250,225", 0.5);
+  }
 }
 
 /* ============================================================
@@ -901,18 +1028,31 @@ windKnEl.oninput=function(){ cfg.windKn=+this.value; document.getElementById("wi
 curKnEl.oninput=function(){ cfg.curKn=+this.value; document.getElementById("curKnV").textContent=this.value; saveCfg(); };
 mkDirs(document.getElementById("windDirs"), cfg.windDir, function(d){ cfg.windDir=d; saveCfg(); });
 mkDirs(document.getElementById("curDirs"), cfg.curDir, function(d){ cfg.curDir=d; saveCfg(); });
+/* чипы погоды и времени суток */
+function wireChips(boxId, attr, key){
+  var box=document.getElementById(boxId);
+  box.querySelectorAll(".dir").forEach(function(b){
+    if (b.dataset[attr]===cfg[key]) b.classList.add("on");
+    b.onclick=function(){
+      box.querySelectorAll(".dir").forEach(function(x){x.classList.remove("on");});
+      b.classList.add("on"); cfg[key]=b.dataset[attr]; saveCfg();
+    };
+  });
+}
+wireChips("wxChips","wx","wx");
+wireChips("todChips","tod","tod");
 
 /* ── рычаги ── */
 function Lever(parent, cap, onChange){
   var el=document.createElement("div"); el.className="lever";
   el.innerHTML='<span class="cap">'+cap+'</span><div class="zero"></div><div class="knob">0</div>';
   parent.appendChild(el);
-  var knob=el.querySelector(".knob"), val=0, drag=null;
+  var knob=el.querySelector(".knob"), val=0, drag=null, KH=42;
   function set(v){
     val=clamp(Math.round(v),-100,100);
     if (Math.abs(val)<7) val=0;
-    var rect=el.getBoundingClientRect(), kh=34, span=(rect.height-kh-8)/2;
-    knob.style.top=(rect.height/2-kh/2 - span*val/100)+"px";
+    var rect=el.getBoundingClientRect(), span=(rect.height-KH-8)/2;
+    knob.style.top=(rect.height/2-KH/2 - span*val/100)+"px";
     knob.textContent=val;
     onChange(val/100);
   }
@@ -921,7 +1061,7 @@ function Lever(parent, cap, onChange){
   el.addEventListener("pointerup",function(){ drag=null; });
   function move(e){
     if(!drag) return;
-    var r=el.getBoundingClientRect(), rel=(r.top+r.height/2 - e.clientY)/((r.height-42)/2);
+    var r=el.getBoundingClientRect(), rel=(r.top+r.height/2 - e.clientY)/((r.height-KH-8)/2);
     set(rel*100);
   }
   return { set:set, get:function(){return val/100;} };
@@ -940,21 +1080,27 @@ function buildControls(){
 }
 /* руль */
 (function(){
-  var box=document.getElementById("rudderBox"), knob=document.getElementById("rudderKnob"), drag=null;
+  var box=document.getElementById("rudderBox"), knob=document.getElementById("rudderKnob"),
+      drag=null, lastTap=0, KW=54;
   function set(deg){
     deg=clamp(Math.round(deg),-35,35); if(Math.abs(deg)<3) deg=0;
-    var r=box.getBoundingClientRect(), span=(r.width-52)/2;
-    knob.style.left=(r.width/2-23 + span*deg/35)+"px";
+    var r=box.getBoundingClientRect(), span=(r.width-KW-10)/2;
+    knob.style.left=(r.width/2-KW/2 + span*deg/35)+"px";
     knob.textContent=deg+"°";
     if (sim){ sim.rudT=deg*DEG; sim.started=true; }
   }
   rudCtl={set:set};
-  box.addEventListener("pointerdown",function(e){ drag=true; box.setPointerCapture(e.pointerId); move(e); });
+  box.addEventListener("pointerdown",function(e){
+    var now=Date.now();
+    if (now-lastTap<350){ set(0); lastTap=0; return; }  // двойной тап = руль прямо
+    lastTap=now;
+    drag=true; box.setPointerCapture(e.pointerId); move(e);
+  });
   box.addEventListener("pointermove",move);
   box.addEventListener("pointerup",function(){ drag=null; });
   function move(e){
     if(!drag) return;
-    var r=box.getBoundingClientRect(), rel=(e.clientX-(r.left+r.width/2))/((r.width-60)/2);
+    var r=box.getBoundingClientRect(), rel=(e.clientX-(r.left+r.width/2))/((r.width-KW-10)/2);
     set(rel*35);
   }
 })();
@@ -1054,6 +1200,7 @@ function loop(ts){
 }
 
 function showResult(){
+  hap(sim.failed ? "error" : "success");
   var ov=document.getElementById("overlay");
   var stars = sim.failed?0 : (sim.maxImp<0.35&&sim.damage===0?3 : sim.damage<25?2:1);
   document.getElementById("ovTitle").textContent = sim.failed?T("dockCrash"):T("dockDocked");
