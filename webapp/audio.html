@@ -12,27 +12,51 @@
 <script src="quiz_data.js"></script>
 <script src="zeglarz_data.js"></script>
 <script src="sternik_data.js"></script>
+<script src="glossary_data.js"></script>
 <script src="migration.js"></script>
 <script src="srs.js"></script>
+<script src="mistakes.js"></script>
+<script src="progress.js"></script>
 <script src="icons.js"></script>
 <style>
   /* — аудио-плеер: специфика страницы — */
-  .src-row{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px }
-  .src-btn{ display:flex; align-items:center; gap:10px; text-align:left; padding:13px 14px;
+  .src-row{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px }
+  .src-btn{ display:flex; align-items:center; gap:9px; text-align:left; padding:11px 12px;
     border:1px solid var(--border); background:var(--card); color:var(--text);
-    border-radius:12px; cursor:pointer; font-size:14px }
-  .src-btn small{ display:block; color:var(--hint); font-size:12px; margin-top:2px }
+    border-radius:12px; cursor:pointer; font-size:13.5px; font-weight:600 }
+  .src-btn small{ display:block; color:var(--hint); font-size:11.5px; margin-top:1px; font-weight:400 }
   .src-btn.on{ border-color:var(--accent) }
-  .src-btn .emi svg{ width:20px; height:20px }
+  .src-btn .emi{ margin-right:0 }
+  .src-btn .emi svg{ width:18px; height:18px }
+
+  /* темы/категории: горизонтальная лента чипов */
+  .chips{ display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; margin-bottom:8px;
+    scrollbar-width:none }
+  .chips::-webkit-scrollbar{ display:none }
+  .chip{ flex:0 0 auto; padding:6px 12px; font-size:12.5px; color:var(--text); background:var(--card);
+    border:1px solid var(--border); border-radius:999px; cursor:pointer; white-space:nowrap }
+  .chip.on{ border-color:var(--accent); color:var(--accent) }
+
   .player{ text-align:center }
-  .now{ min-height:120px; font-size:16px; line-height:1.5; padding:14px;
-    background:var(--bg); border:1px solid var(--border); border-radius:12px; margin-bottom:6px;
-    text-align:left; white-space:pre-wrap }
-  .now .ans{ color:var(--ok); display:block; margin-top:10px }
-  .now .muted-part{ color:var(--hint) }
-  .pcount{ color:var(--hint); font-size:13px; margin:8px 0 12px }
-  .controls{ display:flex; gap:10px; justify-content:center; align-items:center; margin-bottom:12px }
-  .cbtn{ width:56px; height:56px; border-radius:50%; border:1px solid var(--border);
+  .now{ min-height:132px; font-size:15.5px; line-height:1.5; padding:14px;
+    background:var(--bg); border:1px solid var(--border); border-radius:12px; margin-bottom:8px;
+    text-align:left; white-space:pre-wrap; position:relative }
+  .now .qtext{ transition:opacity .2s }
+  .now .qtext.dim{ opacity:.45 }
+  .now .optlist{ color:var(--hint); font-size:14px; margin-top:8px }
+  .now .ans{ color:var(--ok); display:block; margin-top:10px; font-weight:600 }
+  .now .think{ display:flex; align-items:center; gap:8px; margin-top:12px; color:var(--accent);
+    font-weight:700; font-size:15px }
+  .now .think .tdot{ width:10px; height:10px; border-radius:50%; background:var(--accent);
+    animation:tpulse 1s infinite }
+  @keyframes tpulse{ 0%,100%{opacity:.35; transform:scale(.8)} 50%{opacity:1; transform:scale(1.15)} }
+
+  .bar{ height:4px; border-radius:3px; background:var(--border); overflow:hidden; margin-bottom:6px }
+  .bar i{ display:block; height:100%; background:var(--accent); width:0%; transition:width .3s }
+  .pcount{ color:var(--hint); font-size:13px; margin:4px 0 10px }
+
+  .controls{ display:flex; gap:10px; justify-content:center; align-items:center; margin-bottom:10px }
+  .cbtn{ width:54px; height:54px; border-radius:50%; border:1px solid var(--border);
     background:var(--card); color:var(--text); cursor:pointer; font-size:20px;
     display:flex; align-items:center; justify-content:center }
   .cbtn.main{ width:72px; height:72px; background:var(--accent); color:var(--accent-text); border:none }
@@ -41,10 +65,47 @@
   /* .emi в theme.css даёт margin-right:7px (для иконок рядом с текстом) —
      в круглой кнопке это сдвигает треугольник с центра */
   .cbtn .emi{ margin-right:0; vertical-align:0 }
-  .rate-row{ display:flex; gap:8px; justify-content:center; margin-bottom:4px }
+
+  /* самооценка: питает SRS */
+  .assess{ display:flex; gap:8px; margin-bottom:6px }
+  .abtn{ flex:1; padding:12px; border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer;
+    border:1px solid var(--border); background:var(--card); color:var(--text) }
+  .abtn.ok{ color:var(--ok); border-color:rgba(76,175,114,.4) }
+  .abtn.bad{ color:var(--bad); border-color:rgba(229,84,75,.4) }
+  .abtn:disabled{ opacity:.45; cursor:default }
+  .assess-hint{ color:var(--hint); font-size:11.5px; margin:0 0 10px }
+
+  .rate-row{ display:flex; gap:8px; justify-content:center; margin-bottom:8px }
   .rate{ padding:6px 14px; font-size:13px; border-radius:20px; border:1px solid var(--border);
     background:transparent; color:var(--text); cursor:pointer }
   .rate.on{ border-color:var(--accent); color:var(--accent) }
+
+  .sess{ color:var(--hint); font-size:12.5px; text-align:center; margin:4px 0 0 }
+
+  /* настройки */
+  .set-toggle{ width:100%; padding:12px 14px; margin-top:10px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); border-radius:12px; cursor:pointer; font-size:14px;
+    font-weight:600; text-align:left; display:flex; justify-content:space-between; align-items:center }
+  .set-card{ background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:12px 14px; margin-top:8px }
+  .set-row{ margin-bottom:12px }
+  .set-row:last-child{ margin-bottom:2px }
+  .set-lbl{ font-size:12px; color:var(--hint); text-transform:uppercase; letter-spacing:.03em;
+    margin-bottom:6px }
+  .seg{ display:flex; gap:6px; flex-wrap:wrap }
+  .seg .chip{ flex:1 0 auto; text-align:center }
+  .set-row select{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
+    background:var(--bg); color:var(--text); font-size:14px }
+  .swrow{ display:flex; align-items:center; justify-content:space-between; gap:10px }
+  .swrow .lab{ font-size:14px }
+  .sw{ position:relative; width:46px; height:27px; border-radius:14px; background:var(--border);
+    border:none; cursor:pointer; transition:background .15s; flex:0 0 auto }
+  .sw::after{ content:""; position:absolute; top:3px; left:3px; width:21px; height:21px;
+    border-radius:50%; background:#fff; transition:left .15s }
+  .sw.on{ background:var(--accent) }
+  .sw.on::after{ left:22px }
+  .voice-hint{ color:var(--bad); font-size:12px; margin-top:6px }
+
   .nosupport{ padding:14px; border:1px solid var(--warn); border-radius:12px; color:var(--warn);
     font-size:14px; line-height:1.5 }
 </style>
@@ -61,31 +122,92 @@
         <span class="emi" data-icon="refresh-cw"></span>
         <span><span data-i18n="audWeak"></span> <small id="weakSub"></small></span>
       </button>
+      <button class="src-btn" data-src="gloss">
+        <span class="emi" data-icon="book-marked"></span>
+        <span><span data-i18n="audGloss"></span> <small data-i18n="audGlossSub"></small></span>
+      </button>
       <button class="src-btn" data-src="zeglarz">
         <span class="emi" data-icon="anchor"></span>
-        <span>Żeglarz jachtowy <small data-i18n="audPlSub"></small></span>
+        <span>Żeglarz <small data-i18n="audPlSub"></small></span>
       </button>
       <button class="src-btn" data-src="sternik">
         <span class="emi" data-icon="compass"></span>
-        <span>Sternik motorowodny <small data-i18n="audPlSub"></small></span>
+        <span>Sternik <small data-i18n="audPlSub"></small></span>
       </button>
     </div>
 
+    <div class="chips hidden" id="topicRow"></div>
+
     <div class="card player">
       <div class="now" id="nowBox"></div>
+      <div class="bar"><i id="barFill"></i></div>
       <div class="pcount" id="pcount">—</div>
       <div class="controls">
         <button class="cbtn" id="prevBtn"><span class="emi" data-icon="chevron-right" style="transform:scaleX(-1)"></span></button>
         <button class="cbtn main" id="playBtn"><span class="emi" data-icon="play"></span></button>
         <button class="cbtn" id="nextBtn"><span class="emi" data-icon="chevron-right"></span></button>
       </div>
+      <div class="assess">
+        <button class="abtn bad" id="badBtn">✘ <span data-i18n="audForgot"></span></button>
+        <button class="abtn ok" id="okBtn">✔ <span data-i18n="audKnew"></span></button>
+      </div>
+      <p class="assess-hint" data-i18n="audAssessHint"></p>
       <div class="rate-row" id="rateRow">
         <button class="rate" data-rate="0.85">0.85×</button>
         <button class="rate on" data-rate="1">1×</button>
         <button class="rate" data-rate="1.2">1.2×</button>
       </div>
-      <p class="muted" style="font-size:12px" data-i18n="audScreenNote"></p>
+      <div class="sess" id="sessLine"></div>
     </div>
+
+    <button class="set-toggle" id="setToggle">
+      <span>⚙ <span data-i18n="audSettings"></span></span><span id="setChev">▾</span>
+    </button>
+    <div class="set-card hidden" id="setCard">
+      <div class="set-row">
+        <div class="set-lbl" data-i18n="audMode"></div>
+        <div class="seg" id="modeSeg">
+          <button class="chip" data-mode="instant" data-i18n="audModeInstant"></button>
+          <button class="chip" data-mode="recall" data-i18n="audModeRecall"></button>
+          <button class="chip" data-mode="options" data-i18n="audModeOptions"></button>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="set-lbl" data-i18n="audPauseT"></div>
+        <div class="seg" id="pauseSeg">
+          <button class="chip" data-p="2">2 c</button>
+          <button class="chip" data-p="4">4 c</button>
+          <button class="chip" data-p="6">6 c</button>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="set-lbl" data-i18n="audLenT"></div>
+        <div class="seg" id="lenSeg">
+          <button class="chip" data-n="10">10</button>
+          <button class="chip" data-n="20">20</button>
+          <button class="chip" data-n="40">40</button>
+        </div>
+      </div>
+      <div class="set-row swrow">
+        <span class="lab" data-i18n="audLoopT"></span>
+        <button class="sw" id="loopSw"></button>
+      </div>
+      <div class="set-row">
+        <div class="set-lbl" data-i18n="audVoiceRuT"></div>
+        <select id="voiceRu"></select>
+      </div>
+      <div class="set-row">
+        <div class="set-lbl" data-i18n="audVoicePlT"></div>
+        <select id="voicePl"></select>
+        <div class="voice-hint hidden" id="plHint" data-i18n="audNoPlVoice"></div>
+      </div>
+      <div class="set-row swrow" id="wakeRow">
+        <span class="lab" data-i18n="audWakeT"></span>
+        <button class="sw" id="wakeSw"></button>
+      </div>
+    </div>
+
+    <p class="muted" style="font-size:12px; margin-top:12px" data-i18n="audScreenNote"></p>
   </div>
 
 <script>
@@ -103,153 +225,441 @@ if (!SS || !window.SpeechSynthesisUtterance){
   document.getElementById("app").classList.add("hidden");
 }
 
-// ── источники плейлиста ──
-// weak: слабые/просроченные вопросы ISSA (SRS.pickDue), RU-голос.
-// zeglarz/sternik: гибридные PL+RU вопросы — PL часть читает польский голос
-// (слышать экзаменационные формулировки до реального экзамена), RU — русский.
+// ── банки ──
 const RU = window.QUIZ_DATA ? QUIZ_DATA.questions : [];
+const TOPICS = (window.QUIZ_DATA && QUIZ_DATA.topics) || [];
 const PL_BANKS = {
   zeglarz: (window.ZEGLARZ_DATA && ZEGLARZ_DATA.questions) || [],
   sternik: (window.STERNIK_DATA && STERNIK_DATA.questions) || [],
 };
+// словарь: плоский список терминов с категорией
+const GLOSS = (window.GLOSSARY_DATA ? GLOSSARY_DATA.categories : []).flatMap(c =>
+  c.terms.map(t => ({ id: "g:" + t.term, term: t.term, def: t.definition, cat: c.key, catTitle: c.title })));
+const GLOSS_CATS = (window.GLOSSARY_DATA ? GLOSSARY_DATA.categories : []).map(c => ({ key: c.key, title: c.title }));
 
-function buildPlaylist(src){
-  if (src === "weak"){
-    const ids = RU.map(q => q.id);
-    const due = window.SRS ? SRS.pickDue(ids, 20) : [];
-    const byId = Object.fromEntries(RU.map(q => [q.id, q]));
-    let qs = due.map(id => byId[id]).filter(Boolean);
-    if (!qs.length) qs = shuffle(RU).slice(0, 20);   // всё повторено — случайные
-    // трек: RU вопрос → RU правильный ответ
-    return qs.map(q => ({
-      show: q.q + "\n\n✔ " + q.options[q.answer],
-      parts: [ {text: q.q, lang: "ru"}, {text: "Правильный ответ: " + q.options[q.answer], lang: "ru"} ],
-    }));
-  }
-  // польские: поле "PL\nRU" — читаем PL, затем RU, затем ответ PL+RU
-  const qs = shuffle(PL_BANKS[src] || []).slice(0, 20);
-  return qs.map(q => {
-    const [qPl, qRu] = splitHybrid(q.q);
-    const [aPl, aRu] = splitHybrid(q.options[q.answer]);
-    const parts = [ {text: qPl, lang: "pl"} ];
-    if (qRu) parts.push({text: qRu, lang: "ru"});
-    parts.push({text: "Prawidłowa odpowiedź: " + aPl, lang: "pl"});
-    if (aRu) parts.push({text: "Правильный ответ: " + aRu, lang: "ru"});
-    return { show: qPl + (qRu ? "\n" + qRu : "") + "\n\n✔ " + aPl + (aRu ? "\n" + aRu : ""), parts };
-  });
-}
-// "PL\nRU" → [PL, RU]; если перевода нет — RU пустой
+// ── настройки (персистентные) ──
+const CFG_KEY = "issa_audio_cfg";
+const cfg = { mode: "recall", pauseS: 4, len: 20, loop: false, topic: "", gcat: "",
+              voiceRu: "", voicePl: "", wake: false, rate: 1, src: "weak" };
+try { const s = JSON.parse(localStorage.getItem(CFG_KEY) || "{}");
+      for (const k in s) if (k in cfg) cfg[k] = s[k]; } catch (e) {}
+function saveCfg(){ try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {} }
+
+// ── плейлисты ──
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
 function splitHybrid(s){
   const i = String(s).indexOf("\n");
   return i < 0 ? [s, ""] : [s.slice(0, i).trim(), s.slice(i + 1).trim()];
 }
-function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+const LETTERS_RU = ["А","Б","В","Г","Д"], LETTERS_PL = ["A","B","C","D","E"];
 
-// ── голоса: ленивый выбор по языку (getVoices грузится асинхронно) ──
+// вопрос RU-банка → трек по режиму
+function trackRu(q){
+  const ans = q.options[q.answer];
+  const parts = [ { text: q.q, lang: "ru" } ];
+  let optsShow = "";
+  if (cfg.mode === "options"){
+    const spoken = q.options.map((o,i)=>LETTERS_RU[i]+". "+o).join(". ");
+    optsShow = q.options.map((o,i)=>LETTERS_RU[i]+". "+o).join("\n");
+    parts.push({ text: "Варианты. " + spoken, lang: "ru" });
+  }
+  if (cfg.mode !== "instant") parts.push({ pause: cfg.pauseS });
+  parts.push({ text: "Правильный ответ: " + ans, lang: "ru", reveal: true });
+  return { id: q.id, src: "weak", show: { q: q.q, opts: optsShow, a: ans } , parts };
+}
+// гибридный PL-вопрос → трек
+function trackPl(q, src){
+  const [qPl, qRu] = splitHybrid(q.q);
+  const [aPl, aRu] = splitHybrid(q.options[q.answer]);
+  const parts = [ { text: qPl, lang: "pl" } ];
+  if (qRu) parts.push({ text: qRu, lang: "ru" });
+  let optsShow = "";
+  if (cfg.mode === "options"){
+    const plOpts = q.options.map((o,i)=>LETTERS_PL[i]+". "+splitHybrid(o)[0]);
+    optsShow = plOpts.join("\n");
+    parts.push({ text: "Odpowiedzi. " + plOpts.join(". "), lang: "pl" });
+  }
+  if (cfg.mode !== "instant") parts.push({ pause: cfg.pauseS });
+  parts.push({ text: "Prawidłowa odpowiedź: " + aPl, lang: "pl", reveal: true });
+  if (aRu) parts.push({ text: "Правильный ответ: " + aRu, lang: "ru" });
+  return { id: q.id, src,
+    show: { q: qPl + (qRu ? "\n" + qRu : ""), opts: optsShow, a: aPl + (aRu ? "\n" + aRu : "") }, parts };
+}
+// термин словаря → трек (режим options = recall)
+function trackGloss(g){
+  const parts = [ { text: g.term, lang: "ru" } ];
+  if (cfg.mode !== "instant") parts.push({ pause: cfg.pauseS });
+  parts.push({ text: g.def, lang: "ru", reveal: true });
+  return { id: g.id, src: "gloss", show: { q: g.term, opts: "", a: g.def }, parts };
+}
+
+function buildPlaylist(){
+  if (cfg.src === "weak"){
+    const pool = cfg.topic ? RU.filter(q => q.topic === cfg.topic) : RU;
+    const byId = Object.fromEntries(pool.map(q => [q.id, q]));
+    const due = window.SRS ? SRS.pickDue(pool.map(q => q.id), cfg.len) : [];
+    let qs = due.map(id => byId[id]).filter(Boolean);
+    if (!qs.length) qs = shuffle(pool).slice(0, cfg.len);
+    return qs.map(trackRu);
+  }
+  if (cfg.src === "gloss"){
+    const pool = cfg.gcat ? GLOSS.filter(g => g.cat === cfg.gcat) : GLOSS;
+    const byId = Object.fromEntries(pool.map(g => [g.id, g]));
+    const due = window.SRS ? SRS.pickDue(pool.map(g => g.id), cfg.len) : [];
+    let gs = due.map(id => byId[id]).filter(Boolean);
+    if (!gs.length) gs = shuffle(pool).slice(0, cfg.len);
+    return gs.map(trackGloss);
+  }
+  return shuffle(PL_BANKS[cfg.src] || []).slice(0, cfg.len).map(q => trackPl(q, cfg.src));
+}
+
+// ── голоса ──
 let voices = [];
-function refreshVoices(){ voices = SS ? SS.getVoices() : []; }
-if (SS){ refreshVoices(); SS.onvoiceschanged = refreshVoices; }
+function refreshVoices(){ voices = SS ? SS.getVoices() : []; buildVoiceSelects(); }
+if (SS){ voices = SS.getVoices(); SS.onvoiceschanged = refreshVoices; }
+function voicesFor(pref){ return voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(pref)); }
 function voiceFor(lang){
   const pref = lang === "pl" ? "pl" : "ru";
-  return voices.find(v => v.lang && v.lang.toLowerCase().startsWith(pref)) || null;
+  const want = lang === "pl" ? cfg.voicePl : cfg.voiceRu;
+  const list = voicesFor(pref);
+  return list.find(v => v.voiceURI === want) || list[0] || null;
 }
+function buildVoiceSelects(){
+  [["voiceRu","ru"],["voicePl","pl"]].forEach(([elId, pref]) => {
+    const sel = document.getElementById(elId);
+    const cur = pref === "pl" ? cfg.voicePl : cfg.voiceRu;
+    sel.innerHTML = "";
+    const auto = document.createElement("option");
+    auto.value = ""; auto.textContent = I18N.t("audVoiceAuto");
+    sel.appendChild(auto);
+    voicesFor(pref).forEach(v => {
+      const o = document.createElement("option");
+      o.value = v.voiceURI; o.textContent = v.name + " (" + v.lang + ")";
+      if (v.voiceURI === cur) o.selected = true;
+      sel.appendChild(o);
+    });
+  });
+  const noPl = !voicesFor("pl").length && voices.length;
+  document.getElementById("plHint").classList.toggle("hidden", !noPl);
+}
+document.getElementById("voiceRu").onchange = e => { cfg.voiceRu = e.target.value; saveCfg(); };
+document.getElementById("voicePl").onchange = e => { cfg.voicePl = e.target.value; saveCfg(); };
 
 // ── плеер ──
 let playlist = [];
 let idx = 0;
 let playing = false;
-let rate = 1;
-let src = "weak";
+let gen = 0;                          // поколение озвучки: гасит устаревшие колбэки
+const sess = { listened: 0, graded: 0, ok: 0 };
 
 function setPlayIcon(){
-  document.getElementById("playBtn").innerHTML =
-    Icons.svg(playing ? "pause" : "play");
-}
-
-function renderNow(){
-  const box = document.getElementById("nowBox");
-  if (!playlist.length){
-    box.textContent = I18N.t("audEmpty"); return;
-  }
-  const t = playlist[idx];
-  const i = t.show.indexOf("\n\n✔ ");
-  const q = i < 0 ? t.show : t.show.slice(0, i);
-  const a = i < 0 ? "" : t.show.slice(i + 3);
-  box.innerHTML = escapeHtml(q) + (a ? `<span class="ans">✔ ${escapeHtml(a.replace(/^✔\s*/, ""))}</span>` : "");
-  document.getElementById("pcount").textContent = `${idx + 1} / ${playlist.length}`;
+  document.getElementById("playBtn").innerHTML = Icons.svg(playing ? "pause" : "play");
 }
 const escapeHtml = s => String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 
-// говорим части трека последовательно; по окончании — авто-переход к следующему
+function renderNow(revealed){
+  const box = document.getElementById("nowBox");
+  document.getElementById("barFill").style.width =
+    playlist.length ? (idx / playlist.length * 100) + "%" : "0%";
+  if (!playlist.length){ box.textContent = I18N.t("audEmpty"); updateAssess(); return; }
+  const t = playlist[idx];
+  let html = `<div class="qtext">${escapeHtml(t.show.q)}</div>`;
+  if (t.show.opts) html += `<div class="optlist">${escapeHtml(t.show.opts)}</div>`;
+  if (revealed) html += `<span class="ans">✔ ${escapeHtml(t.show.a)}</span>`;
+  box.innerHTML = html;
+  document.getElementById("pcount").textContent = `${idx + 1} / ${playlist.length}`;
+  updateAssess();
+  updateMedia();
+}
+function revealAnswer(){
+  const t = playlist[idx];
+  const box = document.getElementById("nowBox");
+  hideThink();
+  if (!box.querySelector(".ans") && t)
+    box.insertAdjacentHTML("beforeend", `<span class="ans">✔ ${escapeHtml(t.show.a)}</span>`);
+}
+function showThink(){
+  const box = document.getElementById("nowBox");
+  box.querySelector(".qtext") && box.querySelector(".qtext").classList.add("dim");
+  if (!box.querySelector(".think"))
+    box.insertAdjacentHTML("beforeend",
+      `<div class="think"><span class="tdot"></span><span>${escapeHtml(I18N.t("audThink"))} <span id="thinkN"></span></span></div>`);
+}
+function hideThink(){
+  const box = document.getElementById("nowBox");
+  const th = box.querySelector(".think"); if (th) th.remove();
+  const q = box.querySelector(".qtext"); if (q) q.classList.remove("dim");
+}
+
+// последовательное чтение частей трека; pause-части — с обратным отсчётом
 function speakTrack(){
   if (!SS || !playlist.length) return;
+  const g = ++gen;
   SS.cancel();
   const t = playlist[idx];
   let p = 0;
-  const speakNext = () => {
-    if (!playing) return;
+  const step = () => {
+    if (g !== gen || !playing) return;
     if (p >= t.parts.length){
-      // трек дочитан — пауза-вдох и следующий
-      setTimeout(() => { if (playing){ next(); } }, 900);
+      sess.listened++; updateSess();
+      setTimeout(() => { if (g === gen && playing) nextAuto(); }, 900);
       return;
     }
     const part = t.parts[p++];
+    if (part.pause){
+      showThink();
+      const end = Date.now() + part.pause * 1000;
+      (function count(){
+        if (g !== gen || !playing) return;
+        const left = end - Date.now();
+        if (left <= 0){ step(); return; }
+        const n = document.getElementById("thinkN");
+        if (n) n.textContent = Math.ceil(left / 1000);
+        setTimeout(count, 200);
+      })();
+      return;
+    }
+    if (part.reveal) revealAnswer();
     const u = new SpeechSynthesisUtterance(part.text);
     const v = voiceFor(part.lang);
     if (v) u.voice = v;
     u.lang = part.lang === "pl" ? "pl-PL" : "ru-RU";
-    u.rate = rate;
-    u.onend = speakNext;
-    u.onerror = speakNext;   // битый голос не должен вешать плейлист
+    u.rate = cfg.rate;
+    let done = false;
+    const advance = () => { if (!done){ done = true; if (g === gen) step(); } };
+    u.onend = advance;
+    u.onerror = advance;                     // битый голос не вешает плейлист
+    // сторожевой таймер: некоторые синтезы «глотают» onend
+    const est = (part.text.length * 90) / cfg.rate + 4000;
+    setTimeout(() => { if (g === gen && playing) advance(); }, est);
     SS.speak(u);
   };
-  speakNext();
+  setTimeout(step, 60);   // Chrome: speak сразу после cancel иногда глохнет
 }
 
-function play(){ playing = true; setPlayIcon(); renderNow(); speakTrack(); haptic("light"); }
-function pause(){ playing = false; setPlayIcon(); if (SS) SS.cancel(); }
+function play(){
+  playing = true; setPlayIcon(); renderNow(); speakTrack(); haptic("light");
+  startSession(); applyWake();
+}
+function pause(){
+  playing = false; gen++; setPlayIcon(); hideThink();
+  if (SS) SS.cancel();
+  stopSession();
+}
 function next(){ idx = (idx + 1) % playlist.length; renderNow(); if (playing) speakTrack(); }
 function prev(){ idx = (idx - 1 + playlist.length) % playlist.length; renderNow(); if (playing) speakTrack(); }
+function nextAuto(){
+  if (idx + 1 >= playlist.length && !cfg.loop){
+    pause();
+    idx = 0;
+    document.getElementById("nowBox").innerHTML =
+      `<div class="qtext">${escapeHtml(I18N.t("audDoneList"))}</div>`;
+    document.getElementById("barFill").style.width = "100%";
+    haptic("success");
+    return;
+  }
+  next();
+}
 
 document.getElementById("playBtn").onclick = () => { playing ? pause() : play(); };
 document.getElementById("nextBtn").onclick = () => { haptic("select"); next(); };
 document.getElementById("prevBtn").onclick = () => { haptic("select"); prev(); };
 
+// ── самооценка → SRS (+журнал ошибок для ISSA, +дневная цель) ──
+function grade(correct){
+  const t = playlist[idx];
+  if (!t || t.graded) return;
+  t.graded = correct ? "ok" : "bad";
+  if (window.SRS) SRS.grade(t.id, correct);
+  if (t.src === "weak" && window.Mistakes) Mistakes.record(t.id, correct);
+  if (window.Progress) Progress.recordAnswer();
+  sess.graded++; if (correct) sess.ok++;
+  updateSess(); updateWeakSub();
+  haptic(correct ? "light" : "rigid");
+  if (playing) nextAuto(); else updateAssess();
+}
+document.getElementById("okBtn").onclick = () => grade(true);
+document.getElementById("badBtn").onclick = () => grade(false);
+function updateAssess(){
+  const t = playlist[idx];
+  const dis = !t || !!(t && t.graded);
+  document.getElementById("okBtn").disabled = dis;
+  document.getElementById("badBtn").disabled = dis;
+}
+function updateSess(){
+  document.getElementById("sessLine").textContent =
+    sess.listened + sess.graded ? I18N.t("audSess", { a: sess.listened, b: sess.graded, c: sess.ok }) : "";
+}
+
+// ── скорость ──
 document.getElementById("rateRow").querySelectorAll(".rate").forEach(b => {
+  if (parseFloat(b.dataset.rate) === cfg.rate) {
+    document.querySelectorAll(".rate").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+  }
   b.onclick = () => {
-    rate = parseFloat(b.dataset.rate);
+    cfg.rate = parseFloat(b.dataset.rate); saveCfg();
     document.querySelectorAll(".rate").forEach(x => x.classList.toggle("on", x === b));
-    if (playing) speakTrack();   // перечитать текущий с новой скоростью
+    if (playing) speakTrack();
   };
 });
 
+// ── источники и темы ──
+function rebuild(){
+  pause();
+  playlist = buildPlaylist();
+  idx = 0;
+  playlist.forEach(t => delete t.graded);
+  renderNow();
+}
 document.getElementById("srcRow").querySelectorAll(".src-btn").forEach(b => {
+  if (b.dataset.src === cfg.src){
+    document.querySelectorAll(".src-btn").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+  }
   b.onclick = () => {
-    src = b.dataset.src;
+    cfg.src = b.dataset.src; saveCfg();
     document.querySelectorAll(".src-btn").forEach(x => x.classList.toggle("on", x === b));
-    pause();
-    playlist = buildPlaylist(src);
-    idx = 0;
-    renderNow();
+    buildTopics(); rebuild();
   };
 });
+function buildTopics(){
+  const row = document.getElementById("topicRow");
+  const isWeak = cfg.src === "weak", isGloss = cfg.src === "gloss";
+  row.classList.toggle("hidden", !(isWeak || isGloss));
+  if (!(isWeak || isGloss)) return;
+  const items = isWeak ? TOPICS.map(t => ({ key: t, title: t }))
+                       : GLOSS_CATS.map(c => ({ key: c.key, title: c.title }));
+  const cur = isWeak ? cfg.topic : cfg.gcat;
+  row.innerHTML = "";
+  const all = document.createElement("button");
+  all.className = "chip" + (cur ? "" : " on");
+  all.textContent = I18N.t("audTopicAll");
+  all.onclick = () => { if (isWeak) cfg.topic = ""; else cfg.gcat = ""; saveCfg(); buildTopics(); rebuild(); };
+  row.appendChild(all);
+  items.forEach(it => {
+    const c = document.createElement("button");
+    c.className = "chip" + (cur === it.key ? " on" : "");
+    c.textContent = it.title;
+    c.onclick = () => { if (isWeak) cfg.topic = it.key; else cfg.gcat = it.key; saveCfg(); buildTopics(); rebuild(); };
+    row.appendChild(c);
+  });
+}
 
-// подпись «слабых»: сколько к повтору
-(function(){
-  document.getElementById("weakSub").textContent = I18N.t("audBySchedule");  // дефолт
+// ── настройки ──
+document.getElementById("setToggle").onclick = () => {
+  const c = document.getElementById("setCard");
+  c.classList.toggle("hidden");
+  document.getElementById("setChev").textContent = c.classList.contains("hidden") ? "▾" : "▴";
+};
+function wireSeg(segId, attr, key, numeric){
+  const seg = document.getElementById(segId);
+  seg.querySelectorAll(".chip").forEach(b => {
+    const val = numeric ? +b.dataset[attr] : b.dataset[attr];
+    if (val === cfg[key]) b.classList.add("on");
+    b.onclick = () => {
+      seg.querySelectorAll(".chip").forEach(x => x.classList.remove("on"));
+      b.classList.add("on");
+      cfg[key] = val; saveCfg(); rebuild();
+    };
+  });
+}
+wireSeg("modeSeg", "mode", "mode", false);
+wireSeg("pauseSeg", "p", "pauseS", true);
+wireSeg("lenSeg", "n", "len", true);
+function wireSwitch(id, key, cb){
+  const sw = document.getElementById(id);
+  sw.classList.toggle("on", !!cfg[key]);
+  sw.onclick = () => {
+    cfg[key] = !cfg[key]; saveCfg();
+    sw.classList.toggle("on", cfg[key]);
+    if (cb) cb();
+  };
+}
+wireSwitch("loopSw", "loop");
+
+// ── wake lock: не гасить экран во время прослушивания ──
+let wakeLock = null;
+async function applyWake(){
+  try {
+    if (cfg.wake && playing && document.visibilityState === "visible"){
+      if (!wakeLock) wakeLock = await navigator.wakeLock.request("screen");
+    } else if (wakeLock){ await wakeLock.release(); wakeLock = null; }
+  } catch (e) { wakeLock = null; }
+}
+if ("wakeLock" in navigator) wireSwitch("wakeSw", "wake", applyWake);
+else document.getElementById("wakeRow").classList.add("hidden");
+
+// ── Media Session: кнопки на локскрине/в шторке (где поддерживается) ──
+// speechSynthesis сам по себе не создаёт аудио-сессию — держим её тихим <audio>.
+const SILENT_WAV = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQQAAAAAAAA=";
+let silent = null;
+function startSession(){
+  try {
+    if (!silent){ silent = new Audio(SILENT_WAV); silent.loop = true; silent.volume = 0.01; }
+    silent.play().catch(() => {});
+    if ("mediaSession" in navigator){
+      navigator.mediaSession.playbackState = "playing";
+      navigator.mediaSession.setActionHandler("play", play);
+      navigator.mediaSession.setActionHandler("pause", pause);
+      navigator.mediaSession.setActionHandler("nexttrack", next);
+      navigator.mediaSession.setActionHandler("previoustrack", prev);
+    }
+  } catch (e) {}
+}
+function stopSession(){
+  try {
+    if (silent) silent.pause();
+    if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
+  } catch (e) {}
+  applyWake();
+}
+function updateMedia(){
+  try {
+    if (!("mediaSession" in navigator) || !playlist.length) return;
+    const srcBtn = document.querySelector(`.src-btn[data-src="${cfg.src}"]`);
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: playlist[idx].show.q.slice(0, 60),
+      artist: "ISSA Trainer · " + (idx + 1) + "/" + playlist.length,
+      album: srcBtn ? srcBtn.textContent.trim().split("\n")[0] : "",
+    });
+  } catch (e) {}
+}
+
+// ── клавиатура (десктоп) ──
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "SELECT") return;
+  if (e.key === " "){ e.preventDefault(); playing ? pause() : play(); }
+  else if (e.key === "ArrowRight") next();
+  else if (e.key === "ArrowLeft") prev();
+  else if (e.key === "1") grade(true);
+  else if (e.key === "2") grade(false);
+});
+
+// ── подпись «слабых»: сколько к повтору ──
+function updateWeakSub(){
+  const el = document.getElementById("weakSub");
+  el.textContent = I18N.t("audBySchedule");
   if (!window.SRS || !RU.length) return;
   const due = SRS.dueCount(RU.map(q => q.id));
-  if (due) document.getElementById("weakSub").textContent = I18N.t("audDueCount", {n: due});
-})();
+  if (due) el.textContent = I18N.t("audDueCount", { n: due });
+}
 
-// при закрытии страницы затыкаем синтез (иначе голос переживает Mini App)
-window.addEventListener("pagehide", () => { if (SS) SS.cancel(); });
+// при закрытии страницы затыкаем синтез (иначе голос переживает Mini App).
+// При СВОРАЧИВАНИИ не паузим: с тихой аудиосессией прослушивание может
+// продолжаться в фоне там, где платформа это разрешает.
+window.addEventListener("pagehide", () => { pause(); if (SS) SS.cancel(); });
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "hidden") pause();
+  if (document.visibilityState === "visible") applyWake();
 });
 
-playlist = buildPlaylist(src);
+// ── старт ──
+updateWeakSub();
+buildVoiceSelects();
+buildTopics();
+playlist = buildPlaylist();
 renderNow();
+updateSess();
 </script>
 </body>
 </html>
