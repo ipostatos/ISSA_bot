@@ -11,6 +11,11 @@
 #   webapp/quiz_data.js — вопросы (генерируются из questions.json)
 set -euo pipefail
 
+# Всё тело — в функции: скрипт обновляет сам себя через git pull, а bash
+# дочитывает файл по ходу выполнения. Без обёртки после pull исполняется
+# смесь старой и новой версий (2026-07-15 так потерялись cp-строки dock/i18n).
+main() {
+
 APP_DIR=/opt/issa-bot
 SRC="$APP_DIR/webapp"
 DST=/opt/issa-bot/miniapp        # каталог, который раздаёт Caddy (root в Caddyfile)
@@ -129,3 +134,6 @@ echo "✅ опубликовано:"
 ls -1 "$DST"
 echo
 echo "Открой https://<ваш-домен> — должен быть стартовый экран."
+
+}
+main "$@"
