@@ -114,8 +114,9 @@
   #leftCol{position:absolute; left:8px; bottom:calc(26px + env(safe-area-inset-bottom,0px));
     width:min(62vw,280px); display:flex; flex-direction:column; gap:6px}
   .ctl-cap{font-size:10px; color:#9fc4e0; text-shadow:0 1px 2px rgba(0,0,0,.8); padding-left:2px}
+  #thrWrap{margin-bottom:10px}
   #thrRow{display:flex; gap:8px}
-  .gbtn{flex:0 0 68px; height:36px; border-radius:11px; border:1px solid rgba(255,255,255,.2);
+  .gbtn{flex:0 0 68px; height:44px; border-radius:11px; border:1px solid rgba(255,255,255,.2);
     background:rgba(8,18,30,.66); color:#dcecfa; font-size:13px; font-weight:800; cursor:pointer;
     backdrop-filter:blur(4px); touch-action:none}
   .gbtn:active{background:var(--accent); color:var(--accent-text)}
@@ -127,7 +128,7 @@
   #rudderKnob{position:absolute; top:4px; width:46px; height:40px; border-radius:12px; left:calc(50% - 23px);
     background:var(--accent); color:var(--accent-text); display:flex; align-items:center; justify-content:center;
     font-size:12px; font-weight:800; box-shadow:0 2px 8px rgba(0,0,0,.4)}
-  #rudderBox .cap{position:absolute; top:-16px; left:8px; font-size:10px; color:#9fc4e0}
+  #rudderBox .cap{position:absolute; top:-16px; right:8px; font-size:10px; color:#9fc4e0}
 
   /* редкие кнопки — верхний правый угол, под шкалой повреждений */
   #topBtns{position:absolute; right:10px; top:64px; display:flex; gap:8px}
