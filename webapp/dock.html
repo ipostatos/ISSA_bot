@@ -88,7 +88,7 @@
   /* ── управление: правая колонка = газ + СТОП (правый палец),
         левая колонка = подрулька + руль (левый палец),
         редкие кнопки (заново/выход) — наверху справа ── */
-  #rightCol{position:absolute; right:8px; bottom:calc(10px + env(safe-area-inset-bottom,0px));
+  #rightCol{position:absolute; right:8px; bottom:calc(26px + env(safe-area-inset-bottom,0px));
     display:flex; flex-direction:column; gap:8px; align-items:stretch}
   #levers{display:flex; gap:8px; justify-content:flex-end}
   .lever{position:relative; width:58px; height:min(36vh,250px); border-radius:16px;
@@ -98,17 +98,19 @@
   .lever .knob{position:absolute; left:4px; right:4px; height:42px; border-radius:12px; top:calc(50% - 21px);
     background:var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.4); display:flex; align-items:center;
     justify-content:center; color:var(--accent-text); font-size:12px; font-weight:800}
-  .lever .cap{position:absolute; top:5px; left:0; right:0; text-align:center; font-size:10px; color:#9fc4e0}
+  .lever .cap{position:absolute; top:5px; left:0; right:0; text-align:center; font-size:10px;
+    color:#9fc4e0; white-space:pre-line; line-height:1.15}
   #stopBtn{height:50px; border-radius:13px; border:1px solid rgba(255,255,255,.22);
     background:rgba(8,18,30,.72); color:#ffb3ad; font-size:14px; font-weight:800; cursor:pointer;
     backdrop-filter:blur(4px); touch-action:manipulation}
   #stopBtn:active{background:var(--bad); color:#fff}
 
-  #leftCol{position:absolute; left:8px; bottom:calc(10px + env(safe-area-inset-bottom,0px));
-    width:min(52vw,240px); display:flex; flex-direction:column; gap:8px}
+  #leftCol{position:absolute; left:8px; bottom:calc(26px + env(safe-area-inset-bottom,0px));
+    width:min(52vw,240px); display:flex; flex-direction:column; gap:6px}
+  .ctl-cap{font-size:10px; color:#9fc4e0; text-shadow:0 1px 2px rgba(0,0,0,.8); padding-left:2px}
   #thrRow{display:flex; gap:8px}
-  .gbtn{flex:1; height:46px; border-radius:12px; border:1px solid rgba(255,255,255,.2);
-    background:rgba(8,18,30,.66); color:#dcecfa; font-size:15px; font-weight:800; cursor:pointer;
+  .gbtn{flex:0 0 68px; height:36px; border-radius:11px; border:1px solid rgba(255,255,255,.2);
+    background:rgba(8,18,30,.66); color:#dcecfa; font-size:13px; font-weight:800; cursor:pointer;
     backdrop-filter:blur(4px); touch-action:none}
   .gbtn:active{background:var(--accent); color:var(--accent-text)}
 
@@ -249,9 +251,12 @@
         <button id="stopBtn" data-i18n="dockStop"></button>
       </div>
       <div id="leftCol">
-        <div id="thrRow" class="hidden">
-          <button class="gbtn" id="thrL">◀</button>
-          <button class="gbtn" id="thrR">▶</button>
+        <div id="thrWrap" class="hidden">
+          <div class="ctl-cap" data-i18n="dockThrusterLbl"></div>
+          <div id="thrRow">
+            <button class="gbtn" id="thrL">◀</button>
+            <button class="gbtn" id="thrR">▶</button>
+          </div>
         </div>
         <div id="rudderBox">
           <span class="cap" data-i18n="dockRudder"></span>
@@ -1077,7 +1082,7 @@ function buildControls(){
   } else {
     levers.push(Lever(lv, T("dockThrottle"), function(v){ sim.thrT[0]=v; sim.thrT[1]=v; sim.started=true; }));
   }
-  document.getElementById("thrRow").classList.toggle("hidden", !h.thruster);
+  document.getElementById("thrWrap").classList.toggle("hidden", !h.thruster);
 }
 /* руль */
 (function(){
