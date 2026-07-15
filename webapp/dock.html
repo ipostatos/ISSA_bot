@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title data-i18n="dockTitle">Швартовки · 2D-симулятор</title>
+<link rel="stylesheet" href="theme.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
+<script src="icons.js"></script>
+<style>
+  :root{
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --text: var(--tg-theme-text-color, #fff);
+    --hint: var(--tg-theme-hint-color, #8a9aa9);
+    --card: var(--tg-theme-secondary-bg-color, #232e3c);
+    --accent: var(--tg-theme-button-color, #50a8eb);
+    --accent-text: var(--tg-theme-button-text-color, #fff);
+    --border: rgba(255,255,255,.10);
+    --ok:#4caf72; --bad:#e5544b;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg: var(--tg-theme-bg-color, #ffffff);
+      --text: var(--tg-theme-text-color, #1a1a1a);
+      --hint: var(--tg-theme-hint-color, #7d8a99);
+      --card: var(--tg-theme-secondary-bg-color, #f1f3f5);
+      --accent: var(--tg-theme-button-color, #3390ec);
+      --accent-text: var(--tg-theme-button-text-color, #ffffff);
+      --border: rgba(0,0,0,.10);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0; padding:14px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.5; -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation}
+  h1{font-size:19px; margin:0 0 2px}
+  .sub{color:var(--hint); font-size:13px; margin:0 0 14px}
+  .hidden{display:none !important}
+  .section-t{font-size:12px; color:var(--hint); text-transform:uppercase; letter-spacing:.04em; margin:16px 0 8px}
+
+  /* ── настройка ── */
+  .cards{display:flex; flex-direction:column; gap:8px}
+  .pick{display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--border);
+    background:var(--card); border-radius:13px; cursor:pointer; width:100%; color:var(--text);
+    text-align:left; font-size:15px}
+  .pick .pic{flex:0 0 auto; color:var(--accent); width:26px; text-align:center}
+  .pick small{display:block; font-weight:400; font-size:12.5px; color:var(--hint)}
+  .pick b{font-weight:650}
+  .pick.on{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent)}
+  .envrow{display:flex; align-items:center; gap:10px; margin-top:8px}
+  .envrow label{flex:0 0 86px; font-size:13.5px}
+  .envrow input[type=range]{flex:1; accent-color:var(--accent)}
+  .envrow .val{flex:0 0 64px; text-align:right; font-size:13.5px; color:var(--hint); font-variant-numeric:tabular-nums}
+  .dirs{display:flex; gap:5px; flex-wrap:wrap; margin-top:6px}
+  .dir{flex:1 0 auto; min-width:34px; padding:7px 0; font-size:12.5px; text-align:center; color:var(--text);
+    background:var(--card); border:1px solid var(--border); border-radius:9px; cursor:pointer}
+  .dir.on{border-color:var(--accent); color:var(--accent); font-weight:700}
+  .btn{width:100%; padding:14px; border:none; border-radius:13px; background:var(--accent);
+    color:var(--accent-text); font-weight:700; font-size:16px; cursor:pointer; margin-top:16px}
+  .tips{background:var(--card); border:1px solid var(--border); border-radius:13px; padding:12px 14px; margin-top:14px}
+  .tips .t{font-weight:700; font-size:14px; margin-bottom:6px}
+  .tips p{margin:5px 0; font-size:13px; color:var(--hint)}
+  .foot{color:var(--hint); font-size:11px; text-align:center; margin-top:18px}
+
+  /* ── игра ── */
+  body.playing{padding:0; overflow:hidden}
+  #game{position:fixed; inset:0; display:flex; flex-direction:column; background:#0a1a2a}
+  #wrap{position:relative; flex:1; min-height:0}
+  #sea{position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none}
+
+  .hud{position:absolute; left:10px; top:10px; display:flex; flex-direction:column; gap:6px; pointer-events:none}
+  .chip2{background:rgba(8,18,30,.72); border:1px solid rgba(255,255,255,.14); color:#dcecfa;
+    font-size:12px; padding:5px 9px; border-radius:9px; backdrop-filter:blur(4px);
+    font-variant-numeric:tabular-nums; white-space:nowrap}
+  .chip2 b{font-size:13px}
+  #windHud{position:absolute; right:10px; top:10px; display:flex; align-items:center; gap:7px;
+    background:rgba(8,18,30,.72); border:1px solid rgba(255,255,255,.14); color:#dcecfa;
+    font-size:12px; padding:5px 9px; border-radius:9px; pointer-events:none}
+  #windArrow{width:18px; height:18px}
+  #dmgWrap{position:absolute; right:10px; top:46px; width:110px; height:8px; border-radius:5px;
+    background:rgba(8,18,30,.72); border:1px solid rgba(255,255,255,.16); overflow:hidden; pointer-events:none}
+  #dmgBar{height:100%; width:0%; background:var(--bad); transition:width .2s}
+
+  /* рычаги газа (справа поверх канвы) */
+  #levers{position:absolute; right:8px; bottom:86px; display:flex; gap:8px}
+  .lever{position:relative; width:52px; height:min(34vh,240px); border-radius:14px;
+    background:rgba(8,18,30,.66); border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(4px);
+    touch-action:none}
+  .lever .zero{position:absolute; left:6px; right:6px; top:50%; border-top:1px dashed rgba(255,255,255,.35)}
+  .lever .knob{position:absolute; left:4px; right:4px; height:34px; border-radius:10px; top:calc(50% - 17px);
+    background:var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.4); display:flex; align-items:center;
+    justify-content:center; color:var(--accent-text); font-size:11px; font-weight:800}
+  .lever .cap{position:absolute; top:4px; left:0; right:0; text-align:center; font-size:10px; color:#9fc4e0}
+
+  /* руль (снизу по центру) */
+  #rudderBox{position:absolute; left:10px; right:70px; bottom:12px; height:56px; border-radius:14px;
+    background:rgba(8,18,30,.66); border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(4px); touch-action:none}
+  #rudderBox .mid{position:absolute; top:6px; bottom:6px; left:50%; border-left:1px dashed rgba(255,255,255,.35)}
+  #rudderKnob{position:absolute; top:5px; width:46px; height:46px; border-radius:12px; left:calc(50% - 23px);
+    background:var(--accent); color:var(--accent-text); display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:800; box-shadow:0 2px 8px rgba(0,0,0,.4)}
+  #rudderBox .cap{position:absolute; top:-16px; left:8px; font-size:10px; color:#9fc4e0}
+
+  /* кнопки слева */
+  #btnCol{position:absolute; left:8px; bottom:86px; display:flex; flex-direction:column; gap:8px}
+  .gbtn{width:52px; height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.2);
+    background:rgba(8,18,30,.66); color:#dcecfa; font-size:12px; font-weight:800; cursor:pointer;
+    backdrop-filter:blur(4px); touch-action:none}
+  .gbtn:active{background:var(--accent); color:var(--accent-text)}
+  #thrRow{display:flex; gap:6px}
+  #thrRow .gbtn{width:23px; font-size:13px}
+
+  /* оверлей результата */
+  #overlay{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(4,10,18,.55); backdrop-filter:blur(3px)}
+  #overlay .card{width:min(88%,340px); background:var(--card); border:1px solid var(--border);
+    border-radius:16px; padding:20px; text-align:center}
+  #overlay h2{margin:0 0 4px; font-size:19px}
+  #ovStars{font-size:26px; letter-spacing:4px; margin:6px 0}
+  #ovStats{font-size:13.5px; color:var(--hint); margin:8px 0 2px; line-height:1.7}
+  #ovStats b{color:var(--text); font-variant-numeric:tabular-nums}
+  #ovMsg{font-size:13px; color:var(--hint); margin-top:8px}
+  #overlay .row{display:flex; gap:8px; margin-top:14px}
+  #overlay .row .btn{margin:0; padding:12px; font-size:15px}
+  #overlay .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--border)}
+
+  #goalTip{position:absolute; left:50%; transform:translateX(-50%); top:10px; max-width:74%;
+    background:rgba(8,18,30,.72); border:1px solid rgba(255,255,255,.14); color:#dcecfa;
+    font-size:12px; padding:5px 10px; border-radius:9px; text-align:center; pointer-events:none;
+    transition:opacity .5s}
+</style>
+</head>
+<body>
+  <!-- ── НАСТРОЙКА ── -->
+  <section id="setup">
+    <h1>⚓ <span data-i18n="dockH1"></span></h1>
+    <p class="sub" data-i18n="dockSub"></p>
+
+    <div class="section-t" data-i18n="dockHullT"></div>
+    <div class="cards" id="hullCards">
+      <button class="pick on" data-hull="sail">
+        <span class="pic" data-icon="sailboat"></span>
+        <span><b data-i18n="dockHullSail"></b><small data-i18n="dockHullSailD"></small></span>
+      </button>
+      <button class="pick" data-hull="cat">
+        <span class="pic" data-icon="ship"></span>
+        <span><b data-i18n="dockHullCat"></b><small data-i18n="dockHullCatD"></small></span>
+      </button>
+      <button class="pick" data-hull="pow">
+        <span class="pic" data-icon="ship-wheel"></span>
+        <span><b data-i18n="dockHullPow"></b><small data-i18n="dockHullPowD"></small></span>
+      </button>
+    </div>
+
+    <div class="section-t" data-i18n="dockScenT"></div>
+    <div class="cards" id="scenCards">
+      <button class="pick on" data-scen="alongside">
+        <span class="pic" data-icon="anchor"></span>
+        <span><b data-i18n="dockS1"></b><small data-i18n="dockS1D"></small></span>
+      </button>
+      <button class="pick" data-scen="box">
+        <span class="pic" data-icon="target"></span>
+        <span><b data-i18n="dockS2"></b><small data-i18n="dockS2D"></small></span>
+      </button>
+      <button class="pick" data-scen="med">
+        <span class="pic" data-icon="navigation"></span>
+        <span><b data-i18n="dockS3"></b><small data-i18n="dockS3D"></small></span>
+      </button>
+      <button class="pick" data-scen="free">
+        <span class="pic" data-icon="waves"></span>
+        <span><b data-i18n="dockS4"></b><small data-i18n="dockS4D"></small></span>
+      </button>
+    </div>
+
+    <div class="section-t" data-i18n="dockWindT"></div>
+    <div class="envrow">
+      <label data-i18n="dockWindT"></label>
+      <input type="range" id="windKn" min="0" max="25" step="1" value="8">
+      <span class="val"><span id="windKnV">8</span> <span data-i18n="dockKn"></span></span>
+    </div>
+    <div class="dirs" id="windDirs"></div>
+
+    <div class="section-t" data-i18n="dockCurT"></div>
+    <div class="envrow">
+      <label data-i18n="dockCurT"></label>
+      <input type="range" id="curKn" min="0" max="2" step="0.25" value="0">
+      <span class="val"><span id="curKnV">0</span> <span data-i18n="dockKn"></span></span>
+    </div>
+    <div class="dirs" id="curDirs"></div>
+
+    <button class="btn" id="startBtn" data-i18n="dockStart"></button>
+
+    <div class="tips">
+      <div class="t" data-i18n="dockTipsT"></div>
+      <p data-i18n="dockTip1"></p>
+      <p data-i18n="dockTip2"></p>
+      <p data-i18n="dockTip3"></p>
+    </div>
+    <p class="foot" data-i18n="dockFoot"></p>
+  </section>
+
+  <!-- ── ИГРА ── -->
+  <section id="game" class="hidden">
+    <div id="wrap">
+      <canvas id="sea"></canvas>
+      <div id="goalTip"></div>
+      <div class="hud">
+        <div class="chip2">⏱ <b id="hudTime">0:00</b></div>
+        <div class="chip2"><span data-i18n="dockSpeed"></span> <b id="hudSpd">0.0</b> <span data-i18n="dockKn"></span></div>
+      </div>
+      <div id="windHud">
+        <svg id="windArrow" viewBox="0 0 20 20"><path d="M10 2 L14 12 L10 9.5 L6 12 Z" fill="#7fd0ff"/></svg>
+        <span id="windHudV"></span>
+      </div>
+      <div id="dmgWrap"><div id="dmgBar"></div></div>
+
+      <div id="levers"></div>
+      <div id="btnCol">
+        <button class="gbtn" id="stopBtn" data-i18n="dockStop"></button>
+        <div id="thrRow" class="hidden">
+          <button class="gbtn" id="thrL">◀</button>
+          <button class="gbtn" id="thrR">▶</button>
+        </div>
+        <button class="gbtn" id="rstBtn">↺</button>
+        <button class="gbtn" id="exitBtn">✕</button>
+      </div>
+      <div id="rudderBox">
+        <span class="cap" data-i18n="dockRudder"></span>
+        <div class="mid"></div>
+        <div id="rudderKnob">0°</div>
+      </div>
+
+      <div id="overlay" class="hidden">
+        <div class="card">
+          <h2 id="ovTitle"></h2>
+          <div id="ovStars"></div>
+          <div id="ovStats"></div>
+          <div id="ovMsg"></div>
+          <div class="row">
+            <button class="btn ghost" id="ovSetup"></button>
+            <button class="btn" id="ovAgain"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<script>
+"use strict";
+/* ============================================================
+   Тренажёр швартовок — 2D-физика top-down.
+   Модель: surge u / sway v / yaw r в связанной СК (x вперёд,
+   y на правый борт), y экрана вниз, курс psi по часовой от +x.
+   Силы: тяга винта(ов), руль (поток = ход + струя), заброс
+   винта, ветер (парусность), течение, гидродинамика (drag).
+   Коллизии: точки обводов + импульсный отклик.
+   ============================================================ */
+var T = function(k, v){ return (window.I18N && I18N.t) ? I18N.t(k, v) : k; };
+var clamp = function(x,a,b){ return x<a?a:(x>b?b:x); };
+var DEG = Math.PI/180, KN = 0.5144;
+
+/* ── корпуса ── */
+var HULLS = {
+  sail: { L:10.5, B:3.4, m:6500, Iz:45000,
+    thrustF:3200, thrustR:2400, propWalk:650, rudArm:4.6, Cr:1000, washK:2.2,
+    dragU:[60,300], dragV:[800,6000], dragR:[25000,220000],
+    windA:11, windOff:1.6, thruster:900, twin:false, vector:false },
+  cat:  { L:11.5, B:6.4, m:9000, Iz:110000,
+    thrustF:2600, thrustR:2000, propWalk:0, rudArm:5.0, Cr:350, washK:1.4,
+    engOff:2.6, dragU:[80,380], dragV:[600,4200], dragR:[40000,320000],
+    windA:28, windOff:1.2, thruster:1100, twin:true, vector:false },
+  pow:  { L:7.8, B:2.7, m:2800, Iz:12000,
+    thrustF:5200, thrustR:3600, propWalk:150, rudArm:3.4, Cr:250, washK:0,
+    dragU:[50,240], dragV:[300,2200], dragR:[6000,60000],
+    windA:9, windOff:2.2, thruster:0, twin:false, vector:true }
+};
+
+/* ── сценарии: геометрия строится под размер выбранного корпуса ── */
+function buildScenario(kind, hull){
+  // акватория портретная (44×64 м) — под вертикальный экран телефона
+  var L=hull.L, B=hull.B, W=44, H=64, s;
+  var walls=[], poles=[], boats=[], zone=null;
+  // мягкие границы акватории (мол): без повреждений
+  walls.push({x:-4,y:-4,w:W+8,h:4,soft:true},{x:-4,y:H,w:W+8,h:4,soft:true},
+             {x:-4,y:0,w:4,h:H,soft:true},{x:W,y:0,w:4,h:H,soft:true});
+  if (kind==="alongside"){
+    walls.push({x:0,y:H-6,w:W,h:6,quay:true});                  // каменная набережная снизу
+    var gap = L*1.9, x0 = (W-gap)/2;
+    boats.push({x:x0-L, y:H-6-B-0.5, w:L, h:B, psi:0});          // соседи лагом
+    boats.push({x:x0+gap, y:H-6-B-0.5, w:L, h:B, psi:0});
+    zone = { x:x0, y:H-6-B-1.6, w:gap, h:B+1.6, head:[0,Math.PI], tol:14*DEG,
+             reach:{side:"bottom", edge:H-6, dist:1.4},
+             ghost:{x:x0+gap/2, y:H-6-B/2-0.3, psi:0} };
+    s = {start:{x:12,y:12,psi:20*DEG}, windDef:{kn:8, dir:0}};
+  } else if (kind==="box"){
+    walls.push({x:0,y:H-5,w:W,h:5,quay:true});                   // помост снизу
+    var slotW = B+1.3, cx = W/2, py = H-5-(L+4.5);               // сваи в L+4.5 м от помоста
+    poles.push({x:cx-slotW/2, y:py, r:0.22},{x:cx+slotW/2, y:py, r:0.22});
+    poles.push({x:cx-slotW/2-slotW, y:py, r:0.22},{x:cx+slotW/2+slotW, y:py, r:0.22});
+    boats.push({x:cx-slotW/2-slotW+ (slotW-B)/2, y:py+1.2, w:B, h:L, psi:0}); // сосед в левом боксе
+    zone = { x:cx-slotW/2, y:py, w:slotW, h:H-5-py, head:[90*DEG,-90*DEG], tol:12*DEG,
+             reach:{side:"bottom", edge:H-5, dist:2.2},
+             ghost:{x:cx, y:H-5-L/2-0.8, psi:90*DEG} };
+    s = {start:{x:12,y:12,psi:0}, windDef:{kn:6, dir:270}};
+  } else if (kind==="med"){
+    walls.push({x:0,y:H-6,w:W,h:6,quay:true});
+    var gapM = B*2.2, cxm = W/2;
+    boats.push({x:cxm-gapM/2-B, y:H-6-L, w:B, h:L, psi:0});      // соседи кормой к стенке
+    boats.push({x:cxm+gapM/2, y:H-6-L, w:B, h:L, psi:0});
+    zone = { x:cxm-gapM/2, y:H-6-L-1.5, w:gapM, h:L+1.5, head:[-90*DEG], tol:14*DEG,
+             reach:{side:"bottom", edge:H-6, dist:2.2},
+             ghost:{x:cxm, y:H-6-L/2-0.4, psi:-90*DEG} };
+    s = {start:{x:12,y:10,psi:30*DEG}, windDef:{kn:8, dir:90}};
+  } else { // free
+    walls.push({x:14,y:28,w:16,h:4,quay:true});                  // одинокий понтон
+    zone = null;
+    s = {start:{x:10,y:52,psi:-30*DEG}, windDef:{kn:8, dir:225}};
+  }
+  return {W:W,H:H,walls:walls,poles:poles,boats:boats,zone:zone,
+          start:s.start,windDef:s.windDef,kind:kind};
+}
+
+/* ── состояние ── */
+var cfg = { hull:"sail", scen:"alongside", windKn:8, windDir:0, curKn:0, curDir:0 };
+try { var saved = JSON.parse(localStorage.getItem("issa_dock_cfg")||"{}");
+      for (var k in saved) if (k in cfg) cfg[k]=saved[k]; } catch(e){}
+
+var sim = null; // активная симуляция
+
+function newSim(){
+  var hull = HULLS[cfg.hull];
+  var sc = buildScenario(cfg.scen, hull);
+  return {
+    hull:hull, sc:sc,
+    x:sc.start.x, y:sc.start.y, psi:sc.start.psi,
+    u:0, v:0, r:0,
+    thr:[0,0], thrT:[0,0],          // факт/цель: [оба] или [левый, правый]
+    rud:0, rudT:0, keyDiff:0, thrusterDir:0,
+    windKn:cfg.windKn, windDir:cfg.windDir,
+    curKn:cfg.curKn, curDir:cfg.curDir,
+    time:0, started:false, done:false, failed:false,
+    damage:0, hits:0, maxImp:0, zoneHold:0,
+    lastHit:{}, trail:[], wash:[], gust:Math.random()*100
+  };
+}
+
+/* компас «откуда» → вектор «куда дует» (экран: y вниз) */
+function blowVec(dirDeg, spd){
+  var a = dirDeg*DEG;
+  return { x:-Math.sin(a)*spd, y:Math.cos(a)*spd };
+}
+
+/* ── физика: один шаг dt ── */
+function step(S, dt){
+  var h = S.hull;
+  // рычаги: плавный спул двигателя, руль — серво
+  for (var i=0;i<2;i++) S.thr[i] += clamp(S.thrT[i]-S.thr[i], -2.6*dt, 2.6*dt);
+  S.rud += clamp(S.rudT-S.rud, -70*DEG*dt, 70*DEG*dt);
+
+  // ветер с лёгкими порывами
+  S.gust += dt;
+  var wSpd = S.windKn*KN * (1 + 0.22*Math.sin(S.gust*0.33) + 0.08*Math.sin(S.gust*1.7));
+  var wind = blowVec(S.windDir, Math.max(0,wSpd));
+  var cur  = blowVec(S.curDir, S.curKn*KN);
+
+  var cos=Math.cos(S.psi), sin=Math.sin(S.psi);
+  // скорость относительно воды (течение) в связанной СК
+  var vwx = (S.u*cos - S.v*sin) - cur.x, vwy = (S.u*sin + S.v*cos) - cur.y;
+  var ur =  vwx*cos + vwy*sin, vr = -vwx*sin + vwy*cos;
+
+  var Fx=0, Fy=0, N=0;
+
+  // тяга
+  var eng = h.twin ? [S.thr[0]+S.keyDiff, S.thr[1]-S.keyDiff] : null;
+  if (h.twin){
+    var TL = thrustOf(h, clamp(eng[0],-1,1)), TR = thrustOf(h, clamp(eng[1],-1,1));
+    Fx += TL+TR;
+    N  += h.engOff*(TL-TR);
+  } else {
+    var Tm = thrustOf(h, S.thr[0]);
+    if (h.vector){                                   // поворотная колонка
+      Fx += Tm*Math.cos(S.rud);
+      var Fyv = -Tm*Math.sin(S.rud);
+      Fy += Fyv; N += -h.rudArm*Fyv;
+    } else Fx += Tm;
+    // заброс винта: на заднем ходу корму тянет влево
+    if (h.propWalk){
+      var pw = S.thr[0]<0 ? -h.propWalk*(-S.thr[0]) : 0.15*h.propWalk*S.thr[0];
+      Fy += pw; N += -h.rudArm*pw;
+    }
+  }
+
+  // руль: поток = ход воды + струя винта (только вперёд).
+  // У поворотной колонки washK=0 — перо/колонка рулит только на выбеге.
+  var wash = h.twin ? Math.max(S.thr[0]+S.keyDiff,0)+Math.max(S.thr[1]-S.keyDiff,0)
+                    : Math.max(S.thr[0],0);
+  var flow = ur + h.washK*Math.min(wash,1);
+  var Frud = h.Cr * flow*Math.abs(flow) * Math.sin(S.rud);
+  N += h.rudArm*Frud;
+  Fy += -0.35*Frud;
+
+  // носовое подруливающее
+  if (S.thrusterDir && h.thruster){
+    var Ft = h.thruster*S.thrusterDir;
+    Fy += Ft; N += (h.L*0.38)*Ft;
+  }
+
+  // ветер (парусность), точка приложения смещена в нос
+  var awx = wind.x - (S.u*cos - S.v*sin), awy = wind.y - (S.u*sin + S.v*cos);
+  var abx =  awx*cos + awy*sin, aby = -awx*sin + awy*cos;
+  var aw = Math.hypot(abx,aby);
+  if (aw>0.01){
+    var q = 0.613*aw*h.windA;
+    Fx += q*0.35*abx; Fy += q*aby;
+    N  += h.windOff * q*aby;
+  }
+
+  // гидродинамическое сопротивление (относительно воды)
+  Fx += -(h.dragU[0]*ur + h.dragU[1]*ur*Math.abs(ur));
+  Fy += -(h.dragV[0]*vr + h.dragV[1]*vr*Math.abs(vr));
+  N  += -(h.dragR[0]*S.r + h.dragR[1]*S.r*Math.abs(S.r));
+
+  // интегрирование (с кориолисовыми членами)
+  S.u += (Fx/h.m + S.v*S.r)*dt;
+  S.v += (Fy/h.m - S.u*S.r)*dt;
+  S.r += (N/h.Iz)*dt;
+  S.psi += S.r*dt;
+  S.x += (S.u*Math.cos(S.psi) - S.v*Math.sin(S.psi))*dt;
+  S.y += (S.u*Math.sin(S.psi) + S.v*Math.cos(S.psi))*dt;
+
+  collide(S);
+  if (S.started) S.time += dt;   // секундомер — с первого действия рулём/газом
+  if (S.started) checkGoal(S, dt);
+
+  // след и струя
+  S.trail.push({x:S.x,y:S.y});
+  if (S.trail.length>700) S.trail.shift();
+  var thrAbs = h.twin ? Math.max(Math.abs(S.thr[0]),Math.abs(S.thr[1])) : Math.abs(S.thr[0]);
+  if (thrAbs>0.12 && Math.random()<0.5){
+    var back = S.thr[0]>=0 ? -1 : 1;
+    S.wash.push({ x:S.x + back*Math.cos(S.psi)*h.L*0.55, y:S.y + back*Math.sin(S.psi)*h.L*0.55,
+      r:0.35, a:0.5*thrAbs, g:0.9+Math.random()*0.6 });
+  }
+  for (var w2=S.wash.length-1;w2>=0;w2--){ var p=S.wash[w2]; p.r+=p.g*dt*2.2; p.a-=dt*0.55; if(p.a<=0) S.wash.splice(w2,1); }
+}
+
+function thrustOf(h, t){ return t>=0 ? h.thrustF*t : h.thrustR*t; }
+
+/* ── обводы корпуса (связанная СК) ── */
+function hullPoly(h){
+  var L=h.L/2, B=h.B/2;
+  return [[L,0],[L*0.45,B*0.85],[-L*0.75,B],[-L,B*0.8],[-L,-B*0.8],[-L*0.75,-B],[L*0.45,-B*0.85]];
+}
+function worldPoly(S){
+  var c=Math.cos(S.psi), s=Math.sin(S.psi);
+  return hullPoly(S.hull).map(function(p){
+    return { x:S.x + p[0]*c - p[1]*s, y:S.y + p[0]*s + p[1]*c, bx:p[0], by:p[1] };
+  });
+}
+/* точки обводов для коллизий: вершины + середины рёбер */
+function hullSamples(S){
+  var P=worldPoly(S), out=[], n=P.length;
+  for (var i=0;i<n;i++){
+    var a=P[i], b=P[(i+1)%n];
+    out.push(a, {x:(a.x+b.x)/2, y:(a.y+b.y)/2, bx:(a.bx+b.bx)/2, by:(a.by+b.by)/2});
+  }
+  return out;
+}
+
+/* ── коллизии ── */
+function collide(S){
+  var pts = hullSamples(S), i, p;
+  var obs = [];
+  S.sc.walls.forEach(function(w,ix){ obs.push({t:"r",o:w,id:"w"+ix,soft:!!w.soft}); });
+  S.sc.boats.forEach(function(b,ix){ obs.push({t:"r",o:b,id:"b"+ix}); });
+  for (i=0;i<pts.length;i++){
+    p=pts[i];
+    for (var j=0;j<obs.length;j++){
+      var ob=obs[j], w=ob.o;
+      if (p.x>w.x && p.x<w.x+w.w && p.y>w.y && p.y<w.y+w.h){
+        var dl=p.x-w.x, dr=w.x+w.w-p.x, dt2=p.y-w.y, db=w.y+w.h-p.y;
+        var m=Math.min(dl,dr,dt2,db), n = m===dl?{x:-1,y:0}:m===dr?{x:1,y:0}:m===dt2?{x:0,y:-1}:{x:0,y:1};
+        resolveHit(S, p, n, m, ob);
+      }
+    }
+  }
+  // сваи: расстояние от отрезков обводов до центра сваи
+  var P=worldPoly(S), n2=P.length;
+  S.sc.poles.forEach(function(pl,ix){
+    for (var e=0;e<n2;e++){
+      var a=P[e], b=P[(e+1)%n2];
+      var q = closestOnSeg(a,b,pl);
+      var d = Math.hypot(q.x-pl.x, q.y-pl.y);
+      if (d < pl.r+0.05){
+        var nx=(q.x-pl.x)/(d||1), ny=(q.y-pl.y)/(d||1);
+        resolveHit(S, {x:q.x,y:q.y,bx:q.bx,by:q.by}, {x:nx,y:ny}, pl.r+0.05-d, {id:"p"+ix});
+      }
+    }
+  });
+}
+function closestOnSeg(a,b,c){
+  var abx=b.x-a.x, aby=b.y-a.y, t=((c.x-a.x)*abx+(c.y-a.y)*aby)/(abx*abx+aby*aby||1);
+  t=clamp(t,0,1);
+  return {x:a.x+abx*t, y:a.y+aby*t, bx:a.bx+(b.bx-a.bx)*t, by:a.by+(b.by-a.by)*t};
+}
+function resolveHit(S, p, n, depth, ob){
+  var h=S.hull;
+  // скорость точки корпуса
+  var c=Math.cos(S.psi), s=Math.sin(S.psi);
+  var rx = p.bx*c - p.by*s, ry = p.bx*s + p.by*c;
+  var vx = S.u*c - S.v*s - S.r*ry, vy = S.u*s + S.v*c + S.r*rx;
+  var vn = vx*n.x + vy*n.y;
+  // выталкивание
+  S.x += n.x*depth*0.6; S.y += n.y*depth*0.6;
+  if (vn < 0){
+    var imp = -vn;
+    var rn = rx*n.y - ry*n.x;
+    var J = (1+0.15)*imp / (1/h.m + rn*rn/h.Iz);
+    var jm = J/h.m;
+    var dvx = jm*n.x, dvy = jm*n.y;
+    S.u += dvx*c + dvy*s; S.v += -dvx*s + dvy*c;
+    S.r += (rn*J)/h.Iz;
+    // повреждения: не за мол, не чаще 0.5 c на препятствие, не за мягкое касание
+    var now=S.time, last=S.lastHit[ob.id]||-9;
+    if (!ob.soft && now-last>0.5){
+      S.lastHit[ob.id]=now;
+      S.hits++; if (imp>S.maxImp) S.maxImp=imp;
+      if (imp>0.4) S.damage = Math.min(100, S.damage + (imp-0.3)*38);
+      if (S.damage>=100 && !S.done){ S.done=true; S.failed=true; showResult(); }
+    }
+  }
+}
+
+/* ── цель ── */
+function angDiff(a,b){ var d=(a-b)%(2*Math.PI); if(d>Math.PI)d-=2*Math.PI; if(d<-Math.PI)d+=2*Math.PI; return Math.abs(d); }
+function checkGoal(S, dt){
+  var z=S.sc.zone;
+  if (!z || S.done) return;
+  var P=worldPoly(S), inside=P.every(function(p){ return p.x>=z.x-0.3 && p.x<=z.x+z.w+0.3 && p.y>=z.y-0.3 && p.y<=z.y+z.h+0.3; });
+  var headOk = z.head.some(function(hh){ return angDiff(S.psi,hh)<z.tol; });
+  var slow = Math.abs(S.u)<0.12 && Math.abs(S.v)<0.12 && Math.abs(S.r)<2.5*DEG;
+  var reachOk = true;
+  if (z.reach){
+    var best=1e9;
+    P.forEach(function(p){ best=Math.min(best, Math.abs(z.reach.edge-p.y)); });
+    reachOk = best < z.reach.dist;
+  }
+  if (inside && headOk && slow && reachOk){
+    S.zoneHold += dt;
+    if (S.zoneHold>1.2){ S.done=true; S.failed=false; showResult(); }
+  } else S.zoneHold=0;
+}
+
+/* ============================================================
+   РЕНДЕР
+   ============================================================ */
+var cv, cx2, dpr=1, view={s:1,ox:0,oy:0};
+function resizeCanvas(){
+  var r = cv.parentElement.getBoundingClientRect();
+  dpr = window.devicePixelRatio||1;
+  cv.width = Math.round(r.width*dpr); cv.height = Math.round(r.height*dpr);
+  if (sim){
+    var s = Math.min(cv.width/sim.sc.W, cv.height/sim.sc.H);
+    view.s=s; view.ox=(cv.width - sim.sc.W*s)/2; view.oy=(cv.height - sim.sc.H*s)/2;
+  }
+}
+function W2S(x,y){ return [view.ox+x*view.s, view.oy+y*view.s]; }
+
+function draw(S){
+  var w=cv.width, hgt=cv.height, ctx=cx2;
+  // вода
+  var g=ctx.createLinearGradient(0,0,0,hgt);
+  g.addColorStop(0,"#0d2c47"); g.addColorStop(1,"#081c30");
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,hgt);
+
+  ctx.save();
+  ctx.translate(view.ox, view.oy); ctx.scale(view.s, view.s);
+  ctx.lineJoin="round"; ctx.lineCap="round";
+
+  // штрихи ветра
+  var bv = blowVec(S.windDir,1);
+  ctx.strokeStyle="rgba(160,210,255,.10)"; ctx.lineWidth=0.12;
+  for (var i=0;i<26;i++){
+    var wx=((i*97)%S.sc.W)+ (S.time*S.windKn*0.35*bv.x)%S.sc.W, wy=((i*57)%S.sc.H)+(S.time*S.windKn*0.35*bv.y)%S.sc.H;
+    wx=(wx%S.sc.W+S.sc.W)%S.sc.W; wy=(wy%S.sc.H+S.sc.H)%S.sc.H;
+    ctx.beginPath(); ctx.moveTo(wx,wy); ctx.lineTo(wx+bv.x*2.2, wy+bv.y*2.2); ctx.stroke();
+  }
+
+  // зона цели + «призрак»
+  var z=S.sc.zone;
+  if (z){
+    ctx.fillStyle="rgba(76,175,114,.16)";
+    ctx.strokeStyle="rgba(76,175,114,.85)"; ctx.lineWidth=0.16; ctx.setLineDash([0.8,0.5]);
+    ctx.fillRect(z.x,z.y,z.w,z.h); ctx.strokeRect(z.x,z.y,z.w,z.h);
+    ctx.setLineDash([]);
+    if (z.ghost){
+      ctx.save(); ctx.translate(z.ghost.x,z.ghost.y); ctx.rotate(z.ghost.psi);
+      ctx.strokeStyle="rgba(76,175,114,.7)"; ctx.lineWidth=0.14; ctx.setLineDash([0.5,0.35]);
+      tracePoly(ctx, hullPoly(S.hull)); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+    }
+  }
+
+  // причалы и мол
+  S.sc.walls.forEach(function(wl){
+    if (wl.soft){ ctx.fillStyle="rgba(120,160,190,.12)"; ctx.fillRect(wl.x,wl.y,wl.w,wl.h); return; }
+    ctx.fillStyle="#6b7787"; ctx.fillRect(wl.x,wl.y,wl.w,wl.h);
+    ctx.fillStyle="#7e8b9c"; ctx.fillRect(wl.x,wl.y,wl.w,0.5);
+    // кнехты
+    ctx.fillStyle="#3c4757";
+    for (var bx=wl.x+2; bx<wl.x+wl.w-1; bx+=4){ ctx.beginPath(); ctx.arc(bx, wl.y+1.1, 0.28, 0, 7); ctx.fill(); }
+  });
+
+  // сваи (рисуем крупнее физического радиуса, чтобы были видны)
+  S.sc.poles.forEach(function(p){
+    ctx.fillStyle="rgba(160,120,70,.35)"; ctx.beginPath(); ctx.arc(p.x,p.y,p.r+0.35,0,7); ctx.fill();
+    ctx.fillStyle="#8a6a42"; ctx.beginPath(); ctx.arc(p.x,p.y,p.r+0.12,0,7); ctx.fill();
+    ctx.strokeStyle="rgba(0,0,0,.45)"; ctx.lineWidth=0.08; ctx.stroke();
+  });
+
+  // соседние лодки
+  S.sc.boats.forEach(function(b){
+    ctx.save(); ctx.translate(b.x+b.w/2, b.y+b.h/2);
+    var vert = b.h>b.w;
+    ctx.rotate(vert? 90*DEG : 0);
+    var Lb=Math.max(b.w,b.h), Bb=Math.min(b.w,b.h);
+    drawStaticBoat(ctx, Lb, Bb);
+    ctx.restore();
+  });
+
+  // след
+  if (S.trail.length>2){
+    ctx.strokeStyle="rgba(140,200,255,.20)"; ctx.lineWidth=0.14;
+    ctx.beginPath(); ctx.moveTo(S.trail[0].x,S.trail[0].y);
+    S.trail.forEach(function(p){ ctx.lineTo(p.x,p.y); }); ctx.stroke();
+  }
+  // струя винта
+  S.wash.forEach(function(p){
+    ctx.fillStyle="rgba(200,230,255,"+(p.a*0.5).toFixed(3)+")";
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+  });
+
+  // лодка игрока
+  ctx.save(); ctx.translate(S.x,S.y); ctx.rotate(S.psi);
+  drawPlayerBoat(ctx, S);
+  ctx.restore();
+
+  ctx.restore();
+}
+function tracePoly(ctx, P){
+  ctx.beginPath(); ctx.moveTo(P[0][0],P[0][1]);
+  for (var i=1;i<P.length;i++) ctx.lineTo(P[i][0],P[i][1]);
+  ctx.closePath();
+}
+function drawStaticBoat(ctx,L,B){
+  var P=hullPoly({L:L,B:B});
+  ctx.fillStyle="#c8cfd8"; ctx.strokeStyle="#8d99a8"; ctx.lineWidth=0.1;
+  tracePoly(ctx,P); ctx.fill(); ctx.stroke();
+  ctx.fillStyle="#aab4c0";
+  ctx.beginPath(); ctx.arc(0,0,0.16,0,7); ctx.fill();
+}
+function drawPlayerBoat(ctx,S){
+  var h=S.hull, P=hullPoly(h), L=h.L/2, B=h.B/2;
+  if (h.twin){ // катамаран: два корпуса + мост
+    ctx.fillStyle="#f2f5f8"; ctx.strokeStyle="#5f6f80"; ctx.lineWidth=0.1;
+    [-1,1].forEach(function(sgn){
+      ctx.save(); ctx.translate(0, sgn*(B-0.7));
+      tracePoly(ctx, hullPoly({L:h.L, B:1.5})); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    });
+    ctx.fillStyle="rgba(226,234,242,.92)";
+    ctx.fillRect(-L*0.72, -(B-1.3), L*1.35, 2*(B-1.3));
+    ctx.strokeRect(-L*0.72, -(B-1.3), L*1.35, 2*(B-1.3));
+  } else {
+    ctx.fillStyle="#f2f5f8"; ctx.strokeStyle="#5f6f80"; ctx.lineWidth=0.12;
+    tracePoly(ctx,P); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#dfe6ee";
+    ctx.beginPath(); ctx.roundRect(-L*0.55, -B*0.55, L*0.95, B*1.1, 0.35); ctx.fill(); ctx.stroke();
+    if (S===sim && cfg.hull==="sail"){ ctx.fillStyle="#46536b"; ctx.beginPath(); ctx.arc(L*0.08,0,0.2,0,7); ctx.fill(); }
+  }
+  // руль/колонка
+  ctx.strokeStyle="#e5544b"; ctx.lineWidth=0.16;
+  ctx.save(); ctx.translate(-L*0.98,0); ctx.rotate(-S.rud);
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-1.0,0); ctx.stroke(); ctx.restore();
+  // подруливающее: стрелка у носа
+  if (S.thrusterDir){
+    ctx.strokeStyle="#7fd0ff"; ctx.lineWidth=0.14;
+    ctx.beginPath(); ctx.moveTo(L*0.75, 0); ctx.lineTo(L*0.75, S.thrusterDir*1.2); ctx.stroke();
+  }
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+var DIRS=[["N",0],["NE",45],["E",90],["SE",135],["S",180],["SW",225],["W",270],["NW",315]];
+function mkDirs(el, cur, cb){
+  el.innerHTML="";
+  DIRS.forEach(function(d){
+    var b=document.createElement("button");
+    b.className="dir"+(d[1]===cur?" on":""); b.textContent=d[0];
+    b.onclick=function(){ el.querySelectorAll(".dir").forEach(function(x){x.classList.remove("on");});
+      b.classList.add("on"); cb(d[1]); };
+    el.appendChild(b);
+  });
+}
+function saveCfg(){ try{ localStorage.setItem("issa_dock_cfg", JSON.stringify(cfg)); }catch(e){} }
+
+document.querySelectorAll("#hullCards .pick").forEach(function(b){
+  if (b.dataset.hull===cfg.hull){ document.querySelectorAll("#hullCards .pick").forEach(function(x){x.classList.remove("on");}); b.classList.add("on"); }
+  b.onclick=function(){ document.querySelectorAll("#hullCards .pick").forEach(function(x){x.classList.remove("on");});
+    b.classList.add("on"); cfg.hull=b.dataset.hull; saveCfg(); };
+});
+document.querySelectorAll("#scenCards .pick").forEach(function(b){
+  if (b.dataset.scen===cfg.scen){ document.querySelectorAll("#scenCards .pick").forEach(function(x){x.classList.remove("on");}); b.classList.add("on"); }
+  b.onclick=function(){ document.querySelectorAll("#scenCards .pick").forEach(function(x){x.classList.remove("on");});
+    b.classList.add("on"); cfg.scen=b.dataset.scen; saveCfg(); };
+});
+var windKnEl=document.getElementById("windKn"), curKnEl=document.getElementById("curKn");
+windKnEl.value=cfg.windKn; curKnEl.value=cfg.curKn;
+document.getElementById("windKnV").textContent=cfg.windKn;
+document.getElementById("curKnV").textContent=cfg.curKn;
+windKnEl.oninput=function(){ cfg.windKn=+this.value; document.getElementById("windKnV").textContent=this.value; saveCfg(); };
+curKnEl.oninput=function(){ cfg.curKn=+this.value; document.getElementById("curKnV").textContent=this.value; saveCfg(); };
+mkDirs(document.getElementById("windDirs"), cfg.windDir, function(d){ cfg.windDir=d; saveCfg(); });
+mkDirs(document.getElementById("curDirs"), cfg.curDir, function(d){ cfg.curDir=d; saveCfg(); });
+
+/* ── рычаги ── */
+function Lever(parent, cap, onChange){
+  var el=document.createElement("div"); el.className="lever";
+  el.innerHTML='<span class="cap">'+cap+'</span><div class="zero"></div><div class="knob">0</div>';
+  parent.appendChild(el);
+  var knob=el.querySelector(".knob"), val=0, drag=null;
+  function set(v){
+    val=clamp(Math.round(v),-100,100);
+    if (Math.abs(val)<7) val=0;
+    var rect=el.getBoundingClientRect(), kh=34, span=(rect.height-kh-8)/2;
+    knob.style.top=(rect.height/2-kh/2 - span*val/100)+"px";
+    knob.textContent=val;
+    onChange(val/100);
+  }
+  el.addEventListener("pointerdown",function(e){ drag=true; el.setPointerCapture(e.pointerId); move(e); });
+  el.addEventListener("pointermove",move);
+  el.addEventListener("pointerup",function(){ drag=null; });
+  function move(e){
+    if(!drag) return;
+    var r=el.getBoundingClientRect(), rel=(r.top+r.height/2 - e.clientY)/((r.height-42)/2);
+    set(rel*100);
+  }
+  return { set:set, get:function(){return val/100;} };
+}
+var levers=[], rudCtl=null;
+function buildControls(){
+  var lv=document.getElementById("levers"); lv.innerHTML=""; levers=[];
+  var h=HULLS[cfg.hull];
+  if (h.twin){
+    levers.push(Lever(lv, T("dockEngL"), function(v){ sim.thrT[0]=v; sim.started=true; }));
+    levers.push(Lever(lv, T("dockEngR"), function(v){ sim.thrT[1]=v; sim.started=true; }));
+  } else {
+    levers.push(Lever(lv, T("dockThrottle"), function(v){ sim.thrT[0]=v; sim.thrT[1]=v; sim.started=true; }));
+  }
+  document.getElementById("thrRow").classList.toggle("hidden", !h.thruster);
+}
+/* руль */
+(function(){
+  var box=document.getElementById("rudderBox"), knob=document.getElementById("rudderKnob"), drag=null;
+  function set(deg){
+    deg=clamp(Math.round(deg),-35,35); if(Math.abs(deg)<3) deg=0;
+    var r=box.getBoundingClientRect(), span=(r.width-52)/2;
+    knob.style.left=(r.width/2-23 + span*deg/35)+"px";
+    knob.textContent=deg+"°";
+    if (sim){ sim.rudT=deg*DEG; sim.started=true; }
+  }
+  rudCtl={set:set};
+  box.addEventListener("pointerdown",function(e){ drag=true; box.setPointerCapture(e.pointerId); move(e); });
+  box.addEventListener("pointermove",move);
+  box.addEventListener("pointerup",function(){ drag=null; });
+  function move(e){
+    if(!drag) return;
+    var r=box.getBoundingClientRect(), rel=(e.clientX-(r.left+r.width/2))/((r.width-60)/2);
+    set(rel*35);
+  }
+})();
+/* подруливающее: держать */
+["thrL","thrR"].forEach(function(id,ix){
+  var b=document.getElementById(id), dir=ix===0?-1:1;
+  b.addEventListener("pointerdown",function(e){ e.preventDefault(); if(sim){sim.thrusterDir=dir; sim.started=true;} });
+  ["pointerup","pointerleave","pointercancel"].forEach(function(ev){
+    b.addEventListener(ev,function(){ if(sim) sim.thrusterDir=0; });
+  });
+});
+document.getElementById("stopBtn").onclick=function(){
+  if(!sim) return;
+  sim.thrT=[0,0]; levers.forEach(function(l){l.set(0);});
+};
+document.getElementById("rstBtn").onclick=function(){ restart(); };
+document.getElementById("exitBtn").onclick=function(){ toSetup(); };
+document.getElementById("ovAgain").onclick=function(){ restart(); };
+document.getElementById("ovSetup").onclick=function(){ toSetup(); };
+
+/* клавиатура */
+document.addEventListener("keydown",function(e){
+  if (!sim || document.getElementById("game").classList.contains("hidden")) return;
+  var h=sim.hull, step=0.08;
+  if (e.key==="ArrowUp"){ sim.thrT[0]=clamp(sim.thrT[0]+step,-1,1); sim.thrT[1]=clamp(sim.thrT[1]+step,-1,1); syncLevers(); sim.started=true; e.preventDefault(); }
+  else if (e.key==="ArrowDown"){ sim.thrT[0]=clamp(sim.thrT[0]-step,-1,1); sim.thrT[1]=clamp(sim.thrT[1]-step,-1,1); syncLevers(); sim.started=true; e.preventDefault(); }
+  else if (e.key==="ArrowLeft"){ rudCtl.set(sim.rudT/DEG-4); if(h.twin) sim.keyDiff=-0.4; e.preventDefault(); }
+  else if (e.key==="ArrowRight"){ rudCtl.set(sim.rudT/DEG+4); if(h.twin) sim.keyDiff=0.4; e.preventDefault(); }
+  else if (e.key===" "){ sim.thrT=[0,0]; syncLevers(); e.preventDefault(); }
+  else if (e.key==="c"||e.key==="C"){ rudCtl.set(0); }
+  else if (e.key==="q"||e.key==="Q"){ sim.thrusterDir=-1; sim.started=true; }
+  else if (e.key==="e"||e.key==="E"){ sim.thrusterDir=1; sim.started=true; }
+  else if (e.key==="r"||e.key==="R"){ restart(); }
+});
+document.addEventListener("keyup",function(e){
+  if (!sim) return;
+  if (e.key==="ArrowLeft"||e.key==="ArrowRight") sim.keyDiff=0;
+  if (e.key==="q"||e.key==="Q"||e.key==="e"||e.key==="E") sim.thrusterDir=0;
+});
+function syncLevers(){
+  if (levers.length===2){ levers[0].set(sim.thrT[0]*100); levers[1].set(sim.thrT[1]*100); }
+  else if (levers.length===1) levers[0].set(sim.thrT[0]*100);
+}
+
+/* ── жизненный цикл ── */
+var raf=null, lastTs=0;
+function startGame(){
+  document.getElementById("setup").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+  document.body.classList.add("playing");
+  sim=newSim();
+  buildControls(); rudCtl.set(0);
+  document.getElementById("overlay").classList.add("hidden");
+  var tip=document.getElementById("goalTip");
+  tip.textContent = sim.sc.zone ? T("dockGoal") : T("dockS4D");
+  tip.style.opacity=1;
+  setTimeout(function(){ tip.style.opacity=0; }, 5000);
+  document.getElementById("windHudV").textContent = cfg.windKn+" "+T("dockKn")+" · "+dirName(cfg.windDir);
+  document.getElementById("windArrow").style.transform="rotate("+(cfg.windDir+180)+"deg)";
+  resizeCanvas();
+  lastTs=0;
+  if (raf) cancelAnimationFrame(raf);
+  raf=requestAnimationFrame(loop);
+}
+function dirName(d){ for (var i=0;i<DIRS.length;i++) if (DIRS[i][1]===d) return DIRS[i][0]; return d+"°"; }
+function restart(){
+  sim=newSim();
+  sim.thrT=[0,0]; syncLevers(); rudCtl.set(0);
+  document.getElementById("overlay").classList.add("hidden");
+}
+function toSetup(){
+  if (raf) cancelAnimationFrame(raf); raf=null; sim=null;
+  document.body.classList.remove("playing");
+  document.getElementById("game").classList.add("hidden");
+  document.getElementById("setup").classList.remove("hidden");
+}
+var acc=0;
+function loop(ts){
+  raf=requestAnimationFrame(loop);
+  if (!sim) return;
+  if (!lastTs) lastTs=ts;
+  var dt=Math.min((ts-lastTs)/1000, 0.1); lastTs=ts;
+  if (!sim.done){
+    acc+=dt;
+    while (acc>1/60){ step(sim, 1/60); acc-=1/60; }
+  }
+  draw(sim);
+  // HUD
+  var spd=Math.hypot(sim.u,sim.v)/KN;
+  document.getElementById("hudSpd").textContent=spd.toFixed(1);
+  var t=Math.floor(sim.started?sim.time:0);
+  document.getElementById("hudTime").textContent=Math.floor(t/60)+":"+("0"+t%60).slice(-2);
+  document.getElementById("dmgBar").style.width=sim.damage+"%";
+}
+
+function showResult(){
+  var ov=document.getElementById("overlay");
+  var stars = sim.failed?0 : (sim.maxImp<0.35&&sim.damage===0?3 : sim.damage<25?2:1);
+  document.getElementById("ovTitle").textContent = sim.failed?T("dockCrash"):T("dockDocked");
+  document.getElementById("ovStars").textContent = sim.failed?"💥":"★★★".slice(0,stars)+"☆☆☆".slice(0,3-stars);
+  var t=Math.floor(sim.time);
+  document.getElementById("ovStats").innerHTML =
+    T("dockTime")+": <b>"+Math.floor(t/60)+":"+("0"+t%60).slice(-2)+"</b> · "+
+    T("dockHits")+": <b>"+sim.hits+"</b> · "+
+    T("dockMaxImp")+": <b>"+sim.maxImp.toFixed(2)+" "+T("dockMs")+"</b>";
+  document.getElementById("ovMsg").textContent =
+    sim.failed?T("dockCrashTip") : stars===3?T("dockPerfect") : stars===2?T("dockGood") : T("dockRough");
+  document.getElementById("ovAgain").textContent=T("dockAgain");
+  document.getElementById("ovSetup").textContent=T("dockToSetup");
+  ov.classList.remove("hidden");
+}
+
+document.getElementById("startBtn").onclick=startGame;
+window.addEventListener("resize", resizeCanvas);
+
+cv=document.getElementById("sea"); cx2=cv.getContext("2d");
+if (!cx2.roundRect) cx2.roundRect=function(x,y,w,h){ this.rect(x,y,w,h); return this; };
+if (window.Icons) Icons.hydrate();
+</script>
+</body>
+</html>
