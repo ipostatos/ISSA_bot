@@ -3,15 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title data-i18n="audTitle">Аудио-повторение</title>
+<title>Аудио-повторение</title>
 <link rel="stylesheet" href="theme.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="nav.js"></script>
-<script src="i18n.dict.js"></script>
-<script src="i18n.js"></script>
 <script src="quiz_data.js"></script>
-<script src="zeglarz_data.js"></script>
-<script src="sternik_data.js"></script>
 <script src="glossary_data.js"></script>
 <script src="migration.js"></script>
 <script src="srs.js"></script>
@@ -19,7 +15,9 @@
 <script src="progress.js"></script>
 <script src="icons.js"></script>
 <style>
-  /* — аудио-плеер: специфика страницы — */
+  /* — аудио-плеер: специфика страницы —
+     Раздел осознанно НЕ переводится (пометка RU на плитке): озвучка
+     только русская, контент банка русский — интерфейс тоже русский. */
   .src-row{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px }
   .src-btn{ display:flex; align-items:center; gap:9px; text-align:left; padding:11px 12px;
     border:1px solid var(--border); background:var(--card); color:var(--text);
@@ -104,37 +102,28 @@
     border-radius:50%; background:#fff; transition:left .15s }
   .sw.on{ background:var(--accent) }
   .sw.on::after{ left:22px }
-  .voice-hint{ color:var(--bad); font-size:12px; margin-top:6px }
 
   .nosupport{ padding:14px; border:1px solid var(--warn); border-radius:12px; color:var(--warn);
     font-size:14px; line-height:1.5 }
 </style>
 </head>
 <body>
-  <h1><span class="emi" data-icon="headphones"></span> <span data-i18n="audTitle"></span></h1>
-  <p class="sub" data-i18n="audSub"></p>
+  <h1><span class="emi" data-icon="headphones"></span> Аудио-повторение</h1>
+  <p class="sub">Повторение на слух: вопрос, пауза на подумать, ответ. Самооценка кормит расписание.</p>
 
-  <div id="noSupport" class="nosupport hidden" data-i18n="audNoSupport"></div>
-  <div id="sndHint" class="nosupport hidden" style="margin-bottom:10px" data-i18n="audNoSound"></div>
-  <div id="voiceWarn" class="nosupport hidden" style="margin-bottom:10px" data-i18n="audNoRuVoice"></div>
+  <div id="noSupport" class="nosupport hidden">Синтез речи не поддерживается этим клиентом Telegram. Открой Mini App на другом устройстве или обнови приложение.</div>
+  <div id="sndHint" class="nosupport hidden" style="margin-bottom:10px">Не слышно голоса? На iPhone проверь боковой переключатель беззвучного режима (он глушит синтез речи) и громкость. Если не помогло — выбери голос вручную в настройках ниже.</div>
+  <div id="voiceWarn" class="nosupport hidden" style="margin-bottom:10px">Русского голоса в системе нет — текст читает голос по умолчанию. Установи русский: Windows — Параметры → Время и язык → Речь; iPhone — Настройки → Универсальный доступ → Устный контент → Голоса; Android — настройки Google TTS.</div>
 
   <div id="app">
     <div class="src-row" id="srcRow">
       <button class="src-btn on" data-src="weak">
         <span class="emi" data-icon="refresh-cw"></span>
-        <span><span data-i18n="audWeak"></span> <small id="weakSub"></small></span>
+        <span>Слабые вопросы ISSA <small id="weakSub"></small></span>
       </button>
       <button class="src-btn" data-src="gloss">
         <span class="emi" data-icon="book-marked"></span>
-        <span><span data-i18n="audGloss"></span> <small data-i18n="audGlossSub"></small></span>
-      </button>
-      <button class="src-btn" data-src="zeglarz">
-        <span class="emi" data-icon="anchor"></span>
-        <span>Żeglarz <small data-i18n="audPlSub"></small></span>
-      </button>
-      <button class="src-btn" data-src="sternik">
-        <span class="emi" data-icon="compass"></span>
-        <span>Sternik <small data-i18n="audPlSub"></small></span>
+        <span>Словарь терминов <small>термин → определение</small></span>
       </button>
     </div>
 
@@ -145,15 +134,15 @@
       <div class="bar"><i id="barFill"></i></div>
       <div class="pcount" id="pcount">—</div>
       <div class="controls">
-        <button class="cbtn" id="prevBtn"><span class="emi" data-icon="chevron-right" style="transform:scaleX(-1)"></span></button>
+        <button class="cbtn" id="prevBtn" title="Назад"><span class="emi" data-icon="chevron-right" style="transform:scaleX(-1)"></span></button>
         <button class="cbtn main" id="playBtn"><span class="emi" data-icon="play"></span></button>
-        <button class="cbtn" id="nextBtn"><span class="emi" data-icon="chevron-right"></span></button>
+        <button class="cbtn" id="nextBtn" title="Дальше"><span class="emi" data-icon="chevron-right"></span></button>
       </div>
       <div class="assess">
-        <button class="abtn bad" id="badBtn">✘ <span data-i18n="audForgot"></span></button>
-        <button class="abtn ok" id="okBtn">✔ <span data-i18n="audKnew"></span></button>
+        <button class="abtn bad" id="badBtn">✘ Не знал</button>
+        <button class="abtn ok" id="okBtn">✔ Знал</button>
       </div>
-      <p class="assess-hint" data-i18n="audAssessHint"></p>
+      <p class="assess-hint">Оцени себя — вопрос уйдёт в расписание повторений и в дневную цель</p>
       <div class="rate-row" id="rateRow">
         <button class="rate" data-rate="0.85">0.85×</button>
         <button class="rate on" data-rate="1">1×</button>
@@ -163,19 +152,19 @@
     </div>
 
     <button class="set-toggle" id="setToggle">
-      <span>⚙ <span data-i18n="audSettings"></span></span><span id="setChev">▾</span>
+      <span>⚙ Настройки</span><span id="setChev">▾</span>
     </button>
     <div class="set-card hidden" id="setCard">
       <div class="set-row">
-        <div class="set-lbl" data-i18n="audMode"></div>
+        <div class="set-lbl">Режим</div>
         <div class="seg" id="modeSeg">
-          <button class="chip" data-mode="instant" data-i18n="audModeInstant"></button>
-          <button class="chip" data-mode="recall" data-i18n="audModeRecall"></button>
-          <button class="chip" data-mode="options" data-i18n="audModeOptions"></button>
+          <button class="chip" data-mode="instant">Сразу ответ</button>
+          <button class="chip" data-mode="recall">Пауза на подумать</button>
+          <button class="chip" data-mode="options">С вариантами</button>
         </div>
       </div>
       <div class="set-row">
-        <div class="set-lbl" data-i18n="audPauseT"></div>
+        <div class="set-lbl">Пауза на ответ</div>
         <div class="seg" id="pauseSeg">
           <button class="chip" data-p="2">2 c</button>
           <button class="chip" data-p="4">4 c</button>
@@ -183,7 +172,7 @@
         </div>
       </div>
       <div class="set-row">
-        <div class="set-lbl" data-i18n="audLenT"></div>
+        <div class="set-lbl">Длина плейлиста</div>
         <div class="seg" id="lenSeg">
           <button class="chip" data-n="10">10</button>
           <button class="chip" data-n="20">20</button>
@@ -191,34 +180,25 @@
         </div>
       </div>
       <div class="set-row swrow">
-        <span class="lab" data-i18n="audLoopT"></span>
+        <span class="lab">Повторять по кругу</span>
         <button class="sw" id="loopSw"></button>
       </div>
       <div class="set-row">
-        <div class="set-lbl" data-i18n="audVoiceRuT"></div>
+        <div class="set-lbl">Голос</div>
         <select id="voiceRu"></select>
       </div>
-      <div class="set-row">
-        <div class="set-lbl" data-i18n="audVoicePlT"></div>
-        <select id="voicePl"></select>
-        <div class="voice-hint hidden" id="plHint" data-i18n="audNoPlVoice"></div>
-      </div>
       <div class="set-row swrow" id="wakeRow">
-        <span class="lab" data-i18n="audWakeT"></span>
+        <span class="lab">Не гасить экран</span>
         <button class="sw" id="wakeSw"></button>
       </div>
     </div>
 
-    <p class="muted" style="font-size:12px; margin-top:12px" data-i18n="audScreenNote"></p>
+    <p class="muted" style="font-size:12px; margin-top:12px">Синтез речи живёт в открытой странице Mini App: на iPhone экран лучше не гасить.</p>
   </div>
 
 <script>
 "use strict";
 if (window.Icons) Icons.hydrate();
-
-// подписи-подсказки к кнопкам (hydrate не трогает атрибуты)
-document.getElementById("prevBtn").title = I18N.t("audPrev");
-document.getElementById("nextBtn").title = I18N.t("audNext");
 
 // ── поддержка ──
 const SS = window.speechSynthesis;
@@ -227,14 +207,9 @@ if (!SS || !window.SpeechSynthesisUtterance){
   document.getElementById("app").classList.add("hidden");
 }
 
-// ── банки ──
+// ── банки: ISSA (RU) + словарь терминов ──
 const RU = window.QUIZ_DATA ? QUIZ_DATA.questions : [];
 const TOPICS = (window.QUIZ_DATA && QUIZ_DATA.topics) || [];
-const PL_BANKS = {
-  zeglarz: (window.ZEGLARZ_DATA && ZEGLARZ_DATA.questions) || [],
-  sternik: (window.STERNIK_DATA && STERNIK_DATA.questions) || [],
-};
-// словарь: плоский список терминов с категорией
 const GLOSS = (window.GLOSSARY_DATA ? GLOSSARY_DATA.categories : []).flatMap(c =>
   c.terms.map(t => ({ id: "g:" + t.term, term: t.term, def: t.definition, cat: c.key, catTitle: c.title })));
 const GLOSS_CATS = (window.GLOSSARY_DATA ? GLOSSARY_DATA.categories : []).map(c => ({ key: c.key, title: c.title }));
@@ -242,56 +217,35 @@ const GLOSS_CATS = (window.GLOSSARY_DATA ? GLOSSARY_DATA.categories : []).map(c 
 // ── настройки (персистентные) ──
 const CFG_KEY = "issa_audio_cfg";
 const cfg = { mode: "recall", pauseS: 4, len: 20, loop: false, topic: "", gcat: "",
-              voiceRu: "", voicePl: "", wake: false, rate: 1, src: "weak" };
+              voiceRu: "", wake: false, rate: 1, src: "weak" };
 try { const s = JSON.parse(localStorage.getItem(CFG_KEY) || "{}");
       for (const k in s) if (k in cfg) cfg[k] = s[k]; } catch (e) {}
+if (cfg.src !== "weak" && cfg.src !== "gloss") cfg.src = "weak";   // миграция: PL-источники убраны
 function saveCfg(){ try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {} }
 
 // ── плейлисты ──
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
-function splitHybrid(s){
-  const i = String(s).indexOf("\n");
-  return i < 0 ? [s, ""] : [s.slice(0, i).trim(), s.slice(i + 1).trim()];
-}
-const LETTERS_RU = ["А","Б","В","Г","Д"], LETTERS_PL = ["A","B","C","D","E"];
+const LETTERS = ["А","Б","В","Г","Д"];
 
-// вопрос RU-банка → трек по режиму
+// вопрос ISSA → трек по режиму
 function trackRu(q){
   const ans = q.options[q.answer];
-  const parts = [ { text: q.q, lang: "ru" } ];
+  const parts = [ { text: q.q } ];
   let optsShow = "";
   if (cfg.mode === "options"){
-    const spoken = q.options.map((o,i)=>LETTERS_RU[i]+". "+o).join(". ");
-    optsShow = q.options.map((o,i)=>LETTERS_RU[i]+". "+o).join("\n");
-    parts.push({ text: "Варианты. " + spoken, lang: "ru" });
+    const spoken = q.options.map((o,i)=>LETTERS[i]+". "+o).join(". ");
+    optsShow = q.options.map((o,i)=>LETTERS[i]+". "+o).join("\n");
+    parts.push({ text: "Варианты. " + spoken });
   }
   if (cfg.mode !== "instant") parts.push({ pause: cfg.pauseS });
-  parts.push({ text: "Правильный ответ: " + ans, lang: "ru", reveal: true });
-  return { id: q.id, src: "weak", show: { q: q.q, opts: optsShow, a: ans } , parts };
-}
-// гибридный PL-вопрос → трек
-function trackPl(q, src){
-  const [qPl, qRu] = splitHybrid(q.q);
-  const [aPl, aRu] = splitHybrid(q.options[q.answer]);
-  const parts = [ { text: qPl, lang: "pl" } ];
-  if (qRu) parts.push({ text: qRu, lang: "ru" });
-  let optsShow = "";
-  if (cfg.mode === "options"){
-    const plOpts = q.options.map((o,i)=>LETTERS_PL[i]+". "+splitHybrid(o)[0]);
-    optsShow = plOpts.join("\n");
-    parts.push({ text: "Odpowiedzi. " + plOpts.join(". "), lang: "pl" });
-  }
-  if (cfg.mode !== "instant") parts.push({ pause: cfg.pauseS });
-  parts.push({ text: "Prawidłowa odpowiedź: " + aPl, lang: "pl", reveal: true });
-  if (aRu) parts.push({ text: "Правильный ответ: " + aRu, lang: "ru" });
-  return { id: q.id, src,
-    show: { q: qPl + (qRu ? "\n" + qRu : ""), opts: optsShow, a: aPl + (aRu ? "\n" + aRu : "") }, parts };
+  parts.push({ text: "Правильный ответ: " + ans, reveal: true });
+  return { id: q.id, src: "weak", show: { q: q.q, opts: optsShow, a: ans }, parts };
 }
 // термин словаря → трек (режим options = recall)
 function trackGloss(g){
-  const parts = [ { text: g.term, lang: "ru" } ];
+  const parts = [ { text: g.term } ];
   if (cfg.mode !== "instant") parts.push({ pause: cfg.pauseS });
-  parts.push({ text: g.def, lang: "ru", reveal: true });
+  parts.push({ text: g.def, reveal: true });
   return { id: g.id, src: "gloss", show: { q: g.term, opts: "", a: g.def }, parts };
 }
 
@@ -304,48 +258,37 @@ function buildPlaylist(){
     if (!qs.length) qs = shuffle(pool).slice(0, cfg.len);
     return qs.map(trackRu);
   }
-  if (cfg.src === "gloss"){
-    const pool = cfg.gcat ? GLOSS.filter(g => g.cat === cfg.gcat) : GLOSS;
-    const byId = Object.fromEntries(pool.map(g => [g.id, g]));
-    const due = window.SRS ? SRS.pickDue(pool.map(g => g.id), cfg.len) : [];
-    let gs = due.map(id => byId[id]).filter(Boolean);
-    if (!gs.length) gs = shuffle(pool).slice(0, cfg.len);
-    return gs.map(trackGloss);
-  }
-  return shuffle(PL_BANKS[cfg.src] || []).slice(0, cfg.len).map(q => trackPl(q, cfg.src));
+  const pool = cfg.gcat ? GLOSS.filter(g => g.cat === cfg.gcat) : GLOSS;
+  const byId = Object.fromEntries(pool.map(g => [g.id, g]));
+  const due = window.SRS ? SRS.pickDue(pool.map(g => g.id), cfg.len) : [];
+  let gs = due.map(id => byId[id]).filter(Boolean);
+  if (!gs.length) gs = shuffle(pool).slice(0, cfg.len);
+  return gs.map(trackGloss);
 }
 
-// ── голоса ──
+// ── голоса: только русские ──
 let voices = [];
-function refreshVoices(){ voices = SS ? SS.getVoices() : []; buildVoiceSelects(); }
-if (SS){ voices = SS.getVoices(); SS.onvoiceschanged = refreshVoices; }
-function voicesFor(pref){ return voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(pref)); }
-function voiceFor(lang){
-  const pref = lang === "pl" ? "pl" : "ru";
-  const want = lang === "pl" ? cfg.voicePl : cfg.voiceRu;
-  const list = voicesFor(pref);
-  return list.find(v => v.voiceURI === want) || list[0] || null;
+function ruVoices(){ return voices.filter(v => v.lang && v.lang.toLowerCase().startsWith("ru")); }
+function currentVoice(){
+  const list = ruVoices();
+  return list.find(v => v.voiceURI === cfg.voiceRu) || list[0] || null;
 }
 function buildVoiceSelects(){
-  [["voiceRu","ru"],["voicePl","pl"]].forEach(([elId, pref]) => {
-    const sel = document.getElementById(elId);
-    const cur = pref === "pl" ? cfg.voicePl : cfg.voiceRu;
-    sel.innerHTML = "";
-    const auto = document.createElement("option");
-    auto.value = ""; auto.textContent = I18N.t("audVoiceAuto");
-    sel.appendChild(auto);
-    voicesFor(pref).forEach(v => {
-      const o = document.createElement("option");
-      o.value = v.voiceURI; o.textContent = v.name + " (" + v.lang + ")";
-      if (v.voiceURI === cur) o.selected = true;
-      sel.appendChild(o);
-    });
+  const sel = document.getElementById("voiceRu");
+  sel.innerHTML = "";
+  const auto = document.createElement("option");
+  auto.value = ""; auto.textContent = "Авто";
+  sel.appendChild(auto);
+  ruVoices().forEach(v => {
+    const o = document.createElement("option");
+    o.value = v.voiceURI; o.textContent = v.name + " (" + v.lang + ")";
+    if (v.voiceURI === cfg.voiceRu) o.selected = true;
+    sel.appendChild(o);
   });
-  const noPl = !voicesFor("pl").length && voices.length;
-  document.getElementById("plHint").classList.toggle("hidden", !noPl);
 }
+function refreshVoices(){ voices = SS ? SS.getVoices() : []; buildVoiceSelects(); }
+if (SS){ voices = SS.getVoices(); SS.onvoiceschanged = refreshVoices; }
 document.getElementById("voiceRu").onchange = e => { cfg.voiceRu = e.target.value; saveCfg(); };
-document.getElementById("voicePl").onchange = e => { cfg.voicePl = e.target.value; saveCfg(); };
 
 // ── плеер ──
 let playlist = [];
@@ -363,7 +306,7 @@ function renderNow(revealed){
   const box = document.getElementById("nowBox");
   document.getElementById("barFill").style.width =
     playlist.length ? (idx / playlist.length * 100) + "%" : "0%";
-  if (!playlist.length){ box.textContent = I18N.t("audEmpty"); updateAssess(); return; }
+  if (!playlist.length){ box.textContent = "Плейлист пуст."; updateAssess(); return; }
   const t = playlist[idx];
   let html = `<div class="qtext">${escapeHtml(t.show.q)}</div>`;
   if (t.show.opts) html += `<div class="optlist">${escapeHtml(t.show.opts)}</div>`;
@@ -385,7 +328,7 @@ function showThink(){
   box.querySelector(".qtext") && box.querySelector(".qtext").classList.add("dim");
   if (!box.querySelector(".think"))
     box.insertAdjacentHTML("beforeend",
-      `<div class="think"><span class="tdot"></span><span>${escapeHtml(I18N.t("audThink"))} <span id="thinkN"></span></span></div>`);
+      `<div class="think"><span class="tdot"></span><span>Вспоминаем… <span id="thinkN"></span></span></div>`);
 }
 function hideThink(){
   const box = document.getElementById("nowBox");
@@ -423,9 +366,9 @@ function speakTrack(){
     }
     if (part.reveal) revealAnswer();
     const u = new SpeechSynthesisUtterance(part.text);
-    const v = voiceFor(part.lang);
+    const v = currentVoice();
     if (v) u.voice = v;
-    u.lang = part.lang === "pl" ? "pl-PL" : "ru-RU";
+    u.lang = "ru-RU";
     u.rate = cfg.rate;
     let done = false, started = false;
     const advance = () => { if (!done){ done = true; if (g === gen) step(); } };
@@ -453,8 +396,8 @@ function speakTrack(){
 }
 
 let heard = false, sndHintShown = false;
-// голоса грузятся асинхронно: без ожидания первую фразу читает английский
-// голос по умолчанию (цифры по-английски, кириллица мимо)
+// голоса грузятся асинхронно: без ожидания первую фразу читает голос
+// по умолчанию (часто английский — цифры по-английски, кириллица мимо)
 function waitVoices(timeoutMs){
   return new Promise(res => {
     const t0 = Date.now();
@@ -467,7 +410,7 @@ function waitVoices(timeoutMs){
 }
 function checkRuVoice(){
   const warn = document.getElementById("voiceWarn");
-  if (warn) warn.classList.toggle("hidden", !(voices.length && !voicesFor("ru").length));
+  if (warn) warn.classList.toggle("hidden", !(voices.length && !ruVoices().length));
 }
 function play(){
   playing = true; setPlayIcon(); renderNow(); haptic("light");
@@ -497,7 +440,7 @@ function nextAuto(){
     pause();
     idx = 0;
     document.getElementById("nowBox").innerHTML =
-      `<div class="qtext">${escapeHtml(I18N.t("audDoneList"))}</div>`;
+      `<div class="qtext">Плейлист прослушан! Нажми ▶, чтобы пройти ещё раз, или собери новый.</div>`;
     document.getElementById("barFill").style.width = "100%";
     haptic("success");
     return;
@@ -532,7 +475,8 @@ function updateAssess(){
 }
 function updateSess(){
   document.getElementById("sessLine").textContent =
-    sess.listened + sess.graded ? I18N.t("audSess", { a: sess.listened, b: sess.graded, c: sess.ok }) : "";
+    sess.listened + sess.graded
+      ? `Прослушано ${sess.listened} · Оценено ${sess.graded} · Верно ${sess.ok}` : "";
 }
 
 // ── скорость ──
@@ -569,16 +513,15 @@ document.getElementById("srcRow").querySelectorAll(".src-btn").forEach(b => {
 });
 function buildTopics(){
   const row = document.getElementById("topicRow");
-  const isWeak = cfg.src === "weak", isGloss = cfg.src === "gloss";
-  row.classList.toggle("hidden", !(isWeak || isGloss));
-  if (!(isWeak || isGloss)) return;
+  row.classList.remove("hidden");
+  const isWeak = cfg.src === "weak";
   const items = isWeak ? TOPICS.map(t => ({ key: t, title: t }))
                        : GLOSS_CATS.map(c => ({ key: c.key, title: c.title }));
   const cur = isWeak ? cfg.topic : cfg.gcat;
   row.innerHTML = "";
   const all = document.createElement("button");
   all.className = "chip" + (cur ? "" : " on");
-  all.textContent = I18N.t("audTopicAll");
+  all.textContent = "Все";
   all.onclick = () => { if (isWeak) cfg.topic = ""; else cfg.gcat = ""; saveCfg(); buildTopics(); rebuild(); };
   row.appendChild(all);
   items.forEach(it => {
@@ -661,11 +604,10 @@ function stopSession(){
 function updateMedia(){
   try {
     if (!("mediaSession" in navigator) || !playlist.length) return;
-    const srcBtn = document.querySelector(`.src-btn[data-src="${cfg.src}"]`);
     navigator.mediaSession.metadata = new MediaMetadata({
       title: playlist[idx].show.q.slice(0, 60),
       artist: "ISSA Trainer · " + (idx + 1) + "/" + playlist.length,
-      album: srcBtn ? srcBtn.textContent.trim().split("\n")[0] : "",
+      album: cfg.src === "weak" ? "Слабые вопросы" : "Словарь терминов",
     });
   } catch (e) {}
 }
@@ -683,10 +625,10 @@ document.addEventListener("keydown", e => {
 // ── подпись «слабых»: сколько к повтору ──
 function updateWeakSub(){
   const el = document.getElementById("weakSub");
-  el.textContent = I18N.t("audBySchedule");
+  el.textContent = "по расписанию повторения";
   if (!window.SRS || !RU.length) return;
   const due = SRS.dueCount(RU.map(q => q.id));
-  if (due) el.textContent = I18N.t("audDueCount", { n: due });
+  if (due) el.textContent = due + " к повторению";
 }
 
 // при закрытии страницы затыкаем синтез (иначе голос переживает Mini App).
