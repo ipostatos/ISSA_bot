@@ -38,6 +38,9 @@
   .cbtn.main{ width:72px; height:72px; background:var(--accent); color:var(--accent-text); border:none }
   .cbtn svg{ width:24px; height:24px }
   .cbtn.main svg{ width:30px; height:30px }
+  /* .emi в theme.css даёт margin-right:7px (для иконок рядом с текстом) —
+     в круглой кнопке это сдвигает треугольник с центра */
+  .cbtn .emi{ margin-right:0; vertical-align:0 }
   .rate-row{ display:flex; gap:8px; justify-content:center; margin-bottom:4px }
   .rate{ padding:6px 14px; font-size:13px; border-radius:20px; border:1px solid var(--border);
     background:transparent; color:var(--text); cursor:pointer }
