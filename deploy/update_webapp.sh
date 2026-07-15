@@ -58,10 +58,13 @@ cp -f "$SRC/lights.html"     "$DST/lights.html"   # бонус: огни суд�
 cp -f "$SRC/buoys.html"      "$DST/buoys.html"    # бонус: буи IALA (проблески)
 cp -f "$SRC/shapes.html"     "$DST/shapes.html"   # бонус: дневные знаки + флаги МСС
 cp -f "$SRC/audio.html"      "$DST/audio.html"    # аудио-повторение (Web Speech API)
+cp -f "$SRC/dock.html"       "$DST/dock.html"     # бонус: 2D-тренажёр швартовок
 cp -f "$SRC/sw.js"           "$DST/sw.js"          # PWA: офлайн-кэш (service worker)
 cp -f "$SRC/manifest.webmanifest" "$DST/manifest.webmanifest" # PWA-манифест
 cp -f "$SRC/icon.svg"        "$DST/icon.svg"       # PWA-иконка (компас)
 cp -f "$SRC/nav.js"          "$DST/nav.js"        # общая навигация (BackButton) + регистрация SW
+cp -f "$SRC/i18n.dict.js"    "$DST/i18n.dict.js"  # словарь интерфейса (RU/PL/UA/EN)
+cp -f "$SRC/i18n.js"         "$DST/i18n.js"       # движок i18n (t()/hydrate/пикер языка)
 cp -f "$SRC/lightbox.js"     "$DST/lightbox.js"   # зум картинок
 cp -f "$SRC/migration.js"    "$DST/migration.js"  # версионирование localStorage (грузится первым)
 cp -f "$SRC/srs.js"          "$DST/srs.js"        # интервальное повторение (SRS)
