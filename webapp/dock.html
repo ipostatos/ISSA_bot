@@ -262,19 +262,22 @@ var T = function(k, v){ return (window.I18N && I18N.t) ? I18N.t(k, v) : k; };
 var clamp = function(x,a,b){ return x<a?a:(x>b?b:x); };
 var DEG = Math.PI/180, KN = 0.5144;
 
-/* ── корпуса ── */
+/* ── корпуса ──
+   dragV прикладывается в ДВУХ точках (нос xb / корма xs): так сами собой
+   появляются точка вращения, занос кормы в повороте и флюгерность.
+   dragR — лишь остаточное (трение); amU/amV/amR — присоединённая масса воды. */
 var HULLS = {
-  sail: { L:10.5, B:3.4, m:6500, Iz:45000,
+  sail: { L:10.5, B:3.4, m:6500, Iz:45000, amU:1.05, amV:1.9, amR:1.2,
     thrustF:3200, thrustR:2400, propWalk:650, rudArm:4.6, Cr:1000, washK:2.2,
-    dragU:[60,300], dragV:[800,6000], dragR:[25000,220000],
+    dragU:[60,300], dragV:[800,6000], dragR:[9000,80000], xb:0.30, xs:-0.30,
     windA:11, windOff:1.6, thruster:900, twin:false, vector:false },
-  cat:  { L:11.5, B:6.4, m:9000, Iz:110000,
+  cat:  { L:11.5, B:6.4, m:9000, Iz:110000, amU:1.05, amV:1.5, amR:1.15,
     thrustF:2600, thrustR:2000, propWalk:0, rudArm:5.0, Cr:350, washK:1.4,
-    engOff:2.6, dragU:[80,380], dragV:[600,4200], dragR:[40000,320000],
+    engOff:2.6, dragU:[80,380], dragV:[600,4200], dragR:[14000,115000], xb:0.30, xs:-0.30,
     windA:28, windOff:1.2, thruster:1100, twin:true, vector:false },
-  pow:  { L:7.8, B:2.7, m:2800, Iz:12000,
+  pow:  { L:7.8, B:2.7, m:2800, Iz:12000, amU:1.03, amV:1.35, amR:1.1,
     thrustF:5200, thrustR:3600, propWalk:150, rudArm:3.4, Cr:250, washK:0,
-    dragU:[50,240], dragV:[300,2200], dragR:[6000,60000],
+    dragU:[50,240], dragV:[300,2200], dragR:[2200,22000], xb:0.22, xs:-0.36,
     windA:9, windOff:2.2, thruster:0, twin:false, vector:true }
 };
 
@@ -296,7 +299,7 @@ function buildScenario(kind, hull){
              ghost:{x:x0+gap/2, y:H-6-B/2-0.3, psi:0} };
     s = {start:{x:12,y:12,psi:20*DEG}, windDef:{kn:8, dir:0}};
   } else if (kind==="box"){
-    walls.push({x:0,y:H-5,w:W,h:5,quay:true});                   // помост снизу
+    walls.push({x:0,y:H-5,w:W,h:5,quay:true,wood:true});         // деревянный помост снизу
     var slotW = B+1.3, cx = W/2, py = H-5-(L+4.5);               // сваи в L+4.5 м от помоста
     poles.push({x:cx-slotW/2, y:py, r:0.22},{x:cx+slotW/2, y:py, r:0.22});
     poles.push({x:cx-slotW/2-slotW, y:py, r:0.22},{x:cx+slotW/2+slotW, y:py, r:0.22});
@@ -315,7 +318,7 @@ function buildScenario(kind, hull){
              ghost:{x:cxm, y:H-6-L/2-0.4, psi:-90*DEG} };
     s = {start:{x:12,y:10,psi:30*DEG}, windDef:{kn:8, dir:90}};
   } else { // free
-    walls.push({x:14,y:28,w:16,h:4,quay:true});                  // одинокий понтон
+    walls.push({x:14,y:28,w:16,h:4,quay:true,wood:true});        // одинокий понтон
     zone = null;
     s = {start:{x:10,y:52,psi:-30*DEG}, windDef:{kn:8, dir:225}};
   }
@@ -343,7 +346,8 @@ function newSim(){
     curKn:cfg.curKn, curDir:cfg.curDir,
     time:0, started:false, done:false, failed:false,
     damage:0, hits:0, maxImp:0, zoneHold:0,
-    lastHit:{}, trail:[], wash:[], gust:Math.random()*100
+    lastHit:{}, trail:[], wash:[], spray:[], shake:0,
+    wDirNow:cfg.windDir, wSpdNow:cfg.windKn, gust:Math.random()*100
   };
 }
 
@@ -360,10 +364,12 @@ function step(S, dt){
   for (var i=0;i<2;i++) S.thr[i] += clamp(S.thrT[i]-S.thr[i], -2.6*dt, 2.6*dt);
   S.rud += clamp(S.rudT-S.rud, -70*DEG*dt, 70*DEG*dt);
 
-  // ветер с лёгкими порывами
+  // ветер: порывы по силе + медленное блуждание направления (±8°)
   S.gust += dt;
   var wSpd = S.windKn*KN * (1 + 0.22*Math.sin(S.gust*0.33) + 0.08*Math.sin(S.gust*1.7));
-  var wind = blowVec(S.windDir, Math.max(0,wSpd));
+  var wDir = S.windDir + 8*Math.sin(S.gust*0.11) + 3*Math.sin(S.gust*0.47);
+  var wind = blowVec(wDir, Math.max(0,wSpd));
+  S.wDirNow = wDir; S.wSpdNow = wSpd/KN;
   var cur  = blowVec(S.curDir, S.curKn*KN);
 
   var cos=Math.cos(S.psi), sin=Math.sin(S.psi);
@@ -395,16 +401,18 @@ function step(S, dt){
 
   // руль: поток = ход воды + струя винта (только вперёд).
   // У поворотной колонки washK=0 — перо/колонка рулит только на выбеге.
+  // На заднем ходу (обратный поток) перо работает хуже — фактор 0.7.
   var wash = h.twin ? Math.max(S.thr[0]+S.keyDiff,0)+Math.max(S.thr[1]-S.keyDiff,0)
                     : Math.max(S.thr[0],0);
   var flow = ur + h.washK*Math.min(wash,1);
   var Frud = h.Cr * flow*Math.abs(flow) * Math.sin(S.rud);
+  if (flow<0) Frud *= 0.7;
   N += h.rudArm*Frud;
   Fy += -0.35*Frud;
 
-  // носовое подруливающее
+  // носовое подруливающее: на ходу быстро теряет эффективность
   if (S.thrusterDir && h.thruster){
-    var Ft = h.thruster*S.thrusterDir;
+    var Ft = h.thruster*S.thrusterDir / (1 + 2*Math.abs(ur));
     Fy += Ft; N += (h.L*0.38)*Ft;
   }
 
@@ -418,15 +426,21 @@ function step(S, dt){
     N  += h.windOff * q*aby;
   }
 
-  // гидродинамическое сопротивление (относительно воды)
+  // гидродинамическое сопротивление (относительно воды).
+  // Боковое — в двух точках корпуса: локальный поток v_p = vr + r·x,
+  // отсюда честные pivot point, занос кормы и флюгерность.
   Fx += -(h.dragU[0]*ur + h.dragU[1]*ur*Math.abs(ur));
-  Fy += -(h.dragV[0]*vr + h.dragV[1]*vr*Math.abs(vr));
+  [h.xb*h.L, h.xs*h.L].forEach(function(xp){
+    var vp = vr + S.r*xp;
+    var Fp = -(h.dragV[0]/2*vp + h.dragV[1]/2*vp*Math.abs(vp));
+    Fy += Fp; N += xp*Fp;
+  });
   N  += -(h.dragR[0]*S.r + h.dragR[1]*S.r*Math.abs(S.r));
 
-  // интегрирование (с кориолисовыми членами)
-  S.u += (Fx/h.m + S.v*S.r)*dt;
-  S.v += (Fy/h.m - S.u*S.r)*dt;
-  S.r += (N/h.Iz)*dt;
+  // интегрирование (с кориолисовыми членами и присоединённой массой)
+  S.u += (Fx/(h.m*h.amU) + S.v*S.r)*dt;
+  S.v += (Fy/(h.m*h.amV) - S.u*S.r)*dt;
+  S.r += (N/(h.Iz*h.amR))*dt;
   S.psi += S.r*dt;
   S.x += (S.u*Math.cos(S.psi) - S.v*Math.sin(S.psi))*dt;
   S.y += (S.u*Math.sin(S.psi) + S.v*Math.cos(S.psi))*dt;
@@ -435,16 +449,29 @@ function step(S, dt){
   if (S.started) S.time += dt;   // секундомер — с первого действия рулём/газом
   if (S.started) checkGoal(S, dt);
 
-  // след и струя
-  S.trail.push({x:S.x,y:S.y});
+  // след (с запомненной скоростью — для ширины кильватера) и струя винта
+  S.trail.push({x:S.x, y:S.y, s:Math.hypot(S.u,S.v)});
   if (S.trail.length>700) S.trail.shift();
   var thrAbs = h.twin ? Math.max(Math.abs(S.thr[0]),Math.abs(S.thr[1])) : Math.abs(S.thr[0]);
-  if (thrAbs>0.12 && Math.random()<0.5){
-    var back = S.thr[0]>=0 ? -1 : 1;
-    S.wash.push({ x:S.x + back*Math.cos(S.psi)*h.L*0.55, y:S.y + back*Math.sin(S.psi)*h.L*0.55,
-      r:0.35, a:0.5*thrAbs, g:0.9+Math.random()*0.6 });
+  if (thrAbs>0.12 && Math.random()<0.75){
+    var back = S.thr[0]>=0 ? -1 : 1;                 // струя: вперёд газ → назад, реверс → вперёд
+    var jx = back*Math.cos(S.psi), jy = back*Math.sin(S.psi);
+    S.wash.push({ x:S.x + jx*h.L*0.52, y:S.y + jy*h.L*0.52,
+      vx: jx*2.6*thrAbs + (Math.random()-0.5), vy: jy*2.6*thrAbs + (Math.random()-0.5),
+      r:0.28, a:0.55*thrAbs, g:0.9+Math.random()*0.6 });
   }
-  for (var w2=S.wash.length-1;w2>=0;w2--){ var p=S.wash[w2]; p.r+=p.g*dt*2.2; p.a-=dt*0.55; if(p.a<=0) S.wash.splice(w2,1); }
+  for (var w2=S.wash.length-1;w2>=0;w2--){
+    var p=S.wash[w2];
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=0.96; p.vy*=0.96;
+    p.r+=p.g*dt*2.0; p.a-=dt*0.5;
+    if(p.a<=0) S.wash.splice(w2,1);
+  }
+  for (var s2=S.spray.length-1;s2>=0;s2--){
+    var q=S.spray[s2];
+    q.x+=q.vx*dt; q.y+=q.vy*dt; q.vx*=0.90; q.vy*=0.90; q.a-=dt*1.6;
+    if(q.a<=0) S.spray.splice(s2,1);
+  }
+  if (S.shake>0) S.shake=Math.max(0,S.shake-dt);
 }
 
 function thrustOf(h, t){ return t>=0 ? h.thrustF*t : h.thrustR*t; }
@@ -523,6 +550,14 @@ function resolveHit(S, p, n, depth, ob){
     var dvx = jm*n.x, dvy = jm*n.y;
     S.u += dvx*c + dvy*s; S.v += -dvx*s + dvy*c;
     S.r += (rn*J)/h.Iz;
+    // брызги и тряска камеры при ощутимом ударе
+    if (imp>0.3 && S.spray.length<70){
+      for (var sp=0; sp<7; sp++){
+        var an=Math.atan2(n.y,n.x)+(Math.random()-0.5)*1.6, sv=imp*(1+Math.random()*1.5);
+        S.spray.push({x:p.x, y:p.y, vx:Math.cos(an)*sv, vy:Math.sin(an)*sv, a:0.9});
+      }
+      S.shake=Math.min(0.35, S.shake+imp*0.12);
+    }
     // повреждения: не за мол, не чаще 0.5 c на препятствие, не за мягкое касание
     var now=S.time, last=S.lastHit[ob.id]||-9;
     if (!ob.soft && now-last>0.5){
@@ -569,77 +604,144 @@ function resizeCanvas(){
 }
 function W2S(x,y){ return [view.ox+x*view.s, view.oy+y*view.s]; }
 
+/* шумовая текстура воды (рисуется один раз, двигается с ветром) */
+var waterTile=null;
+function makeWater(){
+  // бесшовный тайл: каждый блоб дублируется в 8 соседних смещениях
+  var SZ=180, t=document.createElement("canvas"); t.width=t.height=SZ;
+  var g=t.getContext("2d");
+  for (var i=0;i<220;i++){
+    var x=Math.random()*SZ, y=Math.random()*SZ, r=5+Math.random()*24;
+    var a=0.02+Math.random()*0.05;
+    for (var dx=-1;dx<=1;dx++) for (var dy=-1;dy<=1;dy++){
+      var cxp=x+dx*SZ, cyp=y+dy*SZ;
+      if (cxp<-r||cxp>SZ+r||cyp<-r||cyp>SZ+r) continue;
+      var rg=g.createRadialGradient(cxp,cyp,0,cxp,cyp,r);
+      rg.addColorStop(0,"rgba(175,220,255,"+a.toFixed(3)+")");
+      rg.addColorStop(1,"rgba(175,220,255,0)");
+      g.fillStyle=rg; g.beginPath(); g.arc(cxp,cyp,r,0,7); g.fill();
+    }
+  }
+  return t;
+}
+function drawWater(ctx,w,hgt,S){
+  var g=ctx.createLinearGradient(0,0,0,hgt);
+  g.addColorStop(0,"#0e2f4c"); g.addColorStop(0.6,"#0b2540"); g.addColorStop(1,"#081c30");
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,hgt);
+  if (!waterTile) waterTile=makeWater();
+  var bv=blowVec(S.wDirNow,1), t=S.time;
+  var pat=ctx.createPattern(waterTile,"repeat");
+  [ {sp:6,  sc:1.0, al:0.55},
+    {sp:14, sc:1.9, al:0.35} ].forEach(function(l){
+    var ox=(t*l.sp*bv.x*view.s/10)%180, oy=(t*l.sp*bv.y*view.s/10)%180;
+    ctx.save(); ctx.globalAlpha=l.al;
+    ctx.translate(ox,oy); ctx.scale(l.sc,l.sc);
+    ctx.fillStyle=pat; ctx.fillRect(-360/l.sc,-360/l.sc,(w+720)/l.sc,(hgt+720)/l.sc);
+    ctx.restore();
+  });
+}
+
 function draw(S){
   var w=cv.width, hgt=cv.height, ctx=cx2;
-  // вода
-  var g=ctx.createLinearGradient(0,0,0,hgt);
-  g.addColorStop(0,"#0d2c47"); g.addColorStop(1,"#081c30");
-  ctx.fillStyle=g; ctx.fillRect(0,0,w,hgt);
+  drawWater(ctx,w,hgt,S);
 
   ctx.save();
+  // тряска камеры при ударе
+  if (S.shake>0.01){
+    ctx.translate((Math.random()-0.5)*S.shake*22*dpr, (Math.random()-0.5)*S.shake*22*dpr);
+  }
   ctx.translate(view.ox, view.oy); ctx.scale(view.s, view.s);
   ctx.lineJoin="round"; ctx.lineCap="round";
 
-  // штрихи ветра
-  var bv = blowVec(S.windDir,1);
-  ctx.strokeStyle="rgba(160,210,255,.10)"; ctx.lineWidth=0.12;
+  // штрихи ветра (живое направление)
+  var bv = blowVec(S.wDirNow,1);
+  ctx.strokeStyle="rgba(160,210,255,.14)"; ctx.lineWidth=0.10;
   for (var i=0;i<26;i++){
     var wx=((i*97)%S.sc.W)+ (S.time*S.windKn*0.35*bv.x)%S.sc.W, wy=((i*57)%S.sc.H)+(S.time*S.windKn*0.35*bv.y)%S.sc.H;
     wx=(wx%S.sc.W+S.sc.W)%S.sc.W; wy=(wy%S.sc.H+S.sc.H)%S.sc.H;
     ctx.beginPath(); ctx.moveTo(wx,wy); ctx.lineTo(wx+bv.x*2.2, wy+bv.y*2.2); ctx.stroke();
   }
 
-  // зона цели + «призрак»
-  var z=S.sc.zone;
+  // зона цели + «призрак» (пульсируют)
+  var z=S.sc.zone, pulse=0.55+0.3*Math.sin(S.time*2.6);
   if (z){
-    ctx.fillStyle="rgba(76,175,114,.16)";
-    ctx.strokeStyle="rgba(76,175,114,.85)"; ctx.lineWidth=0.16; ctx.setLineDash([0.8,0.5]);
+    ctx.fillStyle="rgba(76,175,114,.13)";
+    ctx.strokeStyle="rgba(76,175,114,"+pulse.toFixed(2)+")"; ctx.lineWidth=0.16; ctx.setLineDash([0.8,0.5]);
     ctx.fillRect(z.x,z.y,z.w,z.h); ctx.strokeRect(z.x,z.y,z.w,z.h);
     ctx.setLineDash([]);
     if (z.ghost){
       ctx.save(); ctx.translate(z.ghost.x,z.ghost.y); ctx.rotate(z.ghost.psi);
-      ctx.strokeStyle="rgba(76,175,114,.7)"; ctx.lineWidth=0.14; ctx.setLineDash([0.5,0.35]);
+      ctx.strokeStyle="rgba(76,175,114,"+(pulse*0.9).toFixed(2)+")"; ctx.lineWidth=0.14; ctx.setLineDash([0.5,0.35]);
       tracePoly(ctx, hullPoly(S.hull)); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
     }
   }
 
-  // причалы и мол
+  // причалы и мол: камень со сколами или деревянный помост с досками
   S.sc.walls.forEach(function(wl){
-    if (wl.soft){ ctx.fillStyle="rgba(120,160,190,.12)"; ctx.fillRect(wl.x,wl.y,wl.w,wl.h); return; }
-    ctx.fillStyle="#6b7787"; ctx.fillRect(wl.x,wl.y,wl.w,wl.h);
-    ctx.fillStyle="#7e8b9c"; ctx.fillRect(wl.x,wl.y,wl.w,0.5);
-    // кнехты
+    if (wl.soft){ ctx.fillStyle="rgba(120,160,190,.10)"; ctx.fillRect(wl.x,wl.y,wl.w,wl.h); return; }
+    if (wl.wood){
+      ctx.fillStyle="#a8845c"; ctx.fillRect(wl.x,wl.y,wl.w,wl.h);
+      ctx.strokeStyle="rgba(60,40,20,.35)"; ctx.lineWidth=0.06;
+      for (var px=wl.x; px<wl.x+wl.w; px+=0.85){ ctx.beginPath(); ctx.moveTo(px,wl.y); ctx.lineTo(px,wl.y+wl.h); ctx.stroke(); }
+      ctx.fillStyle="rgba(255,235,200,.14)"; ctx.fillRect(wl.x,wl.y,wl.w,0.35);
+    } else {
+      ctx.fillStyle="#6b7787"; ctx.fillRect(wl.x,wl.y,wl.w,wl.h);
+      ctx.fillStyle="rgba(0,0,0,.12)";
+      for (var gx=Math.floor(wl.x); gx<wl.x+wl.w; gx++)
+        for (var gy=Math.floor(wl.y); gy<wl.y+wl.h; gy++)
+          if (((gx*31+gy*17)%7)<2) ctx.fillRect(gx+0.15,gy+0.2,0.7,0.5);
+      ctx.fillStyle="#7e8b9c"; ctx.fillRect(wl.x,wl.y,wl.w,0.5);
+      // покрышки вдоль стенки
+      ctx.strokeStyle="#151b24"; ctx.lineWidth=0.22;
+      for (var tx=wl.x+1.6; tx<wl.x+wl.w-0.8; tx+=3.2){
+        ctx.beginPath(); ctx.arc(tx, wl.y+0.12, 0.34, 0, Math.PI, false); ctx.stroke();
+      }
+    }
+    // кромка-отбойник + кнехты
+    ctx.strokeStyle="rgba(15,20,28,.65)"; ctx.lineWidth=0.14; ctx.strokeRect(wl.x,wl.y,wl.w,wl.h);
     ctx.fillStyle="#3c4757";
-    for (var bx=wl.x+2; bx<wl.x+wl.w-1; bx+=4){ ctx.beginPath(); ctx.arc(bx, wl.y+1.1, 0.28, 0, 7); ctx.fill(); }
+    for (var bx=wl.x+2; bx<wl.x+wl.w-1; bx+=4){ ctx.beginPath(); ctx.arc(bx, wl.y+1.1, 0.26, 0, 7); ctx.fill(); }
   });
 
-  // сваи (рисуем крупнее физического радиуса, чтобы были видны)
+  // сваи: тень на воде, дерево, белая отбойная полоса
   S.sc.poles.forEach(function(p){
-    ctx.fillStyle="rgba(160,120,70,.35)"; ctx.beginPath(); ctx.arc(p.x,p.y,p.r+0.35,0,7); ctx.fill();
-    ctx.fillStyle="#8a6a42"; ctx.beginPath(); ctx.arc(p.x,p.y,p.r+0.12,0,7); ctx.fill();
-    ctx.strokeStyle="rgba(0,0,0,.45)"; ctx.lineWidth=0.08; ctx.stroke();
+    ctx.fillStyle="rgba(0,0,0,.25)"; ctx.beginPath(); ctx.arc(p.x+0.25,p.y+0.3,p.r+0.3,0,7); ctx.fill();
+    var pg=ctx.createRadialGradient(p.x-0.1,p.y-0.1,0.02,p.x,p.y,p.r+0.34);
+    pg.addColorStop(0,"#a9855b"); pg.addColorStop(1,"#6e5335");
+    ctx.fillStyle=pg; ctx.beginPath(); ctx.arc(p.x,p.y,p.r+0.34,0,7); ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.55)"; ctx.lineWidth=0.09;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r+0.20,0,7); ctx.stroke();
   });
 
-  // соседние лодки
-  S.sc.boats.forEach(function(b){
+  // соседние лодки (разные цвета)
+  S.sc.boats.forEach(function(b,bi){
     ctx.save(); ctx.translate(b.x+b.w/2, b.y+b.h/2);
     var vert = b.h>b.w;
     ctx.rotate(vert? 90*DEG : 0);
-    var Lb=Math.max(b.w,b.h), Bb=Math.min(b.w,b.h);
-    drawStaticBoat(ctx, Lb, Bb);
+    drawStaticBoat(ctx, Math.max(b.w,b.h), Math.min(b.w,b.h), bi);
     ctx.restore();
   });
 
-  // след
-  if (S.trail.length>2){
-    ctx.strokeStyle="rgba(140,200,255,.20)"; ctx.lineWidth=0.14;
-    ctx.beginPath(); ctx.moveTo(S.trail[0].x,S.trail[0].y);
-    S.trail.forEach(function(p){ ctx.lineTo(p.x,p.y); }); ctx.stroke();
+  // кильватерный след: ширина и яркость по скорости в точке
+  if (S.trail.length>4){
+    for (var ti=2; ti<S.trail.length; ti+=2){
+      var t0=S.trail[ti-2], t1=S.trail[ti];
+      var age=ti/S.trail.length, sp=Math.min(1.2, (t1.s||0)*0.55);
+      if (sp<0.05) continue;
+      ctx.strokeStyle="rgba(190,225,255,"+(age*0.30*sp).toFixed(3)+")";
+      ctx.lineWidth=0.18+sp*1.1;
+      ctx.beginPath(); ctx.moveTo(t0.x,t0.y); ctx.lineTo(t1.x,t1.y); ctx.stroke();
+    }
   }
-  // струя винта
+  // струя винта (пузыри со скоростью)
   S.wash.forEach(function(p){
-    ctx.fillStyle="rgba(200,230,255,"+(p.a*0.5).toFixed(3)+")";
+    ctx.fillStyle="rgba(205,232,255,"+(p.a*0.5).toFixed(3)+")";
     ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+  });
+  // брызги от ударов
+  S.spray.forEach(function(q){
+    ctx.fillStyle="rgba(240,250,255,"+(q.a*0.85).toFixed(3)+")";
+    ctx.beginPath(); ctx.arc(q.x,q.y,0.13,0,7); ctx.fill();
   });
 
   // лодка игрока
@@ -654,40 +756,114 @@ function tracePoly(ctx, P){
   for (var i=1;i<P.length;i++) ctx.lineTo(P[i][0],P[i][1]);
   ctx.closePath();
 }
-function drawStaticBoat(ctx,L,B){
-  var P=hullPoly({L:L,B:B});
-  ctx.fillStyle="#c8cfd8"; ctx.strokeStyle="#8d99a8"; ctx.lineWidth=0.1;
+var BOAT_TONES=[["#e9dfd2","#cfc0ab"],["#d9e4ea","#b9c9d4"],["#e2e9df","#c2d0bd"],["#e9e0e4","#cfc0c8"]];
+function hullShadow(ctx,P){
+  ctx.save(); ctx.translate(0.35,0.45);
+  ctx.fillStyle="rgba(0,0,10,.22)"; tracePoly(ctx,P); ctx.fill();
+  ctx.restore();
+}
+function hullGrad(ctx,B,c0,c1){
+  var g=ctx.createLinearGradient(0,-B,0,B);
+  g.addColorStop(0,c0); g.addColorStop(0.5,"#ffffff"); g.addColorStop(1,c1);
+  return g;
+}
+function drawStaticBoat(ctx,L,B,idx){
+  var P=hullPoly({L:L,B:B}), tone=BOAT_TONES[(idx||0)%BOAT_TONES.length];
+  hullShadow(ctx,P);
+  ctx.fillStyle=hullGrad(ctx,B/2,tone[0],tone[1]);
+  ctx.strokeStyle="#7c8896"; ctx.lineWidth=0.1;
   tracePoly(ctx,P); ctx.fill(); ctx.stroke();
-  ctx.fillStyle="#aab4c0";
-  ctx.beginPath(); ctx.arc(0,0,0.16,0,7); ctx.fill();
+  // палуба + рубка
+  ctx.fillStyle="rgba(120,135,150,.25)";
+  ctx.beginPath(); ctx.roundRect(-L*0.28, -B*0.26, L*0.5, B*0.52, 0.3); ctx.fill();
+  if (L>9){ // мачта с гиком у парусных размеров
+    ctx.fillStyle="#46536b"; ctx.beginPath(); ctx.arc(L*0.05,0,0.17,0,7); ctx.fill();
+    ctx.strokeStyle="rgba(70,83,107,.8)"; ctx.lineWidth=0.08;
+    ctx.beginPath(); ctx.moveTo(L*0.05,0); ctx.lineTo(-L*0.32,0); ctx.stroke();
+  }
 }
 function drawPlayerBoat(ctx,S){
   var h=S.hull, P=hullPoly(h), L=h.L/2, B=h.B/2;
-  if (h.twin){ // катамаран: два корпуса + мост
-    ctx.fillStyle="#f2f5f8"; ctx.strokeStyle="#5f6f80"; ctx.lineWidth=0.1;
+  // носовой бурун при ходе вперёд
+  var uu=S.u;
+  if (uu>0.4){
+    var bl=Math.min(2.6, uu*0.8), ba=Math.min(0.5, uu*0.16);
+    ctx.strokeStyle="rgba(235,248,255,"+ba.toFixed(2)+")"; ctx.lineWidth=0.16;
+    [-1,1].forEach(function(sgn){
+      ctx.beginPath(); ctx.moveTo(L*0.98, sgn*0.15);
+      ctx.quadraticCurveTo(L*0.55, sgn*(B*0.75), L*0.98-bl, sgn*(B*0.75+bl*0.4));
+      ctx.stroke();
+    });
+  }
+  if (h.twin){ // катамаран: два корпуса + палуба-мост
+    var hp=hullPoly({L:h.L, B:1.5});
+    [-1,1].forEach(function(sgn){
+      ctx.save(); ctx.translate(0, sgn*(B-0.7)); hullShadow(ctx,hp); ctx.restore();
+    });
     [-1,1].forEach(function(sgn){
       ctx.save(); ctx.translate(0, sgn*(B-0.7));
-      tracePoly(ctx, hullPoly({L:h.L, B:1.5})); ctx.fill(); ctx.stroke();
+      ctx.fillStyle=hullGrad(ctx,0.75,"#eef2f6","#c9d4de");
+      ctx.strokeStyle="#5f6f80"; ctx.lineWidth=0.1;
+      tracePoly(ctx,hp); ctx.fill(); ctx.stroke();
       ctx.restore();
     });
-    ctx.fillStyle="rgba(226,234,242,.92)";
-    ctx.fillRect(-L*0.72, -(B-1.3), L*1.35, 2*(B-1.3));
-    ctx.strokeRect(-L*0.72, -(B-1.3), L*1.35, 2*(B-1.3));
+    ctx.fillStyle="rgba(228,236,244,.94)"; ctx.strokeStyle="#5f6f80";
+    ctx.beginPath(); ctx.roundRect(-L*0.72, -(B-1.3), L*1.35, 2*(B-1.3), 0.4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#d4dde6";
+    ctx.beginPath(); ctx.roundRect(-L*0.35, -(B-1.9), L*0.75, 2*(B-1.9), 0.35); ctx.fill(); ctx.stroke();
+    // моторы
+    ctx.fillStyle="#3c4757";
+    [-1,1].forEach(function(sgn){ ctx.beginPath(); ctx.arc(-L*0.97, sgn*(B-0.7), 0.22,0,7); ctx.fill(); });
   } else {
-    ctx.fillStyle="#f2f5f8"; ctx.strokeStyle="#5f6f80"; ctx.lineWidth=0.12;
+    hullShadow(ctx,P);
+    ctx.fillStyle=hullGrad(ctx,B,"#e8edf3","#c6d1dc");
+    ctx.strokeStyle="#5f6f80"; ctx.lineWidth=0.12;
     tracePoly(ctx,P); ctx.fill(); ctx.stroke();
-    ctx.fillStyle="#dfe6ee";
-    ctx.beginPath(); ctx.roundRect(-L*0.55, -B*0.55, L*0.95, B*1.1, 0.35); ctx.fill(); ctx.stroke();
-    if (S===sim && cfg.hull==="sail"){ ctx.fillStyle="#46536b"; ctx.beginPath(); ctx.arc(L*0.08,0,0.2,0,7); ctx.fill(); }
+    // линия борта + кранцы
+    ctx.strokeStyle="rgba(80,110,140,.5)"; ctx.lineWidth=0.07;
+    tracePoly(ctx, hullPoly({L:h.L*0.93, B:h.B*0.86})); ctx.stroke();
+    ctx.fillStyle="#f3ead6"; ctx.strokeStyle="rgba(90,80,60,.5)"; ctx.lineWidth=0.05;
+    [-0.28,0.02,0.32].forEach(function(fx){
+      [-1,1].forEach(function(sgn){
+        ctx.beginPath(); ctx.arc(h.L*fx, sgn*(B*0.97), 0.17,0,7); ctx.fill(); ctx.stroke();
+      });
+    });
+    if (cfg.hull==="sail"){
+      // рубка, люк, мачта, гик, кокпит
+      ctx.fillStyle="#dde5ed"; ctx.strokeStyle="#5f6f80"; ctx.lineWidth=0.08;
+      ctx.beginPath(); ctx.roundRect(-L*0.45, -B*0.5, L*0.8, B, 0.35); ctx.fill(); ctx.stroke();
+      ctx.fillStyle="rgba(90,140,190,.45)";
+      ctx.beginPath(); ctx.roundRect(-L*0.05, -B*0.3, L*0.22, B*0.6, 0.15); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(L*0.55, -B*0.22, L*0.18, B*0.44, 0.12); ctx.fill();
+      ctx.fillStyle="#46536b"; ctx.beginPath(); ctx.arc(L*0.08,0,0.2,0,7); ctx.fill();
+      ctx.strokeStyle="rgba(70,83,107,.85)"; ctx.lineWidth=0.09;
+      ctx.beginPath(); ctx.moveTo(L*0.08,0); ctx.lineTo(-L*0.55,0); ctx.stroke();
+      ctx.fillStyle="rgba(120,135,150,.3)";
+      ctx.beginPath(); ctx.roundRect(-L*0.88, -B*0.42, L*0.35, B*0.84, 0.25); ctx.fill();
+    } else {
+      // катер: ветровое стекло дугой + кокпит + мотор на транце
+      ctx.fillStyle="rgba(120,135,150,.28)";
+      ctx.beginPath(); ctx.roundRect(-L*0.75, -B*0.6, L*1.25, B*1.2, 0.3); ctx.fill();
+      ctx.strokeStyle="rgba(150,200,240,.85)"; ctx.lineWidth=0.14;
+      ctx.beginPath(); ctx.arc(L*0.62, 0, B*0.72, 100*DEG, 260*DEG, false); ctx.stroke();
+      ctx.fillStyle="rgba(90,140,190,.4)";
+      ctx.beginPath(); ctx.roundRect(L*0.62, -B*0.4, L*0.25, B*0.8, 0.15); ctx.fill();
+    }
   }
-  // руль/колонка
-  ctx.strokeStyle="#e5544b"; ctx.lineWidth=0.16;
-  ctx.save(); ctx.translate(-L*0.98,0); ctx.rotate(-S.rud);
-  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-1.0,0); ctx.stroke(); ctx.restore();
-  // подруливающее: стрелка у носа
+  // руль (перо) или поворотная колонка
+  if (h.vector){
+    ctx.save(); ctx.translate(-L*0.98,0); ctx.rotate(-S.rud);
+    ctx.fillStyle="#2f3a48"; ctx.beginPath(); ctx.roundRect(-0.75,-0.22,0.85,0.44,0.12); ctx.fill();
+    ctx.restore();
+  } else {
+    ctx.strokeStyle="#e5544b"; ctx.lineWidth=0.16;
+    ctx.save(); ctx.translate(-L*0.98,0); ctx.rotate(-S.rud);
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-1.0,0); ctx.stroke(); ctx.restore();
+  }
+  // подруливающее: струйка у носа
   if (S.thrusterDir){
-    ctx.strokeStyle="#7fd0ff"; ctx.lineWidth=0.14;
-    ctx.beginPath(); ctx.moveTo(L*0.75, 0); ctx.lineTo(L*0.75, S.thrusterDir*1.2); ctx.stroke();
+    ctx.strokeStyle="rgba(160,220,255,.8)"; ctx.lineWidth=0.14;
+    ctx.beginPath(); ctx.moveTo(L*0.75, 0); ctx.lineTo(L*0.75, S.thrusterDir*1.3); ctx.stroke();
   }
 }
 
@@ -872,6 +1048,9 @@ function loop(ts){
   var t=Math.floor(sim.started?sim.time:0);
   document.getElementById("hudTime").textContent=Math.floor(t/60)+":"+("0"+t%60).slice(-2);
   document.getElementById("dmgBar").style.width=sim.damage+"%";
+  // живой ветер: стрелка гуляет с порывами
+  document.getElementById("windArrow").style.transform="rotate("+(sim.wDirNow+180)+"deg)";
+  document.getElementById("windHudV").textContent=Math.round(sim.wSpdNow)+" "+T("dockKn")+" · "+dirName(cfg.windDir);
 }
 
 function showResult(){
