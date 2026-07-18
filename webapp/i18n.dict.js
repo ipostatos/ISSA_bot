@@ -62,6 +62,7 @@
     bankReady: { ru: "банк закреплён", pl: "baza utrwalona", ua: "банк закріплено", en: "bank mastered" },
     needPerDay:{ ru: "нужно ~{n} отв./день", pl: "trzeba ~{n} odp./dzień", ua: "потрібно ~{n} відп./день", en: "~{n} answers/day" },
     raiseGoal: { ru: "(цель {g} — подними её)", pl: "(cel {g} — podnieś go)", ua: "(ціль {g} — підніми її)", en: "(goal {g} — raise it)" },
+    clearExamDate:{ ru: "Убрать дату экзамена", pl: "Usuń datę egzaminu", ua: "Прибрати дату іспиту", en: "Remove exam date" },
 
     /* ── home: секции и плитки ── */
     activity:  { ru: "Активность", pl: "Aktywność", ua: "Активність", en: "Activity" },

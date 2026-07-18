@@ -101,7 +101,8 @@
           </div>
         </div>
         <div style="display:flex; gap:10px; margin-top:12px">
-          <div id="goalBox" style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px; cursor:pointer">
+          <div id="goalBox" style="flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:12px; cursor:pointer; position:relative">
+            <span class="emi" data-icon="settings" style="position:absolute; top:5px; right:6px; margin:0; width:12px; height:12px; color:var(--hint); opacity:.55"></span>
             <div style="font-size:11px; color:var(--hint)" data-i18n="lblToday"></div>
             <div style="font-weight:800; font-size:18px" id="goalToday">0/0</div>
           </div>
@@ -115,8 +116,11 @@
           </div>
         </div>
         <div class="muted" style="font-size:12px; margin-top:8px" id="weakLine"></div>
-        <!-- план к дате экзамена: обратный отсчёт + честная дневная норма -->
-        <div id="examPlanLine" style="font-size:12px; margin-top:8px; cursor:pointer"></div>
+        <!-- план к дате экзамена: обратный отсчёт + честная дневная норма.
+             label[for] вместо onclick+showPicker(): открывает нативный пикер
+             напрямую через браузер, не завися от showPicker()/prompt() — оба
+             ненадёжны в Telegram WebView (см. renderExamPlan). -->
+        <label id="examPlanLine" for="examDateInput" style="font-size:12px; margin-top:8px; cursor:pointer; display:block"></label>
         <input type="date" id="examDateInput" style="position:absolute; width:1px; height:1px; opacity:0; border:0; padding:0">
       </div>
 
@@ -382,9 +386,11 @@ function render(){
 // закрепления / дни). Клик — задать или изменить дату (пустой ввод = убрать).
 function renderExamPlan(questions, boxOf){
   const el = document.getElementById("examPlanLine");
+  const inp = document.getElementById("examDateInput");
   if (!el || !window.Progress || !Progress.examPlan) return;
   const ic = n => window.Icons ? Icons.svg(n) : "";
   const plan = Progress.examPlan(questions, boxOf);
+  if (inp) inp.value = Progress.getExamDate() || "";
   if (!plan){
     el.innerHTML = `<span style="color:var(--accent)">${ic("calendar")} ${I18N.t("setExamDate")}</span>`;
   } else {
@@ -395,30 +401,25 @@ function renderExamPlan(questions, boxOf){
     // крупный отсчёт — «виджет»: до экзамена осталось N дней
     el.innerHTML =
       `<div style="font-weight:800; font-size:16px; margin-bottom:2px">` +
-        `${ic("calendar")} ${I18N.t("examOn", {date: d + "." + m, left: `<b style="color:${plan.daysLeft <= 7 ? "var(--warn)" : "var(--accent)"}">${dayWord}</b>`})}</div>` +
+        `${ic("calendar")} ${I18N.t("examOn", {date: d + "." + m, left: `<b style="color:${plan.daysLeft <= 7 ? "var(--warn)" : "var(--accent)"}">${dayWord}</b>`})}` +
+        ` <span id="examDateClear" title="${I18N.t("clearExamDate")}" style="color:var(--hint); opacity:.6; cursor:pointer; font-weight:400">${ic("x-circle")}</span></div>` +
       `<div>` + (plan.reviewsLeft === 0
         ? `<span style="color:var(--ok)">${I18N.t("bankReady")} ${ic("check")}</span>`
         : `<span style="color:${col}">${I18N.t("needPerDay", {n: plan.needPerDay})}</span>` +
           (plan.onTrack ? "" : ` ${I18N.t("raiseGoal", {g: Progress.getGoal()})}`)) + `</div>`;
+    const clearBtn = document.getElementById("examDateClear");
+    // отдельная кнопка очистки: клик по label иначе открыл бы пикер снова
+    if (clearBtn) clearBtn.onclick = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      Progress.setExamDate(null); render();
+    };
   }
-  // выбор даты: нативный пикер (prompt() в Telegram WebView часто заблокирован)
-  el.onclick = ()=>{
-    const inp = document.getElementById("examDateInput");
-    const apply = v => { Progress.setExamDate(v || null); render(); };
-    if (inp && inp.showPicker){
-      inp.value = Progress.getExamDate() || "";
-      inp.onchange = () => apply(inp.value);
-      try { inp.showPicker(); return; } catch (e) {}
-    }
-    const v = prompt(I18N.t("promptDate"), Progress.getExamDate() || "");
-    if (v === null) return;
-    const t = v.trim();
-    if (!t){ apply(null); return; }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || isNaN(Date.parse(t))){
-      alert(I18N.t("badDate")); return;
-    }
-    apply(t);
-  };
+  // выбор/смена даты: #examPlanLine — <label for="examDateInput">, тап по нему
+  // открывает нативный пикер напрямую (браузер сам активирует связанный
+  // input), без вызова showPicker()/prompt() — оба ненадёжны в Telegram
+  // WebView (showPicker() не везде поддержан, prompt() там часто заблокирован
+  // и просто ничего не делает — из-за этого кнопка выглядела «сломанной»).
+  if (inp) inp.onchange = () => { Progress.setExamDate(inp.value || null); render(); };
 }
 
 // заполнить слайд готовности польской лицензии
