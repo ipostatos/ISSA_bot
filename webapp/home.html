@@ -226,6 +226,13 @@
       <div class="t" data-i18n="cShapesT"></div>
       <div class="d" data-i18n="cShapesD"></div>
     </a>
+    <!-- BETA:cams — самодостаточный блок, можно удалить целиком без правки грида -->
+    <a class="cell" href="cams.html" data-beta="cams">
+      <div class="ic-tile red" data-icon="video"></div>
+      <div class="t"><span data-i18n="cCamsT"></span> <span class="beta-badge">beta</span></div>
+      <div class="d" data-i18n="cCamsD"></div>
+    </a>
+    <!-- /BETA:cams -->
   </div>
 
   <a class="cell wide" href="profile.html" style="margin-top:12px">
@@ -266,6 +273,13 @@ var WEATHER_BETA = true;
 if (!WEATHER_BETA){
   var wt = document.querySelector('[data-beta="weather"]');
   if (wt) wt.remove();
+}
+// BETA:cams — рубильник бета-плитки «Камеры» (публичный HLS-поток gdansk.pl/TASK,
+// может закрыться в любой момент). false → плитка скрыта, cams.html не трогать.
+var CAMS_BETA = true;
+if (!CAMS_BETA){
+  var ct = document.querySelector('[data-beta="cams"]');
+  if (ct) ct.remove();
 }
 
 // заменить data-icon на SVG-иконки (Lucide) сразу при загрузке

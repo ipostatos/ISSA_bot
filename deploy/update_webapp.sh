@@ -77,6 +77,7 @@ cp -f "$SRC/buoys.html"      "$DST/buoys.html"    # бонус: буи IALA (п�
 cp -f "$SRC/shapes.html"     "$DST/shapes.html"   # бонус: дневные знаки + флаги МСС
 cp -f "$SRC/audio.html"      "$DST/audio.html"    # аудио-повторение (Web Speech API)
 cp -f "$SRC/dock.html"       "$DST/dock.html"     # бонус: 2D-тренажёр швартовок
+cp -f "$SRC/cams.html"       "$DST/cams.html"     # BETA: веб-камеры (HLS gdansk.pl/TASK)
 cp -f "$SRC/sw.js"           "$DST/sw.js"          # PWA: офлайн-кэш (service worker)
 cp -f "$SRC/manifest.webmanifest" "$DST/manifest.webmanifest" # PWA-манифест
 cp -f "$SRC/icon.svg"        "$DST/icon.svg"       # PWA-иконка (компас)
@@ -129,6 +130,10 @@ echo "→ копируем Leaflet (карта ветра, локально; т�
 mkdir -p "$DST/vendor/leaflet"
 cp -f "$SRC/vendor/leaflet/leaflet.js"  "$DST/vendor/leaflet/" 2>/dev/null && echo "  leaflet.js"
 cp -f "$SRC/vendor/leaflet/leaflet.css" "$DST/vendor/leaflet/" 2>/dev/null && echo "  leaflet.css"
+
+echo "→ копируем hls.js (веб-камеры, локально; сам поток — kamera.task.gda.pl)"
+mkdir -p "$DST/vendor/hls"
+cp -f "$SRC/vendor/hls/hls.light.min.js" "$DST/vendor/hls/" 2>/dev/null && echo "  hls.light.min.js"
 
 echo "→ копируем картинки (схемы конспекта)"
 mkdir -p "$DST/images"

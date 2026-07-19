@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title data-i18n="cCamsT">Камеры</title>
+<link rel="stylesheet" href="theme.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="nav.js"></script>
+<script src="i18n.dict.js"></script>
+<script src="i18n.js"></script>
+<script src="icons.js"></script>
+<script src="vendor/hls/hls.light.min.js"></script>
+<style>
+  .cam-head{ display:flex; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-3) }
+  .cam-head .place{ flex:1; min-width:0 }
+  .cam-head .place .t{ font-size:var(--fs-h2); font-weight:800; line-height:1.2 }
+  .cam-head .place .d{ color:var(--hint); font-size:var(--fs-xs); margin-top:2px }
+
+  /* — видеоокно 16:9 — */
+  .cam-wrap{ position:relative; width:100%; aspect-ratio:16/9; border-radius:var(--r-md);
+    overflow:hidden; border:1px solid var(--border); background:#0b1a2b }
+  .cam-wrap video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    background:#0b1a2b }
+  /* оверлей «смотреть» до старта: не грузим ~1.5 ГБ/час без явного тапа */
+  .cam-tap{ position:absolute; inset:0; z-index:2; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:10px; cursor:pointer; border:0;
+    color:#e8f1fb; background:linear-gradient(180deg, rgba(11,26,43,.55), rgba(11,26,43,.85)) }
+  .cam-tap .cam-play{ width:64px; height:64px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; background:var(--accent); box-shadow:0 6px 24px rgba(0,0,0,.35) }
+  .cam-tap .cam-play svg{ width:28px; height:28px; color:#fff }
+  .cam-tap .lab{ font-size:var(--fs-sm); font-weight:700 }
+  .cam-tap:active .cam-play{ transform:scale(.95) }
+  .cam-tap.hidden{ display:none }
+
+  .cam-live{ position:absolute; top:10px; left:10px; z-index:3; display:none; align-items:center;
+    gap:6px; padding:4px 10px; border-radius:var(--r-pill); font-size:11px; font-weight:800;
+    letter-spacing:.06em; color:#fff; background:rgba(200,30,45,.9) }
+  .cam-live .dot{ width:7px; height:7px; border-radius:50%; background:#fff;
+    animation:camPulse 1.6s ease-in-out infinite }
+  .cam-live.on{ display:inline-flex }
+  @keyframes camPulse{ 0%,100%{ opacity:1 } 50%{ opacity:.35 } }
+
+  .cam-state{ position:absolute; inset:0; z-index:2; display:none; flex-direction:column;
+    align-items:center; justify-content:center; gap:6px; padding:var(--sp-4); text-align:center;
+    color:#e8f1fb; background:rgba(11,26,43,.85); font-size:var(--fs-sm) }
+  .cam-state.on{ display:flex }
+  .cam-state .spin{ width:26px; height:26px; border-radius:50%; border:3px solid rgba(255,255,255,.25);
+    border-top-color:#fff; animation:camSpin .9s linear infinite }
+  @keyframes camSpin{ to{ transform:rotate(360deg) } }
+  .cam-state a{ color:var(--accent); font-weight:700; text-decoration:none }
+
+  .cam-src{ margin-top:10px; font-size:var(--fs-xs); color:var(--hint) }
+  .cam-src a{ color:var(--hint); text-decoration:underline }
+</style>
+</head>
+<body>
+  <h1 data-i18n="cCamsT"></h1>
+  <p class="sub" data-i18n="camSub"></p>
+
+  <div id="camList"></div>
+
+  <p class="foot" data-i18n="camFoot"></p>
+
+<script>
+"use strict";
+(function(){
+  var tg = window.Telegram && window.Telegram.WebApp;
+
+  // Камеры — публичные HLS-потоки (задел под несколько; имена мест не переводим).
+  // srcPage — страница-источник: и атрибуция, и фолбэк, если поток закроют.
+  var CAMS = [
+    {
+      id: "ncz",
+      name: "Narodowe Centrum Żeglarstwa",
+      place: "Górki Zachodnie · Martwa Wisła, Gdańsk",
+      hls: "https://kamera.task.gda.pl/rtplive/k002.sdp/playlist.m3u8",
+      srcLabel: "gdansk.pl / TASK",
+      srcPage: "https://www.gdansk.pl/tv/Kamera-online-Narodowe-Centrum-Zeglarstwa-Gorki-Zachodnie,v,4139"
+    }
+  ];
+
+  function openExt(url){
+    if (tg && tg.openLink) tg.openLink(url); else window.open(url, "_blank");
+  }
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
+    return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
+
+  function render(cam){
+    var card = document.createElement("div");
+    card.className = "card";
+    card.style.marginBottom = "12px";
+    card.innerHTML =
+      '<div class="cam-head">' +
+        '<div class="ic-tile cyan" data-icon="video"></div>' +
+        '<div class="place"><div class="t">' + esc(cam.name) + '</div>' +
+        '<div class="d">' + esc(cam.place) + '</div></div>' +
+      '</div>' +
+      '<div class="cam-wrap">' +
+        '<video playsinline muted preload="none"></video>' +
+        '<span class="cam-live"><span class="dot"></span>LIVE</span>' +
+        '<button class="cam-tap" type="button">' +
+          '<span class="cam-play">' + Icons.svg("play") + '</span>' +
+          '<span class="lab">' + I18N.t("camTap") + '</span>' +
+        '</button>' +
+        '<div class="cam-state"></div>' +
+      '</div>' +
+      '<div class="cam-src">' + I18N.t("camSrc") + ": " +
+        '<a href="' + esc(cam.srcPage) + '">' + esc(cam.srcLabel) + '</a></div>';
+
+    var video = card.querySelector("video");
+    var tap   = card.querySelector(".cam-tap");
+    var live  = card.querySelector(".cam-live");
+    var state = card.querySelector(".cam-state");
+    var hlsInst = null;
+    var watchdog = null; // страж зависшего коннекта: тихий столл без fatal-ошибки
+
+    card.querySelector(".cam-src a").addEventListener("click", function(e){
+      e.preventDefault(); openExt(cam.srcPage);
+    });
+
+    function showLoading(){
+      state.innerHTML = '<div class="spin"></div><div>' + I18N.t("camLoad") + '</div>';
+      state.classList.add("on");
+    }
+    function showError(){
+      stop(false);
+      state.innerHTML = '<div>' + I18N.t("camErr") + '</div>' +
+        '<a href="#">' + I18N.t("camErrLink") + '</a>';
+      state.querySelector("a").addEventListener("click", function(e){
+        e.preventDefault(); openExt(cam.srcPage);
+      });
+      state.classList.add("on");
+      tap.classList.add("hidden");
+    }
+    function playing(){
+      clearTimeout(watchdog);
+      state.classList.remove("on");
+      live.classList.add("on");
+      video.controls = true;
+      video.muted = false; // у камеры нет звука, но не мешаем нативным контролам
+    }
+    function stop(showTap){
+      clearTimeout(watchdog);
+      if (hlsInst){ try{ hlsInst.destroy(); }catch(e){} hlsInst = null; }
+      try{ video.pause(); video.removeAttribute("src"); video.load(); }catch(e){}
+      video.controls = false;
+      live.classList.remove("on");
+      state.classList.remove("on");
+      if (showTap !== false) tap.classList.remove("hidden");
+    }
+
+    function start(){
+      tap.classList.add("hidden");
+      showLoading();
+      window.haptic && window.haptic("light");
+      video.addEventListener("playing", playing);
+      watchdog = setTimeout(showError, 20000); // не играет за 20с — честная ошибка вместо вечного спиннера
+
+      if (window.Hls && Hls.isSupported()){
+        hlsInst = new Hls({ maxBufferLength: 15 });
+        hlsInst.on(Hls.Events.ERROR, function(_, data){ if (data.fatal) showError(); });
+        hlsInst.loadSource(cam.hls);
+        hlsInst.attachMedia(video);
+        hlsInst.on(Hls.Events.MANIFEST_PARSED, function(){
+          video.play().catch(showError);
+        });
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")){
+        // iOS/WKWebView: нативный HLS
+        video.addEventListener("error", showError);
+        video.src = cam.hls;
+        video.play().catch(showError);
+      } else {
+        showError();
+      }
+    }
+
+    tap.addEventListener("click", start);
+    // Ушли со страницы/свернули — глушим поток, мобильный трафик дорогой.
+    document.addEventListener("pagehide", function(){ stop(); });
+
+    return card;
+  }
+
+  var list = document.getElementById("camList");
+  CAMS.forEach(function(cam){ list.appendChild(render(cam)); });
+
+  Icons.hydrate();
+})();
+</script>
+</body>
+</html>

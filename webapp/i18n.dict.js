@@ -622,7 +622,18 @@
     dockMaxImp:  { ru: "Макс. удар", pl: "Maks. uderzenie", ua: "Макс. удар", en: "Max impact" },
     dockPerfect: { ru: "Мягко и чисто — как по учебнику.", pl: "Miękko i czysto — podręcznikowo.", ua: "М'яко і чисто — як за підручником.", en: "Soft and clean — textbook." },
     dockGood:    { ru: "Хорошо, но были жёсткие касания.", pl: "Dobrze, ale były twarde kontakty.", ua: "Добре, але були жорсткі торкання.", en: "Good, but some hard contacts." },
-    dockRough:   { ru: "Встали, но верфь ждёт.", pl: "Zacumowano, ale stocznia czeka.", ua: "Стали, але верф чекає.", en: "Docked, but the boatyard awaits." }
+    dockRough:   { ru: "Встали, но верфь ждёт.", pl: "Zacumowano, ale stocznia czeka.", ua: "Стали, але верф чекає.", en: "Docked, but the boatyard awaits." },
+
+    // — камеры (cams.html): публичные веб-камеры с воды —
+    cCamsT:      { ru: "Камеры", pl: "Kamery", ua: "Камери", en: "Cameras" },
+    cCamsD:      { ru: "Прямой эфир из марины NCŻ (Gdańsk)", pl: "Na żywo z mariny NCŻ (Gdańsk)", ua: "Прямий ефір з марини NCŻ (Gdańsk)", en: "Live view of the NCŻ marina (Gdańsk)" },
+    camSub:      { ru: "Реальная обстановка на воде прямо сейчас: ветер, волна, работа яхт в марине", pl: "Rzeczywista sytuacja na wodzie w tej chwili: wiatr, fala, manewry jachtów w marinie", ua: "Реальна обстановка на воді просто зараз: вітер, хвиля, робота яхт у марині", en: "Real conditions on the water right now: wind, waves, boats working the marina" },
+    camTap:      { ru: "Смотреть эфир", pl: "Oglądaj na żywo", ua: "Дивитись ефір", en: "Watch live" },
+    camLoad:     { ru: "Подключаемся…", pl: "Łączenie…", ua: "Підключення…", en: "Connecting…" },
+    camErr:      { ru: "Поток недоступен. Возможно, камера временно выключена.", pl: "Strumień niedostępny. Kamera może być chwilowo wyłączona.", ua: "Потік недоступний. Можливо, камеру тимчасово вимкнено.", en: "Stream unavailable. The camera may be temporarily off." },
+    camErrLink:  { ru: "Открыть на gdansk.pl", pl: "Otwórz na gdansk.pl", ua: "Відкрити на gdansk.pl", en: "Open on gdansk.pl" },
+    camSrc:      { ru: "Источник", pl: "Źródło", ua: "Джерело", en: "Source" },
+    camFoot:     { ru: "Публичная трансляция gdansk.pl (TASK). Поток ~1,5 ГБ/час — лучше смотреть по Wi-Fi.", pl: "Publiczna transmisja gdansk.pl (TASK). Strumień ~1,5 GB/h — najlepiej przez Wi-Fi.", ua: "Публічна трансляція gdansk.pl (TASK). Потік ~1,5 ГБ/год — краще дивитись через Wi-Fi.", en: "Public gdansk.pl (TASK) stream. Uses ~1.5 GB/hour — Wi-Fi recommended." }
   };
 
   return { LANGS: LANGS, DICT: DICT };
