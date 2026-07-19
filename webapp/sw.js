@@ -14,7 +14,7 @@
 //     range-запросы pdf.js), внешние тайлы карт и Open-Meteo (живые данные).
 "use strict";
 
-var CACHE = "issa-static-v1"; // bump при смене формата кэша — старые удаляются в activate
+var CACHE = "issa-static-v2"; // bump при смене формата кэша — старые удаляются в activate (v2: чистка клиентов со старыми icons.js/i18n.dict.js после релиза камер)
 
 var NET_TIMEOUT_MS = 4000; // на плохой сети не ждём вечно — падаем в кэш
 

@@ -625,8 +625,8 @@
     dockRough:   { ru: "Встали, но верфь ждёт.", pl: "Zacumowano, ale stocznia czeka.", ua: "Стали, але верф чекає.", en: "Docked, but the boatyard awaits." },
 
     // — камеры (cams.html): публичные веб-камеры с воды —
-    cCamsT:      { ru: "Камеры", pl: "Kamery", ua: "Камери", en: "Cameras" },
-    cCamsD:      { ru: "Прямой эфир из марины NCŻ (Gdańsk)", pl: "Na żywo z mariny NCŻ (Gdańsk)", ua: "Прямий ефір з марини NCŻ (Gdańsk)", en: "Live view of the NCŻ marina (Gdańsk)" },
+    cCamsT:      { ru: "Камера: марина NCŻ", pl: "Kamera: marina NCŻ", ua: "Камера: марина NCŻ", en: "Camera: NCŻ marina" },
+    cCamsD:      { ru: "Прямой эфир из Górki Zachodnie (Gdańsk)", pl: "Na żywo z Górek Zachodnich (Gdańsk)", ua: "Прямий ефір з Górki Zachodnie (Gdańsk)", en: "Live from Górki Zachodnie (Gdańsk)" },
     camSub:      { ru: "Реальная обстановка на воде прямо сейчас: ветер, волна, работа яхт в марине", pl: "Rzeczywista sytuacja na wodzie w tej chwili: wiatr, fala, manewry jachtów w marinie", ua: "Реальна обстановка на воді просто зараз: вітер, хвиля, робота яхт у марині", en: "Real conditions on the water right now: wind, waves, boats working the marina" },
     camTap:      { ru: "Смотреть эфир", pl: "Oglądaj na żywo", ua: "Дивитись ефір", en: "Watch live" },
     camLoad:     { ru: "Подключаемся…", pl: "Łączenie…", ua: "Підключення…", en: "Connecting…" },
