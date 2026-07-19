@@ -44,6 +44,17 @@
   /* благодарность автору — кнопки в столбик */
   .donate-row{ display:flex; flex-direction:column; gap:10px }
   .donate-row .btn{ width:100% }
+
+  /* другие проекты автора — карточки-ссылки (паттерн лендинга Kwadrat) */
+  .proj-list{ display:flex; flex-direction:column; gap:8px }
+  .proj{ display:flex; align-items:center; gap:12px; padding:12px var(--sp-3);
+    background:var(--bg); border:1px solid var(--border); border-radius:var(--r-md) }
+  .proj:active{ transform:scale(.99) }
+  .proj .pj-emoji{ flex:0 0 auto; font-size:24px; line-height:1 }
+  .proj .pj-body{ flex:1; min-width:0 }
+  .proj .pj-name{ font-weight:700; font-size:14px; color:var(--text) }
+  .proj .pj-desc{ font-size:12px; color:var(--hint); line-height:1.45; margin-top:2px }
+  .proj .pj-arrow{ flex:0 0 auto; color:var(--hint); font-size:16px }
   /* ссылки без подчёркивания (акцентный цвет уже выделяет их) */
   a{ text-decoration:none }
 </style>
@@ -163,6 +174,31 @@
       </a>
     </div>
     <div class="muted" id="donateNote" style="font-size:12px; margin-top:10px; text-align:center"></div>
+  </div>
+
+  <!-- Другие проекты автора -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="h2" data-i18n="aboutOtherT"></div>
+    <div class="proj-list">
+      <a class="proj" href="https://t.me/KwadratPLBot" target="_blank" rel="noopener">
+        <span class="pj-emoji">🏠</span>
+        <span class="pj-body">
+          <span class="pj-name">Kwadrat PL</span>
+          <span class="pj-desc" style="display:block">Поиск аренды жилья в Польше: OLX, Otodom
+            и Morizon в одном боте — фильтры, медианные цены, подписки на новые объявления.</span>
+        </span>
+        <span class="pj-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="proj" href="https://t.me/FlyPLBot" target="_blank" rel="noopener">
+        <span class="pj-emoji">✈️</span>
+        <span class="pj-body">
+          <span class="pj-name">FlyGO</span>
+          <span class="pj-desc" style="display:block">Дешёвые авиабилеты из Польши: Ryanair,
+            Wizz Air и склейки маршрутов, которых не показывают агрегаторы.</span>
+        </span>
+        <span class="pj-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
   </div>
 
   <p class="foot">Это вспомогательный учебный материал для самостоятельной

@@ -633,7 +633,10 @@
     camErr:      { ru: "Поток недоступен. Возможно, камера временно выключена.", pl: "Strumień niedostępny. Kamera może być chwilowo wyłączona.", ua: "Потік недоступний. Можливо, камеру тимчасово вимкнено.", en: "Stream unavailable. The camera may be temporarily off." },
     camErrLink:  { ru: "Открыть на gdansk.pl", pl: "Otwórz na gdansk.pl", ua: "Відкрити на gdansk.pl", en: "Open on gdansk.pl" },
     camSrc:      { ru: "Источник", pl: "Źródło", ua: "Джерело", en: "Source" },
-    camFoot:     { ru: "Публичная трансляция gdansk.pl (TASK). Поток ~1,5 ГБ/час — лучше смотреть по Wi-Fi.", pl: "Publiczna transmisja gdansk.pl (TASK). Strumień ~1,5 GB/h — najlepiej przez Wi-Fi.", ua: "Публічна трансляція gdansk.pl (TASK). Потік ~1,5 ГБ/год — краще дивитись через Wi-Fi.", en: "Public gdansk.pl (TASK) stream. Uses ~1.5 GB/hour — Wi-Fi recommended." }
+    camFoot:     { ru: "Публичная трансляция gdansk.pl (TASK). Поток ~1,5 ГБ/час — лучше смотреть по Wi-Fi.", pl: "Publiczna transmisja gdansk.pl (TASK). Strumień ~1,5 GB/h — najlepiej przez Wi-Fi.", ua: "Публічна трансляція gdansk.pl (TASK). Потік ~1,5 ГБ/год — краще дивитись через Wi-Fi.", en: "Public gdansk.pl (TASK) stream. Uses ~1.5 GB/hour — Wi-Fi recommended." },
+
+    // — «О банке»: другие проекты автора —
+    aboutOtherT: { ru: "Другие проекты автора", pl: "Inne projekty autora", ua: "Інші проєкти автора", en: "More projects by the author" }
   };
 
   return { LANGS: LANGS, DICT: DICT };
