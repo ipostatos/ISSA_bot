@@ -36,11 +36,21 @@ chown -R issa:issa /opt/issa-bot
 
 ## 5. Виртуальное окружение и зависимости
 
+Venv создаём и наполняем **от пользователя issa** — от него же работает бот.
+Если сделать это от root, в `.venv` останутся файлы `root:root`, и дальше
+любой запуск от issa (деплой, pip, сам бот) упрётся в права.
+
 ```bash
 cd /opt/issa-bot
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
+sudo -u issa python3 -m venv .venv
+sudo -u issa /opt/issa-bot/.venv/bin/pip install -r requirements.txt
+# проверка: должно вывести 0
+sudo find /opt/issa-bot/.venv ! -user issa | wc -l
 ```
+
+> В `requirements.txt` есть `edge-tts` — он нужен только билд-скрипту озвучки
+> (`webapp/build_audio_tts.py`), сам бот его не импортирует. Ставится один раз
+> здесь; деплой-скрипты его больше не доустанавливают.
 
 ## 6. Задать токен бота
 
@@ -95,9 +105,14 @@ journalctl -u issa-bot -f      # живой лог (Ctrl+C для выхода)
 ```bash
 cd /opt/issa-bot
 sudo -u issa git pull
-.venv/bin/pip install -r requirements.txt   # если менялись зависимости
-systemctl restart issa-bot
+sudo -u issa /opt/issa-bot/.venv/bin/pip install -r requirements.txt   # если менялись зависимости
+systemctl restart issa-bot                                            # единственный шаг от root
 ```
+
+> Правило: всё, что пишет в `/opt/issa-bot` (git, pip, генерация данных), —
+> от `issa`; root оставляем только для `systemctl` и копирования в системные
+> каталоги раздачи. Разовых `pip install <пакет>` в деплое быть не должно:
+> версии фиксируются в `requirements.txt`.
 
 Или одной строкой — скрипт `deploy/update.sh` (см. ниже).
 

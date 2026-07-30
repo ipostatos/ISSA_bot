@@ -4,6 +4,15 @@
 #
 # Запуск на сервере:  sudo bash /opt/issa-bot/deploy/update_webapp.sh
 #
+# ПРАВИЛО ВЛАДЕНИЯ (волна 0, находка H2). Root нужен ТОЛЬКО для публикации в
+# системные каталоги раздачи (/opt/issa-bot/miniapp, /opt/issa-site) — это
+# копирование, туда пишет Caddy-хост. Всё, что трогает /opt/issa-bot (git pull,
+# pip, генерация данных, кэш озвучки), выполняется ОТ issa через as_issa().
+# Иначе в дереве и в .venv появляются файлы root:root, и следующий деплой от
+# issa падает по правам, а бот (он работает от issa) теряет доступ к своим же
+# данным. Проверка после деплоя:
+#   sudo find /opt/issa-bot/.venv ! -user issa | wc -l     # должно быть 0
+#
 # Структура (статика, без сборки — никакого npm/vite/dist не нужно):
 #   webapp/home.html   — стартовый экран (выбор: Тесты / Калькулятор)
 #   webapp/quiz.html   — тесты
@@ -19,31 +28,60 @@ main() {
 APP_DIR=/opt/issa-bot
 SRC="$APP_DIR/webapp"
 DST=/opt/issa-bot/miniapp        # каталог, который раздаёт Caddy (root в Caddyfile)
+PY="$APP_DIR/.venv/bin/python"
 
-echo "→ обновляем код из git"
-sudo -u issa git -C "$APP_DIR" pull --ff-only || git -C "$APP_DIR" pull --ff-only
+# Единая точка «выполнить от issa». Всё, что пишет внутрь $APP_DIR, идёт через неё.
+as_issa() { sudo -u issa "$@"; }
+
+echo "→ обновляем код из git (от issa)"
+# Фолбэка `|| git pull` (то есть «не вышло от issa — сделаем от root») здесь
+# больше нет: он тихо превращал сбой прав в деплой от root и оставлял в дереве
+# файлы root:root. Если pull от issa не проходит — деплой обязан остановиться.
+as_issa git -C "$APP_DIR" pull --ff-only
+
+# Предполётная проверка владения: после старых деплоев от root в дереве могли
+# остаться файлы root:root — тогда шаги ниже (они идут от issa) упадут по правам.
+# Сами ничего не чиним и деплой не валим: печатаем ровно ту команду, которой лечится.
+BAD_OWNER="$(find "$APP_DIR/webapp" "$APP_DIR/.venv" ! -user issa -print -quit 2>/dev/null || true)"
+if [ -n "$BAD_OWNER" ]; then
+  echo "  ⚠ в дереве есть файлы не от issa (например: $BAD_OWNER)"
+  echo "    почини один раз:  sudo chown -R issa:issa $APP_DIR"
+fi
 
 # Каталоги рантайм-состояния бота (в .gitignore, git их не приносит). Создаём
 # заранее с владельцем issa: иначе ReadWritePaths в issa-bot.service указывает
 # на несуществующий путь → systemd падает с 226/NAMESPACE при чистом деплое.
 echo "→ гарантируем каталоги состояния бота (progress/, sessions/)"
-sudo -u issa mkdir -p "$APP_DIR/progress" "$APP_DIR/sessions"
+as_issa mkdir -p "$APP_DIR/progress" "$APP_DIR/sessions"
 
-echo "→ перегенерируем данные (вопросы, конспект, задачи, словарь)"
-"$APP_DIR/.venv/bin/python" "$SRC/build_quiz_data.py"
-"$APP_DIR/.venv/bin/python" "$SRC/build_konspekt_data.py"
-"$APP_DIR/.venv/bin/python" "$SRC/build_tasks_data.py"
-"$APP_DIR/.venv/bin/python" "$SRC/build_glossary_data.py"
-"$APP_DIR/.venv/bin/python" "$SRC/build_content_data.py"
-"$APP_DIR/.venv/bin/python" "$SRC/build_zeglarz_data.py"      # польская лицензия Żeglarz
-"$APP_DIR/.venv/bin/python" "$SRC/build_sternik_data.py"      # польская лицензия Sternik
-"$APP_DIR/.venv/bin/python" "$SRC/build_konspekt_pl_data.py"  # польский конспект (Żeglarz+Sternik)
+echo "→ перегенерируем данные (вопросы, конспект, задачи, словарь) — от issa"
+# Скрипты пишут *_data.js прямо в репозиторий ($SRC). От root они оставляли бы
+# там файлы root:root, после чего следующий `git pull` от issa падал бы.
+as_issa "$PY" "$SRC/build_quiz_data.py"
+as_issa "$PY" "$SRC/build_konspekt_data.py"
+as_issa "$PY" "$SRC/build_tasks_data.py"
+as_issa "$PY" "$SRC/build_glossary_data.py"
+as_issa "$PY" "$SRC/build_content_data.py"
+as_issa "$PY" "$SRC/build_zeglarz_data.py"      # польская лицензия Żeglarz
+as_issa "$PY" "$SRC/build_sternik_data.py"      # польская лицензия Sternik
+as_issa "$PY" "$SRC/build_konspekt_pl_data.py"  # польский конспект (Żeglarz+Sternik)
 
 echo "→ нейроозвучка (edge-tts): генерируем недостающие фразы"
-# Не валит деплой: без сети/пакета плеер работает на системном синтезе.
-"$APP_DIR/.venv/bin/pip" install -q edge-tts 2>/dev/null || true
-"$APP_DIR/.venv/bin/python" "$SRC/build_audio_tts.py" --cache "$APP_DIR/tts_cache" \
-  || echo "  (генерация неполная — плеер дочитает системным голосом)"
+# Пакет здесь БОЛЬШЕ НЕ СТАВИМ. Раньше на каждом деплое выполнялось
+# `pip install -q edge-tts` от root: свежая версия с PyPI прямо в root на
+# боевой машине, плюс файлы root:root в .venv. Теперь версия запинена в
+# requirements.txt (edge-tts==7.2.8) и ставится один раз через deploy/update.sh.
+# Отсутствие пакета деплой НЕ валит — плеер дочитает системным синтезом.
+if as_issa "$PY" -c 'import edge_tts' 2>/dev/null; then
+  as_issa "$PY" "$SRC/build_audio_tts.py" --cache "$APP_DIR/tts_cache" \
+    || echo "  (генерация неполная — плеер дочитает системным голосом)"
+else
+  echo "  edge-tts нет в $APP_DIR/.venv — озвучка пропущена, плеер читает системным голосом."
+  echo "  поставить один раз:  sudo -u issa $APP_DIR/.venv/bin/pip install -r $APP_DIR/requirements.txt"
+fi
+
+# Ниже — публикация в системный каталог раздачи ($DST). Здесь root уместен:
+# это копирование наружу, в дерево, которым владеет хост, а не запись в $APP_DIR.
 mkdir -p "$DST/tts"
 if command -v rsync >/dev/null; then
   rsync -a --delete "$APP_DIR/tts_cache/" "$DST/tts/"

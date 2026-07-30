@@ -212,3 +212,24 @@ jobs:
             exit 1
           fi
           echo "OK: бэкапов, БД и секретов в индексе нет, .gitignore их закрывает"
+
+      - name: Deploy scripts — pip только от issa и только из requirements.txt
+        run: |
+          # Сторож против возврата находки H2: root, исполняющий код и pip внутри
+          # /opt/issa-bot, оставляет в .venv файлы root:root и обходит systemd-песочницу.
+          # Комментарии не считаем — шаблоны требуют, чтобы до совпадения не было '#'.
+          bad=0
+          if grep -nE '^[^#]*pip[^#]*install' deploy/*.sh | grep -v -- '-r '; then
+            echo "::error::в deploy/*.sh есть разовый pip install без -r requirements.txt — версию надо пинить"
+            bad=1
+          fi
+          if grep -nE '^[^#]*\.venv/bin/pip' deploy/*.sh | grep -v 'sudo -u issa'; then
+            echo "::error::.venv/bin/pip вызывается не от issa — в venv появятся файлы root:root"
+            bad=1
+          fi
+          if grep -nE '^[^#]*\|\|[^#]*git[^#]*pull' deploy/*.sh; then
+            echo "::error::в deploy/*.sh остался root-фолбэк вида '|| git pull'"
+            bad=1
+          fi
+          [ "$bad" -eq 0 ] || exit 1
+          echo "OK: деплой-скрипты не ставят пакеты на ходу и не работают с pip от root"
