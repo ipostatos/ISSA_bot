@@ -88,15 +88,35 @@ sudo systemctl restart issa-api
 ## Бэкап
 
 Скрипт делает онлайн-снимок БД (корректно с WAL, не мешает живому API) и
-ротирует копии (хранит последние 14):
+ротирует копии (хранит последние 14).
+
+Копии складываются в **`/var/backups/issa/state-<timestamp>.db`** — вне рабочего
+дерева git. Раньше каталог был внутри репозитория (`api/backups/`), и один
+`git add -A` опубликовал бы базу всех пользователей (Telegram user_id, прогресс).
+Путь переопределяется переменной `ISSA_BACKUP_DIR`.
+
+**Шаг 1 (один раз, от root) — создать каталог.** Скрипт его сам не создаёт:
+от учётки `issa` запись в `/var/backups` запрещена, и молчаливая ошибка оборвала бы
+цепочку бэкапов. Без каталога скрипт падает с этой же подсказкой:
 
 ```bash
-sudo bash /opt/issa-bot/deploy/backup_db.sh          # разово
-# по расписанию — добавить в crontab пользователя issa:
+sudo install -d -o issa -g issa -m 700 /var/backups/issa
+```
+
+**Шаг 2 — запускать ОТ issa** (не `sudo bash`): владелец файлов в каталоге должен
+быть один, иначе ротация от другой учётки упрётся в права.
+
+```bash
+sudo -u issa bash /opt/issa-bot/deploy/backup_db.sh      # разово
+# по расписанию — в crontab пользователя issa (crontab -u issa -e):
 #   0 4 * * *  bash /opt/issa-bot/deploy/backup_db.sh
 ```
 
-Копии складываются в `/opt/issa-bot/api/backups/state-<timestamp>.db`.
+Права: каталог `700`, каждый снимок `600` — содержимое читает только `issa`.
+
+> Если на сервере уже лежат старые копии в `/opt/issa-bot/api/backups/` — перенести
+> и удалить каталог вручную:
+> `sudo mv /opt/issa-bot/api/backups/*.db /var/backups/issa/ && sudo chown issa:issa /var/backups/issa/*.db && sudo chmod 600 /var/backups/issa/*.db && sudo rmdir /opt/issa-bot/api/backups`
 
 ## Smoke-проверка (после деплоя)
 

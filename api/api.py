@@ -438,10 +438,34 @@ async def create_invoice(
 ALLOWED_ORIGIN = os.environ.get("ISSA_API_ORIGIN", "").strip()
 
 
+def _declared_too_large(content_length: str | None, limit: int = MAX_BODY) -> bool:
+    """Ранняя проверка размера ПО ЗАГОЛОВКУ, до чтения тела в память.
+
+    `await request.body()` буферизует запрос целиком и только потом сравнивает
+    с MAX_BODY — тело на пару гигабайт кладёт процесс по памяти раньше, чем
+    сработает лимит. Здесь смотрим на объявленный Content-Length и отказываем,
+    не прочитав ни байта. Проверки после чтения тела остаются на месте: они
+    ловят chunked-запросы без Content-Length и враньё в заголовке.
+    """
+    if not content_length:
+        return False
+    try:
+        return int(content_length) > limit
+    except (TypeError, ValueError):
+        return False           # мусор в заголовке — пусть решают обычные проверки
+
+
 @app.middleware("http")
 async def cors_and_guard(request: Request, call_next):
     if request.method == "OPTIONS":
         return JSONResponse({}, headers=_cors_headers())
+    if _declared_too_large(request.headers.get("content-length")):
+        log.warning("413 early: Content-Length=%s > %d на %s",
+                    request.headers.get("content-length"), MAX_BODY, request.url.path)
+        # HTTPException в middleware не перехватывается обработчиками FastAPI —
+        # отвечаем напрямую, в том же формате {"detail": ...}.
+        return JSONResponse({"detail": "payload too large"}, status_code=413,
+                            headers=_cors_headers())
     resp = await call_next(request)
     for k, v in _cors_headers().items():
         resp.headers[k] = v

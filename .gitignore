@@ -1,8 +1,21 @@
+# Секреты. Ловим весь набор .env* (.env.local, .env.prod…), кроме образца .env.example,
+# который в репозитории нужен. Порядок важен: негативное правило идёт ПОСЛЕ шаблона.
 .env
+.env.*
+!.env.example
 progress/
 sessions/
+# Базы и их WAL/SHM-спутники — где бы ни лежали.
+*.db
+*.db-wal
+*.db-shm
 api/state.db
 api/state.db-*
+# Бэкапы БД содержат PII (Telegram user_id, прогресс) — в git не попадают НИКОГДА.
+# Боевой каталог вынесен за пределы репозитория (/var/backups/issa, см. deploy/backup_db.sh),
+# эти правила — страховка на случай локального/старого расположения внутри дерева.
+api/backups/
+backups/
 api/__pycache__/
 __pycache__/
 *.pyc

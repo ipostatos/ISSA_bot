@@ -183,3 +183,32 @@ jobs:
             exit 1
           fi
           echo "OK: .env не в репозитории"
+
+      - name: Ensure backups / DB / env files are not tracked
+        run: |
+          # 1) Ничего похожего на бэкап, базу или секрет не должно быть в индексе.
+          #    Репозиторий публичный: state.db и снимки содержат PII (Telegram
+          #    user_id, история прохождений) — см. PRIVACY.md.
+          BAD=$(git ls-files \
+                | grep -E '(^|/)backups/|\.db$|\.db-(wal|shm)$|(^|/)\.env$|(^|/)\.env\.[^/]+$' \
+                | grep -v '^\.env\.example$' || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::В git отслеживаются бэкапы/БД/секреты — удалить из индекса:"
+            echo "$BAD"
+            exit 1
+          fi
+          # 2) И .gitignore действительно их закрывает (иначе следующий `git add -A`
+          #    их и добавит — проверка №1 к тому моменту уже опоздает).
+          for p in api/backups/state-20260101-000000.db api/state.db api/state.db-wal \
+                   .env .env.local .env.production; do
+            if ! git check-ignore -q "$p"; then
+              echo "::error::$p не игнорируется .gitignore"
+              exit 1
+            fi
+          done
+          # 3) …но образец .env.example игнорироваться НЕ должен — он нужен в репо.
+          if git check-ignore -q .env.example; then
+            echo "::error::.env.example не должен игнорироваться (нужно исключение в .gitignore)"
+            exit 1
+          fi
+          echo "OK: бэкапов, БД и секретов в индексе нет, .gitignore их закрывает"

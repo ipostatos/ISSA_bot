@@ -4,23 +4,52 @@
 # Использует `sqlite3 .backup` — безопасный онлайн-бэкап: корректно работает с
 # WAL-режимом и не мешает живому API (в отличие от простого cp файла .db).
 #
-# Запуск вручную:        sudo bash /opt/issa-bot/deploy/backup_db.sh
-# По расписанию (cron):  0 4 * * *  bash /opt/issa-bot/deploy/backup_db.sh
+# Запускать ОТ ПОЛЬЗОВАТЕЛЯ issa (не через sudo): каталог бэкапов принадлежит issa,
+# и смешивать владельцев файлов в нём нельзя — иначе ротация от другой учётки упрётся
+# в права.
+#
+# Запуск вручную:        sudo -u issa bash /opt/issa-bot/deploy/backup_db.sh
+# По расписанию (cron):  crontab -u issa -e →  0 4 * * *  bash /opt/issa-bot/deploy/backup_db.sh
+#
+# Каталог назначения — ВНЕ рабочего дерева git (иначе один `git add -A` опубликует
+# базу всех пользователей). Переопределяется переменной ISSA_BACKUP_DIR.
+# Каталог должен существовать и принадлежать issa — создаётся один раз от root:
+#   sudo install -d -o issa -g issa -m 700 /var/backups/issa
 #
 # Хранит последние KEEP копий, старые удаляет. Не печатает секретов.
 set -euo pipefail
 
 APP_DIR=/opt/issa-bot
 DB="${ISSA_API_DB:-$APP_DIR/api/state.db}"
-BACKUP_DIR="$APP_DIR/api/backups"
+BACKUP_DIR="${ISSA_BACKUP_DIR:-/var/backups/issa}"
 KEEP=14                          # сколько копий держим (≈2 недели при ежедневном)
+
+# Снимки БД содержат PII → создаём их сразу без прав для группы и остальных.
+umask 077
 
 if [ ! -f "$DB" ]; then
   echo "backup_db: БД не найдена: $DB (ещё не создавалась?) — нечего бэкапить."
   exit 0
 fi
 
-mkdir -p "$BACKUP_DIR"
+# Каталог не создаём «молча через sudo»: от учётки issa mkdir в /var/backups упрётся
+# в права, и цепочка бэкапов тихо оборвётся. Лучше внятно упасть с инструкцией.
+if [ ! -d "$BACKUP_DIR" ]; then
+  if ! mkdir -p "$BACKUP_DIR" 2>/dev/null; then
+    echo "backup_db: каталог бэкапов не существует и создать его нельзя: $BACKUP_DIR" >&2
+    echo "backup_db: создайте его один раз от root:" >&2
+    echo "           sudo install -d -o issa -g issa -m 700 $BACKUP_DIR" >&2
+    exit 1
+  fi
+fi
+if [ ! -w "$BACKUP_DIR" ]; then
+  echo "backup_db: нет прав на запись в $BACKUP_DIR (запущено от $(id -un))." >&2
+  echo "backup_db: каталог должен принадлежать issa:" >&2
+  echo "           sudo install -d -o issa -g issa -m 700 $BACKUP_DIR" >&2
+  exit 1
+fi
+# 700 на каталог: содержимое видно только владельцу. Не фатально, если chmod не наш.
+chmod 700 "$BACKUP_DIR" 2>/dev/null || true
 # метку времени берём из системы (UTC), без внешних зависимостей
 STAMP="$(date -u +%Y%m%d-%H%M%S)"
 OUT="$BACKUP_DIR/state-$STAMP.db"
@@ -46,6 +75,8 @@ finally:
     s.close()
 PYEOF
 fi
+# 600 на снимок: в нём Telegram user_id и весь прогресс пользователей.
+chmod 600 "$OUT"
 echo "backup_db: создан $OUT ($(du -h "$OUT" | cut -f1))"
 
 # ротация: оставляем последние KEEP по имени (имена сортируются по времени)
