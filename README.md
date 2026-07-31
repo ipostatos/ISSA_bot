@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="docs/assets/hero.png" width="900"
+       alt="ISSA Trainer — Telegram Mini App для подготовки к экзаменам по яхтингу: ISSA Inshore Skipper (605 вопросов), Żeglarz jachtowy (150), Sternik motorowodny (460); 1215 вопросов, три лицензии, SRS с синхронизацией, RU и PL">
+</p>
+
 # ⚓ Тренажёр ISSA Inshore Skipper + SRC (Telegram-бот + Mini App)
 
 Телеграм-бот и набор **Telegram Mini Apps** для подготовки к теоретическим
