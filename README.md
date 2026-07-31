@@ -307,15 +307,14 @@ python merge_dedup.py --collapse-semantic  # ещё и свернуть смыс
 пошаговая инструкция для Linux-VPS (Ubuntu) с автозапуском через `systemd`:
 см. **[`deploy/DEPLOY.md`](deploy/DEPLOY.md)**.
 
-Кратко:
-
-```bash
-cd /opt && git clone <repo> issa-bot && cd issa-bot
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-echo 'BOT_TOKEN=...' > .env && chmod 600 .env
-cp deploy/issa-bot.service /etc/systemd/system/
-systemctl daemon-reload && systemctl enable --now issa-bot
-```
+> ⚠️ Здесь **намеренно нет краткого сниппета установки на сервер.** Раньше он
+> тут был и создавал `.venv` от root — после чего в окружении оставались файлы
+> `root:root`, деплой от непривилегированной учётной записи ломался по правам,
+> а компрометация кода в репозитории давала root в обход systemd-песочницы.
+> Единственный поддерживаемый порядок (venv и `pip` от пользователя `issa`,
+> root — только `systemctl`) описан в **[`deploy/DEPLOY.md`](deploy/DEPLOY.md)**;
+> дублировать его сокращённой версией — значит гарантированно разъехаться снова.
+> Sync API — в [`deploy/DEPLOY_API.md`](deploy/DEPLOY_API.md).
 
 Обновление кода бота: `git pull` → `systemctl restart issa-bot`
 (или `bash deploy/update.sh`).
@@ -373,8 +372,16 @@ CI (GitHub Actions, `.github/workflows/ci.yml`) гоняет всё это на 
 
 ## Лицензия и приватность
 
-- Код — лицензия [MIT](LICENSE).
-- Какие данные хранит бот — [PRIVACY.md](PRIVACY.md) (команда `/privacy`).
+- Условия использования — [`LICENSE`](LICENSE): © 2026 ipostatos, **all rights
+  reserved**. Разрешены личное некоммерческое использование тренажёра и изучение
+  кода в ознакомительных целях; продажа, распространение банков вопросов и
+  конспектов, создание производных продуктов — только с письменного разрешения.
+  Условия те же, что в разделе [«Лицензия и использование ИИ»](#лицензия-и-использование-ии)
+  выше: лицензионная модель в этом репозитории **одна**.
+- Использование материалов для обучения ИИ и массового сбора — запрещено,
+  см. [`AI-POLICY.md`](AI-POLICY.md).
+- Какие данные хранит бот — [`PRIVACY.md`](PRIVACY.md) (команда `/privacy`).
+- Нашли уязвимость — [`SECURITY.md`](SECURITY.md) (не через публичные Issues).
 
 ## О результатах поиска готовых решений
 
@@ -388,8 +395,8 @@ CI (GitHub Actions, `.github/workflows/ci.yml`) гоняет всё это на 
   Skipper Sail/Power, VHF и COLREG/МППСС) доступны только в процессе прохождения,
   без API/экспорта.
 - Поэтому база собрана и переработана из открытой программы курса и общепринятых
-  морских правил (COLREG/МППСС-72, IALA MBS, процедуры VHF/GMDSS) — см.
-  `../_extracted/sources.txt`.
+  морских правил (COLREG/МППСС-72, IALA MBS, процедуры VHF/GMDSS) — полный
+  разбор с цифрами по каждой группе источников в [`docs/SOURCES.md`](docs/SOURCES.md).
 
 Бот и база вопросов оригинальны, не содержат экзаменационных ключей и не являются
 официальным материалом ISSA или какой-либо школы.
