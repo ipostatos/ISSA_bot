@@ -214,48 +214,8 @@ jobs:
           fi
           echo "OK: бэкапов, БД и секретов в индексе нет, .gitignore их закрывает"
 
-      - name: Docs — README не расходится с deploy-руководствами
-        run: |
-          # Сторож против повторения реальной ошибки: в deploy/DEPLOY.md порядок
-          # установки поправили (venv и pip от issa), а сокращённая копия в README
-          # осталась с root-версией и продолжала воспроизводить находку H2.
-          bad=0
-          # 1) Установка окружения В СЕРВЕРНОМ контексте обязана быть от issa.
-          #    Смотрим на fenced-блок ЦЕЛИКОМ, а не построчно: в исходной ошибке
-          #    `cd /opt` и `python3 -m venv` стояли на РАЗНЫХ строках, и построчный
-          #    фильтр такую пару пропускал (поймано негативным прогоном).
-          #    Локальный quick start разработчика правилом не задевается.
-          python3 - <<'PY' || bad=1
-          import re, sys
-          src = open("README.md", encoding="utf-8").read()
-          blocks = re.findall(r"```[^\n]*\n(.*?)```", src, re.S)
-          bad = False
-          for b in blocks:
-              server = ("/opt" in b) or ("systemctl" in b)
-              installs = re.search(r"(python3? -m venv|\.venv/bin/pip|pip install)", b)
-              if server and installs and "sudo -u issa" not in b:
-                  print("::error::блок README ставит окружение на сервере не от issa:")
-                  print("\n".join("    " + l for l in b.strip().splitlines()[:6]))
-                  bad = True
-          sys.exit(1 if bad else 0)
-          PY
-          # 2) ссылки на пути ВНЕ репозитория (они мертвы у всех, кроме автора)
-          if grep -nE '\.\./_extracted|\]\(\.\./\.\./' README.md ; then
-            echo "::error::README ссылается за пределы репозитория — файл не дойдёт до читателя"
-            bad=1
-          fi
-          # 3) лицензия названа одним словом, без второй несовместимой модели
-          if grep -nE '(лицензия|licen[sc]e)\s*\[?MIT' README.md ; then
-            echo "::error::README обещает MIT, а LICENSE — all rights reserved"
-            bad=1
-          fi
-          # 4) обещанные файлы существуют
-          for f in LICENSE PRIVACY.md SECURITY.md AI-POLICY.md docs/SOURCES.md \
-                   deploy/DEPLOY.md deploy/DEPLOY_API.md; do
-            [ -f "$f" ] || { echo "::error::README ссылается на $f, а его нет"; bad=1; }
-          done
-          [ "$bad" -eq 0 ] || exit 1
-          echo "OK: README согласован с LICENSE и deploy-руководствами"
+      - name: Docs — README согласован с LICENSE и deploy-руководствами
+        run: bash scripts/check_readme.sh
 
       - name: Deploy scripts — pip только от issa и только из requirements.txt
         run: |
