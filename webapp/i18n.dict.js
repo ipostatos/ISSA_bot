@@ -371,6 +371,9 @@
     quizVerdictNo:{ ru: "Неверно.", pl: "Źle.", ua: "Неправильно.", en: "Wrong." },
     quizSourceLabel:{ ru: "Источник: {ref}", pl: "Źródło: {ref}", ua: "Джерело: {ref}", en: "Source: {ref}" },
     quizWhereStudy:{ ru: "Где изучить:", pl: "Gdzie się nauczyć:", ua: "Де вивчити:", en: "Where to study:" },
+    // счётчик верных в шапке тренировки: раньше показывалось голое «✓ 2»,
+    // и было непонятно — это верные ответы, отвеченные вопросы или номер
+    quizLiveCorrect:{ ru: "Верных: {n}", pl: "Poprawnych: {n}", ua: "Правильних: {n}", en: "Correct: {n}" },
     quizNext:     { ru: "Далее →", pl: "Dalej →", ua: "Далі →", en: "Next →" },
     quizFinishShort:{ ru: "Завершить", pl: "Zakończ", ua: "Завершити", en: "Finish" },
     quizSkip:     { ru: "Пропустить →", pl: "Pomiń →", ua: "Пропустити →", en: "Skip →" },

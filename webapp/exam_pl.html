@@ -65,10 +65,17 @@
   .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px}
   .q{font-size:16px; font-weight:600; white-space:pre-line; margin-bottom:12px}
   .sign{display:block; max-width:170px; margin:0 auto 14px; border-radius:10px; background:#fff; padding:8px}
+  /* Вариант ответа. Паритет с quiz.html: до ответа строка должна читаться как
+     кнопка (заливка + рамка), нажимается вся ширина, касание видно сразу,
+     с клавиатуры есть фокус. Габариты прежние — верстка не прыгает. */
   .opt{display:flex; gap:10px; align-items:flex-start; padding:12px; border:1px solid var(--border);
-    border-radius:11px; margin-bottom:8px; font-size:15px; cursor:pointer; white-space:pre-line}
+    border-radius:11px; margin-bottom:8px; font-size:15px; cursor:pointer; white-space:pre-line;
+    background:var(--card); box-shadow:0 1px 0 rgba(0,0,0,.04);
+    transition:transform .08s, background .12s, border-color .12s}
   .opt .lt{font-weight:800; color:var(--hint); flex:0 0 auto}
-  .opt:active{transform:scale(.99)}
+  .opt:not(.lock):active{transform:scale(.98); border-color:var(--accent); background:var(--bg)}
+  .opt:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .opt.lock{box-shadow:none}
   .opt.chosen{border-color:var(--accent)}
   .opt.ok{background:rgba(76,175,114,.15); border-color:var(--ok)} .opt.ok .lt{color:var(--ok)}
   .opt.bad{background:rgba(229,84,75,.15); border-color:var(--bad)} .opt.bad .lt{color:var(--bad)}
@@ -147,8 +154,12 @@
       <div class="q" id="q">…</div>
       <div id="signWrap"></div>
       <div id="opts"></div>
-      <div id="lamp"></div>
+      <!-- Навигация стоит СРАЗУ под вариантами и ВЫШЕ «лампочки»-источника —
+           паритет с quiz.html: на последнем вопросе кнопка не должна уезжать
+           под сгиб за дополнительным блоком. Обычный поток, без sticky
+           (липкая панель в Telegram на iOS конфликтует с safe-area). -->
       <div class="row" id="controls"></div>
+      <div id="lamp"></div>
     </div>
     <button class="btn ghost" id="quit" style="width:100%" data-i18n="pxQuit"></button>
   </section>
@@ -290,7 +301,11 @@ function render(){
       if (orig===q.answer) cls+=" ok";
       else if (orig===S._trainPicked) cls+=" bad";
     }
-    return `<div class="${cls}" data-i="${orig}"><span class="lt">${"abcde"[pos]}</span><span>${esc(o)}</span></div>`;
+    // role/tabindex: вариант здесь — <div>, а не <button>; без них строка не
+    // получает фокус с клавиатуры и не объявляется скринридером как кнопка.
+    const lock = cls.indexOf("lock") >= 0;
+    return `<div class="${cls}" data-i="${orig}" role="button"${lock ? "" : ' tabindex="0"'}>`
+         + `<span class="lt">${"abcde"[pos]}</span><span>${esc(o)}</span></div>`;
   }).join("");
   renderLamp(q);
   renderControls(chosen);
@@ -321,13 +336,23 @@ function renderControls(chosen){
   } else {
     // тренировка: после выбора показываем «Далее»
     if (S._trainPicked!=null){
-      $("controls").innerHTML = `<button class="btn" id="next">${last?I18N.t("pxMenu"):I18N.t("pxNextTrain")}</button>`;
+      // на последнем вопросе — «Завершить» (паритет с quiz.html), а не «Меню»
+      $("controls").innerHTML = `<button class="btn" id="next">${last?I18N.t("quizFinishShort"):I18N.t("pxNextTrain")}</button>`;
       $("next").onclick = ()=>{ S._trainPicked=null; if(last){ toMenu(); } else { S.idx++; render(); } };
     } else {
       $("controls").innerHTML = `<span class="sub" style="margin:auto">${I18N.t("pxChooseOpt")}</span>`;
     }
   }
 }
+
+// клавиатура: Enter/Space по варианту работают как клик (вариант — div с
+// role="button", нативной обработки у него нет)
+$("opts").addEventListener("keydown", e=>{
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const el = e.target.closest(".opt"); if (!el) return;
+  e.preventDefault();
+  el.click();
+});
 
 // клик по варианту
 $("opts").addEventListener("click", e=>{

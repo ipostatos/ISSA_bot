@@ -71,15 +71,27 @@
     border:1px solid var(--border)}
   .diff.d1{color:var(--ok)} .diff.d2{color:#e0a13a} .diff.d3{color:var(--bad)}
   .q{font-size:16px; line-height:1.45; margin:0 0 14px; font-weight:600}
+  /* Вариант ответа — <button> во всю ширину (кликается вся строка, не только текст).
+     До ответа он должен ЧИТАТЬСЯ как кнопка: заливка карточки + заметная рамка,
+     иначе выглядит обычным текстом. Габариты не меняем — верстка не прыгает. */
   .opt{display:block; width:100%; text-align:left; padding:13px; margin-bottom:9px; font-size:15px;
-    border:1px solid var(--border); background:var(--bg); color:var(--text); border-radius:11px; cursor:pointer}
-  .opt:active{transform:scale(.995)}
+    border:1px solid var(--border); background:var(--card); color:var(--text); border-radius:11px; cursor:pointer;
+    box-shadow:0 1px 0 rgba(0,0,0,.04);
+    transition:transform .08s, background .12s, border-color .12s}
+  /* Реакция на касание. Было scale(.995) — полпроцента, глазом не читается. */
+  .opt:not([disabled]):active{transform:scale(.98); border-color:var(--accent); background:var(--bg)}
+  /* Клавиатура: видимый фокус (мышью/касанием рамка не появляется). */
+  .opt:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  /* После ответа кнопка неактивна — тень и «нажимаемость» убираем. */
+  .opt[disabled]{box-shadow:none}
   .opt.correct{border-color:var(--ok); background:rgba(76,175,114,.16)}
   .opt.wrong{border-color:var(--bad); background:rgba(229,84,75,.16)}
   .opt[disabled]{cursor:default; opacity:.95}
   /* разбор под вариантом (почему верен/неверен) — после ответа */
   .opt .why{display:block; font-size:12px; line-height:1.4; margin-top:6px; font-weight:400;
     color:var(--hint)}
+  /* краткая пометка «✓ Верно» в карточке верного варианта — без пересказа разбора */
+  .opt .why.mark{font-weight:600; display:flex; align-items:center; gap:5px}
   .opt.correct .why{color:var(--ok)} .opt.wrong .why{color:var(--bad)}
   /* источник под пояснением */
   .ref{margin-top:8px; font-size:12px; color:var(--hint)}
@@ -100,7 +112,12 @@
   .src a:active{transform:scale(.98)}
   .next{width:100%; padding:14px; font-size:15px; font-weight:600; border:none; border-radius:12px;
     background:var(--accent); color:var(--accent-text); cursor:pointer}
-  .next.ghost{background:transparent; color:var(--text); border:1px solid var(--border); margin-bottom:9px}
+  /* «Пропустить» — вторичная кнопка, а не ссылка. Прозрачный фон + тонкая рамка
+     читались как текст; даём заливку карточки, приглушённый цвет и отбивку
+     сверху, чтобы кнопка не липла к последнему варианту. */
+  .next.ghost{background:var(--card); color:var(--hint); border:1px solid var(--border);
+    font-weight:600; margin-top:4px; margin-bottom:9px}
+  .next.ghost:active{transform:scale(.98); color:var(--text)}
 
   /* экзамен: навигация */
   .nav-row{display:flex; gap:10px; margin-top:4px}
@@ -262,12 +279,17 @@
   </div>
   <p class="q" id="qtext"></p>
   <div id="opts"></div>
+
+  <!-- Тренировка: пропустить (до ответа) / Далее / Завершить (после ответа).
+       Кнопка стоит СРАЗУ под вариантами и ВЫШЕ разбора: иначе на последнем
+       вопросе «Завершить» уезжало под сгиб за длинным пояснением. Обычный поток,
+       без position:sticky — липкая панель в Telegram на iOS конфликтует
+       с safe-area и перекрывает содержимое. -->
+  <button class="next ghost hidden" id="trainSkip" data-i18n="quizSkip"></button>
+  <button class="next hidden" id="nextBtn" data-i18n="quizNext"></button>
+
   <div class="expl hidden" id="expl"></div>
   <div class="src hidden" id="src"></div>
-
-  <!-- тренировка: пропустить (до ответа) / Далее (после ответа) -->
-  <button class="next ghost hidden" id="trainSkip">Пропустить →</button>
-  <button class="next hidden" id="nextBtn">Далее →</button>
 
   <!-- экзамен: свободная навигация -->
   <div id="examNav" class="hidden">
@@ -382,11 +404,56 @@ function startQuiz(mode, isExam, queue){
   window.scrollTo(0, 0);   // тест — в начале экрана, а не там, где был скролл списка
   document.getElementById("timer").classList.toggle("hidden", !isExam);
   document.getElementById("examNav").classList.toggle("hidden", !isExam);
-  document.getElementById("liveScore").innerHTML = isExam ? "" : `${Icons.svg("check")} 0`;
+  setLiveScore(isExam ? null : 0);
   if (isExam){ tickTimer(); S.timerH = setInterval(tickTimer, 1000); }
   if (window.setBusy) setBusy(true);   // предупреждать при случайном закрытии
   renderQ();
 }
+
+// Счётчик верных в шапке тренировки. Раньше выводилось голое «✓ 2» — пользователь
+// не мог понять, это два верных ответа, два отвеченных вопроса или номер результата.
+// Теперь подпись словом (и на всех четырёх языках). null — экзамен, счётчик скрыт:
+// в экзамене правильность до конца не показывается.
+function countCorrect(){
+  return S.queue.filter((q, k) => S.locked[k] && S.answers[k] === q.answer).length;
+}
+function setLiveScore(n){
+  document.getElementById("liveScore").textContent =
+    (n === null) ? "" : I18N.t("quizLiveCorrect", { n: n });
+}
+
+/* __QUIZ_FEEDBACK_HELPERS_START__  (извлекаются webapp/_quizfeedback_check.mjs —
+   чек гоняет ИМЕННО этот код, а не свою копию) */
+// Нормализация для сравнения: регистр, пробелы, пунктуация и служебные префиксы
+// «Верно:» / «Неверно:» не должны мешать увидеть, что это одна и та же мысль.
+function normFeedback(s){
+  return String(s == null ? "" : s)
+    .replace(/^\s*(верно|неверно|правильно|неправильно|correct|wrong)\s*[:\-–—]\s*/i, "")
+    .toLowerCase()
+    .replace(/[\s.,;:!?()"'«»]+/g, " ")
+    .trim();
+}
+// Что показать после ответа. Правило: одна мысль — один раз.
+//   верный ответ    → в карточке только краткая пометка «✓ Верно» (её ставит
+//                     renderQ), подробности ниже из expl; если expl пуст —
+//                     падаем на why[правильный], чтобы не остаться без разбора;
+//   неверный ответ  → в карточке why[выбранный] (объясняет ИМЕННО эту ошибку и
+//                     нигде больше не повторяется), подробности ниже из expl;
+//                     если после нормализации это один и тот же текст —
+//                     в карточке не дублируем.
+// Причина правки: у 174 из 605 вопросов why[правильный] совпадал с expl более
+// чем на 70%, экран раздувался вдвое и кнопка «Завершить» уезжала под сгиб.
+function buildFeedback(q, sel){
+  q = q || {};
+  const why = Array.isArray(q.why) ? q.why : [];
+  const ok = (sel === q.answer);
+  let detail = String(q.expl == null ? "" : q.expl).trim();
+  if (!detail) detail = String(why[q.answer] == null ? "" : why[q.answer]).trim();
+  let card = ok ? "" : String(why[sel] == null ? "" : why[sel]).trim();
+  if (card && detail && normFeedback(card) === normFeedback(detail)) card = "";
+  return { ok: ok, card: card, detail: detail };
+}
+/* __QUIZ_FEEDBACK_HELPERS_END__ */
 
 function tickTimer(){
   const s = Math.floor((Date.now()-S.startTs)/1000);
@@ -414,6 +481,7 @@ function renderQ(){
   hide("src");
 
   const sel = S.answers[S.idx];           // ИСХОДНЫЙ индекс выбранного (или null)
+  const FB = buildFeedback(q, sel);       // что писать в карточке и что — ниже
   const order = S.order[S.idx];           // порядок показа: позиция k → исходный orig
   const box = document.getElementById("opts");
   box.innerHTML = "";
@@ -430,12 +498,18 @@ function renderQ(){
         b.disabled = true;
         if (orig === q.answer) b.classList.add("correct");
         if (orig === sel && sel !== q.answer) b.classList.add("wrong");
-        // разбор: почему этот вариант верен/неверен (только у выбранного и правильного,
-        // чтобы не перегружать — но если хочется по всем, убрать условие)
-        if (q.why && (orig === q.answer || orig === sel)){
+        // Обратная связь в карточке — по правилам buildFeedback():
+        //   правильный вариант — краткая пометка «✓ Верно» (подробности ниже),
+        //   ошибочно выбранный — why именно этой ошибки (если он не дублирует expl).
+        if (orig === q.answer){
+          const m = document.createElement("small");
+          m.className = "why mark";
+          m.innerHTML = `${Icons.svg("check")} ${esc(I18N.t("quizVerdictOk"))}`;
+          b.appendChild(m);
+        } else if (orig === sel && FB.card){
           const w = document.createElement("small");
-          w.className = "why"; w.textContent = q.why[orig] || "";
-          if (w.textContent) b.appendChild(w);
+          w.className = "why"; w.textContent = FB.card;
+          b.appendChild(w);
         }
       } else {
         b.onclick = ()=> answerTraining(orig);
@@ -453,10 +527,12 @@ function renderQ(){
       // после ответа — пояснение + кнопка Далее
       hide("trainSkip");
       const ok = sel === q.answer;
-      if (q.expl || q.ref){
+      if (FB.detail || q.ref){
         const e = document.getElementById("expl");
+        // FB.detail = expl, а при пустом expl — why[правильный]: без разбора
+        // пользователь не остаётся никогда.
         let html = (ok ? `<span style="color:var(--ok)">${Icons.svg("check-circle")}</span> ${I18N.t("quizVerdictOk")} `
-                       : `<span style="color:var(--bad)">${Icons.svg("x-circle")}</span> ${I18N.t("quizVerdictNo")} `) + esc(q.expl || "");
+                       : `<span style="color:var(--bad)">${Icons.svg("x-circle")}</span> ${I18N.t("quizVerdictNo")} `) + esc(FB.detail);
         if (q.ref) html += `<div class="ref">${Icons.svg("book")} ${I18N.t("quizSourceLabel", {ref: esc(q.ref)})}</div>`;
         e.innerHTML = html;
         show("expl");
@@ -535,8 +611,7 @@ function answerTraining(i){
   if (window.Progress) Progress.recordAnswer();   // дневная цель + streak
   if (window.Sync) Sync.schedulePush();           // синхрон с сервером (debounce)
   maybeBadgeToast();                              // вдруг открылся бейдж
-  document.getElementById("liveScore").innerHTML =
-    `${Icons.svg("check")} ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
+  setLiveScore(countCorrect());
   haptic(ok ? "light" : "rigid");
   renderQ();
 }
@@ -1091,8 +1166,7 @@ function resumeQuiz(){
   window.scrollTo(0, 0);
   document.getElementById("timer").classList.toggle("hidden", !s.isExam);
   document.getElementById("examNav").classList.toggle("hidden", !s.isExam);
-  document.getElementById("liveScore").innerHTML = s.isExam ? ""
-    : `${Icons.svg("check")} ${S.queue.filter((q,k)=>S.locked[k] && S.answers[k]===q.answer).length}`;
+  setLiveScore(s.isExam ? null : countCorrect());
   if (s.isExam){ tickTimer(); S.timerH = setInterval(tickTimer, 1000); }
   if (window.setBusy) setBusy(true);   // возобновили тест — снова предупреждаем о закрытии
   renderQ();

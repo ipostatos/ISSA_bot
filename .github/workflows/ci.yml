@@ -144,6 +144,7 @@ jobs:
           node webapp/_marine_check.mjs
           node webapp/_tide_check.mjs
           node webapp/_quiz_check.mjs
+          node webapp/_quizfeedback_check.mjs
           node webapp/_srs_check.mjs
           node webapp/_progress_check.mjs
           node webapp/_badges_check.mjs
