@@ -524,8 +524,25 @@ async def send_quiz(
     mode: str,
     is_exam: bool = False,
 ) -> None:
-    """Отправляет вопрос как нативный Telegram quiz-poll."""
-    options = [_truncate(opt, POLL_OPTION_LIMIT) for opt in question["options"]]
+    """Отправляет вопрос как нативный Telegram quiz-poll.
+
+    Варианты перемешиваются на каждую отправку. Причина не косметическая: в
+    банке 86% правильных ответов стоят на позициях A и B, а у большинства
+    вопросов правильный вариант ещё и самый длинный. Без перемешивания
+    ученик, механически жмущий B, набирает около половины без знаний и
+    получает ложное «я готов», а выученная позиционная эвристика ломается на
+    настоящем экзамене. Mini App перемешивает варианты с самого начала
+    (quiz.html), бот — теперь тоже.
+    """
+    raw_options = question["options"]
+    answer = question["answer"]
+    order = list(range(len(raw_options)))
+    if isinstance(answer, int) and 0 <= answer < len(raw_options):
+        random.shuffle(order)
+    else:                       # битый ключ ответа — не маскируем перестановкой
+        log.warning("send_quiz: некорректный answer=%r у %s", answer, question.get("id"))
+    options = [_truncate(raw_options[i], POLL_OPTION_LIMIT) for i in order]
+    correct_id = order.index(answer) if answer in order else answer
     explanation = _truncate(question.get("expl", ""), POLL_EXPL_LIMIT)   # 200, не 300
     q_text = _truncate(f"[{question['topic']}] {question['q']}", POLL_QUESTION_LIMIT)
 
@@ -534,7 +551,7 @@ async def send_quiz(
         question=q_text,
         options=options,
         type="quiz",
-        correct_option_id=question["answer"],
+        correct_option_id=correct_id,
         explanation=explanation or None,
         is_anonymous=False,
     )
@@ -545,7 +562,17 @@ async def send_quiz(
         "mode": mode,
         "exam": is_exam,
         "ts": int(time.time()),   # для TTL-очистки при загрузке
+        # индекс правильного варианта В ЭТОЙ отправке (варианты перемешаны);
+        # у записей, сохранённых до перемешивания, ключа нет — там ответ
+        # сверяется со значением из банка, как раньше
+        "ans": correct_id,
     }
+    if is_exam:
+        # к какому именно экзамену относится опрос: без этого ответ на опрос
+        # брошенного экзамена засчитывался в новый (сдвигал idx и счёт)
+        exam = EXAMS.get(user_id)
+        if exam and exam.get("sid"):
+            ACTIVE_POLLS[poll_id]["sid"] = exam["sid"]
     _save_polls()
     mark_seen(user_id, question["id"])
 
@@ -893,12 +920,25 @@ async def cb_exam_start(cb: CallbackQuery) -> None:
     user_id = cb.from_user.id
     size = min(EXAM_SIZE, len(QUESTIONS))
     chosen = pick_unseen(user_id, QUESTIONS, size)
+    # Опросы брошенного экзамена живут до суток и остаются «активными».
+    # Ответ на такой опрос засчитывался в НОВЫЙ экзамен: сдвигал idx, портил
+    # счёт и завершал экзамен раньше на вопрос. Снимаем их при старте.
+    stale = [pid for pid, i in ACTIVE_POLLS.items()
+             if i.get("user_id") == user_id and i.get("exam")]
+    for pid in stale:
+        ACTIVE_POLLS.pop(pid, None)
+    if stale:
+        log.info("exam start: снято %d опросов прошлого экзамена (user=%s)", len(stale), user_id)
+        _save_polls()
     EXAMS[user_id] = {
         "queue": [q["id"] for q in chosen],
         "idx": 0,
         "correct": 0,
         "results": [],  # список (qid, correct: bool)
         "ts": int(time.time()),   # для TTL-очистки при загрузке
+        # устойчивый идентификатор попытки: ts обновляется на каждый ответ,
+        # поэтому сверять принадлежность опроса по нему нельзя
+        "sid": f"{int(time.time())}-{random.randint(1000, 9999)}",
     }
     _save_exams()
     lang = user_lang(user_id)
@@ -975,7 +1015,7 @@ async def finish_exam(bot: Bot, chat_id: int, user_id: int) -> None:
 
 @dp.poll_answer()
 async def on_poll_answer(poll_answer: PollAnswer) -> None:
-    info = ACTIVE_POLLS.pop(poll_answer.poll_id, None)
+    info = ACTIVE_POLLS.get(poll_answer.poll_id)
     if not info:
         # Ответ на «потерянный» опрос: опрос старше TTL, либо уже отвеченный.
         # Активные опросы переживают рестарт (см. _load_sessions), так что это
@@ -983,17 +1023,33 @@ async def on_poll_answer(poll_answer: PollAnswer) -> None:
         log.info("stale poll_answer: poll_id=%s user=%s",
                  poll_answer.poll_id, getattr(poll_answer.user, "id", "?"))
         return
-    _save_polls()   # опрос отвечен — снимаем привязку из персистентного стора
     user_id = info["user_id"]
+    # Quiz-poll неанонимный и пересылаемый: голос любого, кому переслали
+    # сообщение, приходит с тем же poll_id. Без этой проверки чужой ответ
+    # писался в прогресс и экзамен автора — экзамен можно было прорешать
+    # чужими руками. Привязку при этом НЕ снимаем: опрос автора ещё жив.
+    voter = getattr(poll_answer.user, "id", None)
+    if voter is not None and voter != user_id:
+        log.info("чужой голос на пересланном опросе: poll_id=%s voter=%s owner=%s",
+                 poll_answer.poll_id, voter, user_id)
+        return
+    ACTIVE_POLLS.pop(poll_answer.poll_id, None)
+    _save_polls()   # опрос отвечен — снимаем привязку из персистентного стора
     question = QUESTIONS_BY_ID.get(info["qid"])
     if not question:
         return
     chosen = poll_answer.option_ids[0] if poll_answer.option_ids else -1
-    is_correct = chosen == question["answer"]
+    # варианты перемешаны при отправке — правильный индекс лежит в записи опроса
+    is_correct = chosen == info.get("ans", question["answer"])
     record_answer(user_id, question["id"], is_correct)
 
     if info.get("exam"):
         exam = EXAMS.get(user_id)
+        # опрос от прошлой попытки экзамена: ответ засчитан в прогресс, но
+        # двигать текущий экзамен он не должен
+        if exam and info.get("sid") and exam.get("sid") and info["sid"] != exam["sid"]:
+            log.info("ответ на опрос прошлого экзамена (user=%s) — в текущий не засчитан", user_id)
+            return
         if exam:
             exam["results"].append((question["id"], is_correct))
             if is_correct:

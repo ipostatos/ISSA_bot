@@ -38,6 +38,12 @@ jobs:
       - name: Mini App quiz-result parser tests
         run: python test_webapp.py
 
+      - name: Chat session persistence tests (EXAMS/ACTIVE_POLLS переживают рестарт)
+        run: python test_sessions.py
+
+      - name: Quiz-poll tests (перемешивание вариантов, чужой голос, старый экзамен)
+        run: python test_quiz_poll.py
+
       - name: Sync API tests (HMAC initData + merge + endpoints)
         run: |
           pip install -r api/requirements.txt
