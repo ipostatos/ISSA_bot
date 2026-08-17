@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title data-i18n="konTitleTag">Конспект ISSA</title>
-<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="theme.css?v=3">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="nav.js"></script>
-<script src="i18n.dict.js?v=2"></script>
-<script src="i18n.js"></script>
-<script src="icons.js?v=2"></script>
-<script src="lightbox.js" data-scope="#rBody"></script>
-<script src="konspekt_data.js"></script>
+<script src="nav.js?v=3"></script>
+<script src="i18n.dict.js?v=3"></script>
+<script src="i18n.js?v=3"></script>
+<script src="icons.js?v=3"></script>
+<script src="lightbox.js?v=3" data-scope="#rBody"></script>
+<script src="konspekt_data.js?v=3"></script>
 <style>
   :root{
     --bg: var(--tg-theme-bg-color, #17212b);
@@ -195,7 +195,7 @@ function mkTile(t){
 function formatKonspekt(html){
   // <pre>…</pre> сохраняем целиком (таблицы/схемы) — вынимаем перед построчной обработкой.
   const pres = [];
-  html = html.replace(/<pre[\s\S]*?<\/pre>/g, m => { pres.push(m); return ` PRE${pres.length-1} `; });
+  html = html.replace(/<pre[\s\S]*?<\/pre>/g, m => { pres.push(m); return `@@PRE${pres.length-1}@@`; });
 
   const lines = html.split("\n");
   let out = "", list = [];
@@ -206,7 +206,7 @@ function formatKonspekt(html){
     const line = raw.trim();
     if (!line){ flushList(); continue; }
     // плейсхолдер <pre> — отдельным блоком, как есть
-    const pm = line.match(/^ PRE(\d+) $/);
+    const pm = line.match(/^@@PRE(\d+)@@$/);
     if (pm){ flushList(); out += pres[+pm[1]]; continue; }
     // строка-пункт списка: начинается с «•» (или «– »)
     if (/^[•‣–-]\s+/.test(line)){
@@ -223,7 +223,7 @@ function formatKonspekt(html){
   }
   flushList();
   // вернуть оставшиеся плейсхолдеры (если pre был внутри абзаца)
-  out = out.replace(/ PRE(\d+) /g, (_,i)=>pres[+i]);
+  out = out.replace(/@@PRE(\d+)@@/g, (_,i)=>pres[+i]);
   return out;
 }
 

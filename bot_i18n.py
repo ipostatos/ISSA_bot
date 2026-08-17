@@ -241,6 +241,13 @@ TR = {
         "en": ("This exam is no longer active (the bot may have restarted). "
                "Start over: /menu → “📝 Exam”."),
     },
+    # Экзамен пережил рестарт бота: продолжаем с текущего вопроса.
+    "exam_resumed": {
+        "ru": "Бот перезапускался — продолжаем твой экзамен с текущего вопроса.",
+        "pl": "Bot był restartowany — kontynuujemy Twój egzamin od bieżącego pytania.",
+        "ua": "Бот перезапускався — продовжуємо твій екзамен із поточного питання.",
+        "en": "The bot restarted — continuing your exam from the current question.",
+    },
 
     # ─────────────── команда /start ───────────────
     "start_webapp": {

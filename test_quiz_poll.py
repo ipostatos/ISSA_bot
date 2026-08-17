@@ -277,6 +277,76 @@ def test_exam_start_clears_previous_polls():
               len(sent_polls) == 1 and sent_polls[0].get("sid") == bot.EXAMS[uid]["sid"])
 
 
+def test_exam_size_not_shrunk_by_seen():
+    """Экзамен не ужимается до остатка непройденных вопросов (волна B)."""
+    bot = _load_bot()
+    with tempfile.TemporaryDirectory() as d:
+        _prepare(bot, d)
+        uid = 888
+        pool = bot.QUESTIONS
+        # пользователь прошёл ВСЁ, кроме пяти вопросов
+        prog = bot.load_progress(uid)
+        prog["seen"] = [q["id"] for q in pool][:-5]
+        bot.save_progress(uid, prog)
+
+        old = bot.pick_unseen(uid, pool, 100)
+        new = bot.pick_exam_questions(uid, pool, 100)
+        check(f"pick_unseen отдавал только остаток ({len(old)} вопросов)", len(old) == 5)
+        check(f"экзамен получает полный набор ({len(new)} из 100)", len(new) == 100)
+        check("вопросы в наборе не повторяются",
+              len({q["id"] for q in new}) == len(new))
+        # непросмотренные должны попасть в набор — они полезнее
+        unseen_ids = {q["id"] for q in pool[-5:]}
+        check("непросмотренные включены в набор",
+              unseen_ids.issubset({q["id"] for q in new}))
+        # и экзамен не должен сбрасывать круг «увиденного» у тренировки
+        check("экзамен не сбросил круг увиденного",
+              len(bot.load_progress(uid)["seen"]) == len(pool) - 5)
+
+
+def test_missing_question_does_not_freeze_exam():
+    """Исчезнувший из банка вопрос не замораживает экзамен (волна B)."""
+    bot = _load_bot()
+    with tempfile.TemporaryDirectory() as d:
+        _prepare(bot, d)
+        import time as _t
+        uid = 999
+        real = bot.QUESTIONS[0]["id"]
+        bot.EXAMS[uid] = {"queue": ["q-НЕТ-ТАКОГО", real], "idx": 0, "correct": 0,
+                          "results": [], "ts": int(_t.time()), "sid": "e1"}
+        fb = FakeBot()
+        # раньше здесь был KeyError → экзамен замирал навсегда
+        asyncio.run(bot.send_next_exam_question(fb, uid, uid))
+        ex = bot.EXAMS.get(uid, {})
+        check("пропавший вопрос убран из очереди", ex.get("queue") == [real])
+        check("следующий вопрос отправлен", len(fb.sent) == 1)
+        check("итоговый счёт будет считаться от реального числа вопросов",
+              len(ex.get("queue", [])) == 1)
+
+
+def test_resume_exams_after_restart():
+    """Экзамен без активного опроса получает вопрос заново при старте бота."""
+    bot = _load_bot()
+    with tempfile.TemporaryDirectory() as d:
+        _prepare(bot, d)
+        import time as _t
+        # экзамен пережил рестарт: опроса в ACTIVE_POLLS нет
+        bot.EXAMS[101] = {"queue": [bot.QUESTIONS[0]["id"]], "idx": 0, "correct": 0,
+                          "results": [], "ts": int(_t.time()), "sid": "e1"}
+        # а этот экзамен опрос сохранил — его дёргать не нужно
+        bot.EXAMS[102] = {"queue": [bot.QUESTIONS[1]["id"]], "idx": 0, "correct": 0,
+                          "results": [], "ts": int(_t.time()), "sid": "e2"}
+        bot.ACTIVE_POLLS["p102"] = {"user_id": 102, "qid": bot.QUESTIONS[1]["id"],
+                                    "mode": "exam", "exam": True, "ts": int(_t.time()),
+                                    "ans": 0, "sid": "e2"}
+        fb = FakeBot()
+        asyncio.run(bot.resume_exams(fb))
+        sent_to = [i["user_id"] for i in bot.ACTIVE_POLLS.values() if i.get("exam")]
+        check("экзамену без опроса вопрос дослан", 101 in sent_to)
+        check("экзамену с живым опросом второй вопрос НЕ дослан",
+              sent_to.count(102) == 1)
+
+
 if __name__ == "__main__":
     print("QUIZ-POLL TESTS")
     test_shuffle_and_grading()
@@ -284,6 +354,9 @@ if __name__ == "__main__":
     test_foreign_voter_ignored()
     test_stale_exam_poll_does_not_advance_new_exam()
     test_exam_start_clears_previous_polls()
+    test_exam_size_not_shrunk_by_seen()
+    test_missing_question_does_not_freeze_exam()
+    test_resume_exams_after_restart()
     print()
     if fails:
         print(f"QUIZ-POLL TESTS: {fails} провал(ов)")

@@ -59,6 +59,55 @@
     } catch (e) {}
   };
 
+  // ── Диалоги: нативные confirm()/alert() в iOS-клиенте Telegram (WKWebView)
+  // подавляются. confirm() при этом не падает, а МГНОВЕННО возвращает false —
+  // поэтому кнопки «Завершить тест» и «Выйти из экзамена» там просто молчали,
+  // и отличить «пользователь нажал Отмена» от «диалога не было» невозможно.
+  // Отсюда правило: если мы внутри Telegram, спрашиваем через его же диалоги.
+  //
+  // askConfirm(msg, opts) → Promise<boolean>.
+  //   opts.fallback — что вернуть, если мы внутри Telegram, но showConfirm
+  //   недоступен (старый клиент): для «выйти/завершить» передавай true, иначе
+  //   пользователь окажется заперт в экране без единого рабочего выхода.
+  //
+  // ВАЖНО про версию: showConfirm/showAlert появились в Bot API 6.2. На более
+  // старом клиенте метод в объекте ЕСТЬ, но вызов уходит в ошибку
+  // «Method showPopup is not supported in version 6.0» — то есть проверки
+  // `typeof tg.showConfirm === "function"` недостаточно. Поймано живым
+  // прогоном. Полагаться на исключение нельзя: клиент может и не бросить его,
+  // а просто не позвать колбэк — тогда промис не разрешится никогда и кнопка
+  // повиснет. Поэтому спрашиваем сам клиент через isVersionAtLeast.
+  function tgDialogs() {
+    try {
+      if (!tg || typeof tg.showConfirm !== "function") return false;
+      if (typeof tg.isVersionAtLeast === "function") return tg.isVersionAtLeast("6.2");
+      return false;   // версию не спросить — не рискуем, идём детерминированным путём
+    } catch (e) { return false; }
+  }
+
+  window.askConfirm = function (msg, opts) {
+    var fallback = !!(opts && opts.fallback);
+    return new Promise(function (resolve) {
+      if (tgDialogs()) {
+        try {
+          tg.showConfirm(msg, function (ok) { resolve(!!ok); });
+          return;
+        } catch (e) {}
+      }
+      if (tg) { resolve(fallback); return; }   // Telegram есть, диалога нет
+      try { resolve(!!window.confirm(msg)); }  // обычный браузер — confirm работает
+      catch (e) { resolve(fallback); }
+    });
+  };
+
+  // Короткое уведомление вместо alert() — по той же причине.
+  window.showNote = function (msg) {
+    if (tgDialogs() && typeof tg.showAlert === "function") {
+      try { tg.showAlert(msg); return; } catch (e) {}
+    }
+    try { window.alert(msg); } catch (e) {}
+  };
+
   if (!tg) return;
   try { tg.ready(); tg.expand(); } catch (e) {}
 

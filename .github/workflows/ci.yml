@@ -166,6 +166,8 @@ jobs:
           node webapp/_buoys_check.mjs
           node webapp/_shapes_check.mjs
           node webapp/_sw_check.mjs
+          node webapp/_dialogs_check.mjs
+          node webapp/_i18n_check.mjs
 
   # Волна 1, шаг 0: id вопросов — ключи пользовательского прогресса (SRS,
   # seen/wrong, solved). Сторож не даёт слить перенумерацию: неизменённый текст

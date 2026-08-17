@@ -242,6 +242,28 @@ def pick_unseen(user_id: int, pool: list[dict], count: int = 1) -> list[dict]:
     return unseen[:count]
 
 
+def pick_exam_questions(user_id: int, pool: list[dict], count: int) -> list[dict]:
+    """Набор для ЭКЗАМЕНА: ровно count вопросов, если банк позволяет.
+
+    Экзамен — не тренировка «без повторов». `pick_unseen` отдаёт только
+    непросмотренные, поэтому у человека, прошедшего 600 из 605 вопросов,
+    «Экзамен (100 вопросов)» превращался в экзамен из 5 вопросов с тем же
+    порогом 90%: один промах — «не сдал», 5 из 5 — «сдал». Результат
+    несопоставим с настоящим экзаменом, а кнопка обещала другое.
+
+    Сначала непросмотренные (полезнее), затем доливаем из уже виденных.
+    Круг «увиденного» здесь НЕ сбрасываем: экзамен не должен менять состояние
+    тренировочного цикла.
+    """
+    with _lock_for(user_id):
+        seen = set(load_progress(user_id)["seen"])
+    unseen = [q for q in pool if q["id"] not in seen]
+    rest = [q for q in pool if q["id"] in seen]
+    random.shuffle(unseen)
+    random.shuffle(rest)
+    return (unseen + rest)[:count]
+
+
 def mark_seen(user_id: int, qid: str) -> None:
     # Принимаем только реальные id из банка: иначе подделанный payload из WebApp
     # мог бы бесконечно раздувать прогресс-файл (защита от флуда мусором).
@@ -919,7 +941,7 @@ async def cb_reset_confirm(cb: CallbackQuery) -> None:
 async def cb_exam_start(cb: CallbackQuery) -> None:
     user_id = cb.from_user.id
     size = min(EXAM_SIZE, len(QUESTIONS))
-    chosen = pick_unseen(user_id, QUESTIONS, size)
+    chosen = pick_exam_questions(user_id, QUESTIONS, size)
     # Опросы брошенного экзамена живут до суток и остаются «активными».
     # Ответ на такой опрос засчитывался в НОВЫЙ экзамен: сдвигал idx, портил
     # счёт и завершал экзамен раньше на вопрос. Снимаем их при старте.
@@ -953,11 +975,25 @@ async def send_next_exam_question(bot: Bot, chat_id: int, user_id: int) -> None:
     exam = EXAMS.get(user_id)
     if not exam:
         return
-    if exam["idx"] >= len(exam["queue"]):
+    # Вопрос мог исчезнуть из банка между стартом экзамена и этим моментом
+    # (экзамены переживают деплой). Раньше здесь стоял QUESTIONS_BY_ID[qid]:
+    # KeyError глотал глобальный хендлер, и экзамен ЗАМИРАЛ навсегда — человек
+    # ответил, а следующего вопроса не приходило. Выкидываем пропавший вопрос
+    # из очереди (именно из очереди, а не сдвигом idx, чтобы итоговый счёт
+    # считался от реального числа вопросов).
+    question = None
+    while exam["idx"] < len(exam["queue"]):
+        qid = exam["queue"][exam["idx"]]
+        question = QUESTIONS_BY_ID.get(qid)
+        if question:
+            break
+        log.warning("экзамен: вопрос %s исчез из банка — убран из очереди (user=%s)",
+                    qid, user_id)
+        exam["queue"].pop(exam["idx"])
+        _save_exams()
+    if not question or exam["idx"] >= len(exam["queue"]):
         await finish_exam(bot, chat_id, user_id)
         return
-    qid = exam["queue"][exam["idx"]]
-    question = QUESTIONS_BY_ID[qid]
     # В экзамене показываем прогресс в подписи отдельным сообщением.
     lang = user_lang(user_id)
     await bot.send_message(chat_id, t("exam_question_counter", lang,
@@ -1037,6 +1073,15 @@ async def on_poll_answer(poll_answer: PollAnswer) -> None:
     _save_polls()   # опрос отвечен — снимаем привязку из персистентного стора
     question = QUESTIONS_BY_ID.get(info["qid"])
     if not question:
+        # Вопрос исчез из банка. Записать ответ некуда, но экзамен обязан идти
+        # дальше: раньше здесь был просто return, и экзамен замирал молча.
+        log.warning("ответ на вопрос %s, которого нет в банке (user=%s)", info["qid"], user_id)
+        if info.get("exam"):
+            exam = EXAMS.get(user_id)
+            same_attempt = not (info.get("sid") and exam and exam.get("sid")
+                                and info["sid"] != exam["sid"])
+            if exam and same_attempt:
+                await send_next_exam_question(poll_answer.bot, user_id, user_id)
         return
     chosen = poll_answer.option_ids[0] if poll_answer.option_ids else -1
     # варианты перемешаны при отправке — правильный индекс лежит в записи опроса
@@ -1963,12 +2008,33 @@ async def on_error(event) -> bool:
 
 # ──────────────────────────── Запуск ────────────────────────────
 
+async def resume_exams(bot: Bot) -> None:
+    """Дослать вопрос экзаменам, которые пережили рестарт без активного опроса.
+
+    Экзамен сохраняется после каждого ответа, а следующий вопрос отправляется
+    уже потом (там же есть пауза в секунду для подсветки ответа). Рестарт в
+    этом окне оставлял экзамен без опроса: ответить не на что, а прислать
+    следующий вопрос было некому — экзамен зависал до истечения суточного TTL.
+    Docstring `_load_sessions` обещал сброс таких «сирот», но кода не было.
+    """
+    for user_id in list(EXAMS):
+        has_poll = any(i.get("user_id") == user_id and i.get("exam")
+                       for i in ACTIVE_POLLS.values())
+        if has_poll:
+            continue          # опрос жив — пользователь всё ещё может ответить
+        with contextlib.suppress(Exception):
+            await bot.send_message(user_id, t("exam_resumed", user_lang(user_id)))
+            await send_next_exam_question(bot, user_id, user_id)
+            log.info("экзамен возобновлён после рестарта (user=%s)", user_id)
+
+
 async def main() -> None:
     token = load_token()
     bot = Bot(token=token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     me = await bot.get_me()
     log.info("Бот запущен: @%s | вопросов в банке: %d | тем: %d", me.username, len(QUESTIONS), len(TOPICS))
     _load_sessions()   # восстановить активные экзамены/опросы после рестарта
+    await resume_exams(bot)   # и дослать вопрос тем, кто остался без опроса
     # Кнопка-меню слева от поля ввода → открывает Mini App (главный вход в продукт).
     # Так пользователь сразу видит, что «вкусное» — в приложении, а не в чат-диалоге.
     if WEBAPP_HOME_URL:

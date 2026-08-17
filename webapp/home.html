@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>ISSA Trainer</title>
-<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="theme.css?v=3">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="nav.js" data-home="true"></script>
-<script src="i18n.dict.js?v=2"></script>
-<script src="i18n.js"></script>
-<script src="quiz_data.js"></script>
-<script src="migration.js"></script>
-<script src="srs.js"></script>
-<script src="progress.js"></script>
-<script src="pl_progress.js"></script>
-<script src="heatmap.js"></script>
-<script src="badges.js"></script>
-<script src="icons.js?v=2"></script>
-<script src="sync.js"></script>
+<script src="nav.js?v=3" data-home="true"></script>
+<script src="i18n.dict.js?v=3"></script>
+<script src="i18n.js?v=3"></script>
+<script src="quiz_data.js?v=3"></script>
+<script src="migration.js?v=3"></script>
+<script src="srs.js?v=3"></script>
+<script src="progress.js?v=3"></script>
+<script src="pl_progress.js?v=3"></script>
+<script src="heatmap.js?v=3"></script>
+<script src="badges.js?v=3"></script>
+<script src="icons.js?v=3"></script>
+<script src="sync.js?v=3"></script>
 <style>
   /* — дашборд: специфика главного экрана — */
   .hero{ display:flex; align-items:baseline; gap:var(--sp-2); margin-bottom:var(--sp-1) }
@@ -296,6 +296,42 @@ if (window.Icons) Icons.hydrate();
 
 // Оживляем блок «С чего начать»: если есть вопросы к повтору по SRS —
 // предлагаем повторение приоритетом, иначе обычный старт. Всё на устройстве.
+// Выбор дневной цели. Раньше здесь был prompt(), а он в iOS-клиенте Telegram
+// подавлен и возвращает null — сменить цель было невозможно вообще (при этом
+// строкой ниже в этом же файле prompt честно назван ненадёжным для даты
+// экзамена). Оверлей собран на существующих классах (.lang-overlay/.lang-box —
+// это просто «затемнение + карточка по центру», к языку они не привязаны) и на
+// существующих ключах словаря, чтобы не тянуть за собой бамп ?v= у всех страниц.
+function openGoalPicker(){
+  if (document.querySelector(".lang-overlay")) return;
+  const cur = Progress.getGoal();
+  const opts = [...new Set([5, 10, 15, 20, 30, 50, cur])].sort((a, b) => a - b);
+  const ov = document.createElement("div");
+  ov.className = "lang-overlay";
+  ov.innerHTML = `<div class="lang-box card">
+    <div class="h2" style="text-align:center;margin:0 0 12px">${I18N.t("promptGoal")}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      ${opts.map(n => `<button class="btn${n === cur ? "" : " ghost"}" data-goal="${n}">${n}</button>`).join("")}
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn ghost" style="width:100%" data-goal="close">${I18N.t("quizDone")}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener("click", (e)=>{
+    const b = e.target.closest("[data-goal]");
+    if (!b){ if (e.target === ov) ov.remove(); return; }   // тап по фону — закрыть
+    const v = b.getAttribute("data-goal");
+    if (v !== "close"){
+      Progress.setGoal(parseInt(v, 10));
+      if (window.Sync) Sync.schedulePush();
+      render();
+    }
+    ov.remove();
+    haptic("select");
+  });
+}
+
 function render(){
   const D = window.QUIZ_DATA;
   const total = D && D.meta ? D.meta.total : (D && D.questions ? D.questions.length : 0);
@@ -358,13 +394,7 @@ function render(){
       document.getElementById("streakVal").innerHTML =
         `${streak.streak} ${window.Icons ? Icons.svg("flame") : ""}${flake}`;
       document.getElementById("bestVal").textContent = `${streak.best}`;
-      document.getElementById("goalBox").onclick = ()=>{
-        const cur = Progress.getGoal();
-        const v = prompt(I18N.t("promptGoal"), cur);
-        if (v === null) return;
-        const n = parseInt(v, 10);
-        if (!isNaN(n)){ Progress.setGoal(n); if (window.Sync) Sync.schedulePush(); render(); }
-      };
+      document.getElementById("goalBox").onclick = openGoalPicker;
       const weak = r.topics.filter(t=>t.pct<60).slice(0,3).map(t=>t.topic);
       document.getElementById("weakLine").textContent =
         weak.length ? I18N.t("weakTop", {list: weak.join(", ")}) : I18N.t("noWeak");

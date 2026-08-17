@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title data-i18n="quizTitle">Тесты ISSA</title>
-<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="theme.css?v=3">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="nav.js"></script>
-<script src="i18n.dict.js?v=2"></script>
-<script src="i18n.js"></script>
-<script src="quiz_data.js"></script>
-<script src="migration.js"></script>
-<script src="srs.js"></script>
-<script src="progress.js"></script>
-<script src="mistakes.js"></script>
-<script src="badges.js"></script>
-<script src="icons.js?v=2"></script>
-<script src="sync.js"></script>
+<script src="nav.js?v=3"></script>
+<script src="i18n.dict.js?v=3"></script>
+<script src="i18n.js?v=3"></script>
+<script src="quiz_data.js?v=3"></script>
+<script src="migration.js?v=3"></script>
+<script src="srs.js?v=3"></script>
+<script src="progress.js?v=3"></script>
+<script src="mistakes.js?v=3"></script>
+<script src="badges.js?v=3"></script>
+<script src="icons.js?v=3"></script>
+<script src="sync.js?v=3"></script>
 <style>
   :root{
     --bg: var(--tg-theme-bg-color, #17212b);
@@ -631,9 +631,11 @@ document.getElementById("trainSkip").onclick = ()=>{
 // экзамен: назад / пропустить-далее / завершить
 document.getElementById("prevBtn").onclick = ()=>{ if (S.idx>0){ S.idx--; renderQ(); } };
 document.getElementById("skipBtn").onclick = ()=>{ if (S.idx+1 < S.queue.length){ S.idx++; renderQ(); } };
-document.getElementById("finishBtn").onclick = ()=>{
+document.getElementById("finishBtn").onclick = async ()=>{
   const left = S.queue.length - answeredCount();
-  if (left > 0 && !confirm(I18N.t("quizFinishConfirm", {n: left}))) return;
+  // fallback:true — если диалог недоступен, завершаем: иначе на iOS кнопка
+  // «Завершить» молчала и выйти из экзамена было нечем
+  if (left > 0 && !(await askConfirm(I18N.t("quizFinishConfirm", {n: left}), {fallback:true}))) return;
   finish();
 };
 
@@ -1042,7 +1044,7 @@ function startMistakes(){
   const ids = Mistakes.list();
   const queue = shuffle(ids.map(id => byId[id]).filter(Boolean)).slice(0, 20);
   if (!queue.length){
-    alert(I18N.t("quizMistakesEmpty"));
+    showNote(I18N.t("quizMistakesEmpty"));
     return;
   }
   startQuiz("mistakes", false, queue);
@@ -1055,7 +1057,7 @@ document.getElementById("startReview").onclick = ()=>{
   if (!window.SRS) return;
   const dueIds = SRS.pickDue(ALL_IDS, 20);
   if (!dueIds.length){
-    alert(I18N.t("quizReviewEmpty"));
+    showNote(I18N.t("quizReviewEmpty"));
     return;
   }
   const queue = dueIds.map(id=>byId[id]).filter(Boolean);
@@ -1097,7 +1099,7 @@ function buildContrastQueue(limit){
 }
 document.getElementById("startContrast").onclick = ()=>{
   const queue = buildContrastQueue(20);
-  if (queue.length < 6){ alert(I18N.t("quizContrastLow")); return; }
+  if (queue.length < 6){ showNote(I18N.t("quizContrastLow")); return; }
   startQuiz("contrast", false, queue);
 };
 
