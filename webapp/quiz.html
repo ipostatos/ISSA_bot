@@ -680,7 +680,33 @@ function renderFeedback(pct){
   box.innerHTML = html;
 }
 
+/* __EXAM_GRADING_START__
+   Экзамен питает те же механики, что и тренировка: интервальное повторение,
+   журнал ошибок, дневную цель и серию. Раньше он не питал ничего — человек,
+   готовившийся только экзаменами, видел пустую тепловую карту, нулевую
+   готовность и не получал повторений (польский экзамен при этом засчитывался).
+   Грейдим только ОТВЕЧЕННЫЕ: пропущенный вопрос — не ошибка, сбрасывать по нему
+   коробку нечестно. В тренировке ответ уже зачтён в answerTraining.
+   Функция вынесена и помечена маркерами, чтобы _quizfeedback_check.mjs гонял
+   настоящий код страницы, а не его копию. */
+function gradeExamResults(queue, answers, sinks){
+  const S_ = sinks || {};
+  let graded = 0;
+  queue.forEach((q, i) => {
+    const a = answers[i];
+    if (a === undefined || a === null) return;
+    const ok = a === q.answer;
+    if (S_.SRS) S_.SRS.grade(q.id, ok);
+    if (S_.Mistakes) S_.Mistakes.record(q.id, ok);
+    if (S_.Progress) S_.Progress.recordAnswer();
+    graded++;
+  });
+  return graded;
+}
+/* __EXAM_GRADING_END__ */
+
 function finish(){
+  if (S.finished) return;              // двойной тап не должен грейдить дважды
   if (S.timerH){ clearInterval(S.timerH); S.timerH=null; }
   S.finished = true; clearSession();   // тест завершён — сохранённую сессию убираем
   if (window.setBusy) setBusy(false);
@@ -690,6 +716,7 @@ function finish(){
   // итог считаем из answers (неотвеченные = ошибки)
   S.results = S.queue.map((q,i)=> [q.id, S.answers[i] === q.answer ? 1 : 0]);
   S.correct = S.results.filter(([,ok])=>ok).length;
+  if (S.isExam) gradeExamResults(S.queue, S.answers, window);
   const total = S.queue.length, correct = S.correct;
   const pct = total ? Math.round(correct/total*100) : 0;
   document.getElementById("rScore").textContent = `${correct} / ${total}`;

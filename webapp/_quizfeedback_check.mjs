@@ -26,6 +26,37 @@ if (!m) {
 const { buildFeedback, normFeedback } =
   new Function(m[1] + "\nreturn { buildFeedback, normFeedback };")();
 
+// ── грейдинг экзамена: тоже настоящий код страницы, не копия ──
+const gm = quiz.match(/__EXAM_GRADING_START__[\s\S]*?\*\/([\s\S]*?)\/\*\s*__EXAM_GRADING_END__/);
+if (!gm) {
+  console.log("  ✗ маркеры __EXAM_GRADING_*__ не найдены в quiz.html");
+  process.exit(1);
+}
+const { gradeExamResults } = new Function(gm[1] + "\nreturn { gradeExamResults };")();
+
+{
+  const graded = [], mistakes = [];
+  let days = 0;
+  const sinks = {
+    SRS: { grade: (id, ok) => graded.push([id, ok]) },
+    Mistakes: { record: (id, ok) => mistakes.push([id, ok]) },
+    Progress: { recordAnswer: () => { days++; } },
+  };
+  const queue = [{ id: "q-1", answer: 0 }, { id: "q-2", answer: 1 }, { id: "q-3", answer: 2 }];
+  const answers = [0, 0, undefined];     // верно, неверно, пропущен
+  const n = gradeExamResults(queue, answers, sinks);
+
+  ok(n === 2, "экзамен: грейдятся только отвеченные вопросы (2 из 3)");
+  ok(JSON.stringify(graded) === JSON.stringify([["q-1", true], ["q-2", false]]),
+     "экзамен: SRS получает верный/неверный по каждому отвеченному");
+  ok(!graded.some(([id]) => id === "q-3"), "экзамен: пропущенный вопрос не сбрасывает коробку");
+  ok(JSON.stringify(mistakes) === JSON.stringify([["q-1", true], ["q-2", false]]),
+     "экзамен: журнал ошибок получает те же результаты");
+  ok(days === 2, "экзамен: дневная цель растёт на число отвеченных");
+  ok(gradeExamResults(queue, [null, null, null], sinks) === 0,
+     "экзамен без ответов: ничего не грейдится");
+}
+
 // ── a) expl на месте: в карточке верного варианта разбора нет, он ниже ──
 const qWithExpl = {
   answer: 1,
