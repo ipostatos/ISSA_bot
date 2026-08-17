@@ -30,6 +30,11 @@
   var KEY = "issa_progress_v1";
   var DEFAULT_GOAL = 15;
   var DAY_MS = 24 * 60 * 60 * 1000;
+  // Сколько дней активности храним локально. ОБЯЗАНО совпадать с лимитом в
+  // sync.js и api/merge.py: раньше здесь стояло 60, и каждый ответ обрезал
+  // историю до 60 дней, хотя карта на главной рисует 18 недель (126 дней), а
+  // сервер помнит 365 — хвост карты у активного пользователя был пустым.
+  var MAX_HEATMAP_DAYS = 365;
 
   // Локализация вердикта: i18n в браузере, русский фолбэк вне его (Node/тесты).
   function tr(key, fallback) {
@@ -117,9 +122,9 @@
         var ns = nextStreak(s, k);
         s.streak = ns.streak; s.best = ns.best; s.lastDay = ns.lastDay; s.frozenUsed = ns.frozenUsed;
       }
-      // компактность: храним только последние ~60 дней
+      // компактность: храним последние MAX_HEATMAP_DAYS дней (как сервер)
       var keys = Object.keys(s.days).sort();
-      while (keys.length > 60) { delete s.days[keys.shift()]; }
+      while (keys.length > MAX_HEATMAP_DAYS) { delete s.days[keys.shift()]; }
       save(s);
       return s.days[k];
     },

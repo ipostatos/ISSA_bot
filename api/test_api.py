@@ -77,6 +77,59 @@ def test_merge_srs():
     check("SRS: невалидный box>5 отброшен", m3["x"]["box"] == 4)
 
 
+# ── merge SRS по свежести (волна A) ──
+# Те же кейсы продублированы в webapp/_sync_check.mjs — правила слияния на
+# сервере и в клиенте обязаны совпадать.
+def test_merge_srs_freshness():
+    # главный кейс: ошибка на устройстве A (box 4 → 0) не откатывается
+    # устаревшей записью box 4 с устройства B
+    reset = merge_srs({"x": {"box": 4, "due": 900, "ts": 100}},
+                      {"x": {"box": 0, "due": 110, "ts": 200}})
+    check("SRS: свежий сброс побеждает устаревшую высокую коробку", reset["x"]["box"] == 0)
+    back = merge_srs({"x": {"box": 0, "due": 110, "ts": 200}},
+                     {"x": {"box": 4, "due": 900, "ts": 100}})
+    check("SRS: правило симметрично (порядок аргументов не меняет исход)", back["x"]["box"] == 0)
+
+    tie = merge_srs({"x": {"box": 2, "due": 5, "ts": 100}}, {"x": {"box": 5, "due": 9, "ts": 100}})
+    check("SRS: равный ts → выше box", tie["x"]["box"] == 5)
+
+    # совместимость: записи, сохранённые до волны A, не имеют ts
+    mixed = merge_srs({"x": {"box": 5, "due": 9}}, {"x": {"box": 0, "due": 1, "ts": 50}})
+    check("SRS: запись с ts побеждает запись без ts", mixed["x"]["box"] == 0)
+    mixed2 = merge_srs({"x": {"box": 0, "due": 1, "ts": 50}}, {"x": {"box": 5, "due": 9}})
+    check("SRS: запись без ts не перебивает запись с ts", mixed2["x"]["box"] == 0)
+    legacy = merge_srs({"x": {"box": 3, "due": 100}}, {"x": {"box": 1, "due": 900}})
+    check("SRS: обе без ts → прежнее правило (выше box)", legacy["x"]["box"] == 3)
+
+    future = merge_srs({}, {"x": {"box": 1, "due": 5, "ts": 4_102_444_800_001}})
+    check("SRS: ts из будущего (>2100) отброшен, запись сохранена",
+          "ts" not in future["x"] and future["x"]["box"] == 1)
+
+    # NaN проходил валидацию и ронял POST /api/state в 500 (int(NaN))
+    nan = merge_srs({}, {"x": {"box": 1, "due": float("nan"), "ts": 5}})
+    check("SRS: NaN в due → запись отброшена (не роняет merge)", "x" not in nan)
+    boolean = merge_srs({}, {"x": {"box": True, "due": 5}})
+    check("SRS: box=True не число → запись отброшена (паритет с JS)", "x" not in boolean)
+
+
+# ── ключи дней активности (волна A) ──
+def test_merge_day_keys():
+    m = merge_progress({"days": {"2026-06-20": 3, "не-дата": 7}},
+                       {"days": {"2026-06-21": 2, "2026-06-21T00:00:00": 9}})
+    check("progress: дни с ключом не YYYY-MM-DD отброшены",
+          sorted(m["days"]) == ["2026-06-20", "2026-06-21"])
+
+    # без этой проверки длина ключа ничем не ограничена: потолок был только
+    # по ЧИСЛУ дней, и один аккаунт мог вырасти до десятков мегабайт
+    huge = merge_progress({}, {"days": {"x" * 200_000: 1}})
+    check("progress: гигантский ключ дня не попадает в состояние", huge["days"] == {})
+
+    clamp = merge_progress({}, {"days": {"2026-06-22": 10**9}})
+    check("progress: счётчик дня зажат сверху", clamp["days"]["2026-06-22"] == 100_000)
+    check("progress: lastDay не-дата игнорируется",
+          "lastDay" not in merge_progress({}, {"lastDay": "мусор"}))
+
+
 # ── merge: progress ──
 def test_merge_progress():
     server = {"streak": 5, "best": 7, "days": {"2026-06-20": 3}, "lastDay": "2026-06-20", "goal": 15}
@@ -94,15 +147,20 @@ def test_merge_progress():
     # heatmap: храним до 365 дней (раньше резалось на 120 — ломало карту >4 мес)
     from merge import MAX_HEATMAP_DAYS
     check("heatmap лимит = 365", MAX_HEATMAP_DAYS == 365)
-    many = {f"2025-{(i // 28) + 1:02d}-{(i % 28) + 1:02d}": 1 for i in range(300)}
+    # ключи — настоящие даты: с волны A merge отбрасывает всё, что не YYYY-MM-DD
+    import datetime
+    def day(i):
+        return (datetime.date(2025, 1, 1) + datetime.timedelta(days=i)).isoformat()
+
+    many = {day(i): 1 for i in range(300)}
     m200 = merge_progress({"days": many}, {})
     check("heatmap: 300 дней (<365) хранятся целиком", len(m200["days"]) == 300)
-    over = {f"day-{i:04d}": 1 for i in range(500)}    # 500 «дней» → обрезка до 365
+    over = {day(i): 1 for i in range(500)}    # 500 дней → обрезка до 365
     mover = merge_progress({"days": over}, {})
     check("heatmap: 500 дней обрезаются до 365", len(mover["days"]) == MAX_HEATMAP_DAYS)
     # и остаются именно ПОСЛЕДНИЕ (по сортировке) — старейшие удалены
     check("heatmap: остаются последние (старейшие удалены)",
-          "day-0000" not in mover["days"] and "day-0499" in mover["days"])
+          day(0) not in mover["days"] and day(499) in mover["days"])
 
 
 def test_merge_pl_progress():
@@ -457,6 +515,8 @@ def test_concurrent_state():
 if __name__ == "__main__":
     test_auth()
     test_merge_srs()
+    test_merge_srs_freshness()
+    test_merge_day_keys()
     test_merge_progress()
     test_merge_pl_progress()
     test_merge_caps()

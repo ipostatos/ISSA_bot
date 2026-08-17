@@ -27,17 +27,18 @@ const T0 = 1_000_000_000_000;        // фиксированное «сейча�
 const I = SRS.INTERVALS;
 
 // 1. чистое ядро: верный ответ поднимает коробку
-eq(SRS.nextState(undefined, true, T0), { box: 1, due: T0 + I[1] }, "новый+верно → box1");
-eq(SRS.nextState({ box: 1, due: 0 }, true, T0), { box: 2, due: T0 + I[2] }, "box1+верно → box2");
+eq(SRS.nextState(undefined, true, T0), { box: 1, due: T0 + I[1], ts: T0 }, "новый+верно → box1");
+eq(SRS.nextState({ box: 1, due: 0 }, true, T0), { box: 2, due: T0 + I[2], ts: T0 }, "box1+верно → box2");
 // 2. ошибка сбрасывает в box0
-eq(SRS.nextState({ box: 4, due: 0 }, false, T0), { box: 0, due: T0 + I[0] }, "box4+ошибка → box0");
+eq(SRS.nextState({ box: 4, due: 0 }, false, T0), { box: 0, due: T0 + I[0], ts: T0 }, "box4+ошибка → box0");
 // 3. потолок коробки
-eq(SRS.nextState({ box: 5, due: 0 }, true, T0), { box: 5, due: T0 + I[5] }, "box5+верно → остаётся box5");
+eq(SRS.nextState({ box: 5, due: 0 }, true, T0), { box: 5, due: T0 + I[5], ts: T0 }, "box5+верно → остаётся box5");
 
 // 4. grade пишет в хранилище и читается обратно
 SRS.reset();
 SRS.grade("q1", true, T0);
-eq(SRS.state("q1"), { box: 1, due: T0 + I[1] }, "grade сохраняет состояние");
+eq(SRS.state("q1"), { box: 1, due: T0 + I[1], ts: T0 }, "grade сохраняет состояние");
+eq(typeof SRS.state("q1").ts, "number", "grade проставляет ts ответа (для merge по свежести)");
 
 // 5. isDue: невиданный — пора; свежеотвеченный — нет; просроченный — пора
 eq(SRS.isDue("new-q", T0), true, "невиданный вопрос → пора");

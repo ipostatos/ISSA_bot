@@ -77,8 +77,12 @@
           var inRange = cur >= start && cur <= end;
           if (inRange) {
             var key = fmt(cur);
-            var lv = level(days[key] || 0);
-            var t = days[key] ? (key + ": " + days[key]) : key;
+            // счётчик приводим к числу: он попадает в атрибут title, а в
+            // localStorage/ответе сервера может лежать что угодно
+            var n = parseInt(days[key], 10);
+            if (isNaN(n) || n < 0) n = 0;
+            var lv = level(n);
+            var t = n ? (key + ": " + n) : key;
             html += '<div class="hm-c' + (lv ? " l" + lv : "") + '" title="' + t + '"></div>';
           } else {
             html += '<div class="hm-c" style="visibility:hidden"></div>';

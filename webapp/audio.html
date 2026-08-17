@@ -14,6 +14,7 @@
 <script src="srs.js"></script>
 <script src="mistakes.js"></script>
 <script src="progress.js"></script>
+<script src="sync.js"></script><!-- иначе прослушанное не уезжает на сервер до открытия quiz/home -->
 <script src="icons.js?v=2"></script>
 <style>
   /* — аудио-плеер: специфика страницы —
@@ -518,6 +519,7 @@ function grade(correct){
   if (window.SRS) SRS.grade(t.id, correct);
   if (t.src === "weak" && window.Mistakes) Mistakes.record(t.id, correct);
   if (window.Progress) Progress.recordAnswer();
+  if (window.Sync) Sync.schedulePush();            // синхрон с сервером (debounce)
   sess.graded++; if (correct) sess.ok++;
   updateSess(); updateWeakSub();
   haptic(correct ? "light" : "rigid");
@@ -709,6 +711,20 @@ buildTopics();
 playlist = buildPlaylist();
 renderNow();
 updateSess();
+
+// подтянуть прогресс с сервера: подборка «слабых» строится по SRS, а он мог
+// пополниться на другом устройстве
+if (window.Sync) {
+  Sync.pull().then(function(changed){
+    if (!changed) return;
+    updateWeakSub();
+    // плейлист пересобираем только если слушать ещё не начали — иначе выдернем
+    // трек из-под играющего плеера
+    if (playing || sess.graded || idx > 0) return;
+    playlist = buildPlaylist();
+    renderNow();
+  });
+}
 </script>
 </body>
 </html>

@@ -43,9 +43,40 @@
     try { global.localStorage.setItem(k, JSON.stringify(v)); } catch (e) {}
   }
 
-  // ── merge-логика, ИДЕНТИЧНАЯ серверной (api/merge.py) ──
+  // ── merge-логика, зеркало серверной (api/merge.py) ──
+  // ВАЖНО: правила слияния совпадают с сервером один в один (это сверяет
+  // _sync_check.mjs). НЕ совпадают потолки состояния (MAX_SRS_KEYS, MAX_FLAGS,
+  // MAX_PL_*): они живут только на сервере — клиенту резать своё состояние
+  // незачем, а серверный ответ мы больше не применяем поверх локального
+  // вслепую (см. push).
+  var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+  var MAX_DAY_COUNT = 100000;
+  var MAX_TS_MS = 4102444800000;   // 2100-01-01
+
+  function num(v) {   // число или null; bool и NaN/Infinity — не числа
+    return (typeof v === "number" && isFinite(v)) ? v : null;
+  }
   function validSrs(s) {
-    return s && typeof s.box === "number" && typeof s.due === "number" && s.box >= 0 && s.box <= 5;
+    return !!s && num(s.box) !== null && num(s.due) !== null && s.box >= 0 && s.box <= 5;
+  }
+  function normSrs(s) {
+    var out = { box: s.box, due: s.due };
+    var ts = num(s.ts);
+    if (ts !== null && ts > 0 && ts <= MAX_TS_MS) out.ts = ts;
+    return out;
+  }
+  // Свежее ли y, чем x. Раньше побеждало «более выученное» (выше box) — из-за
+  // этого сброс коробки после ошибки откатывался при синке с устройством,
+  // которое об ошибке не знает. Теперь побеждает более поздний ts; записи без
+  // ts (старый клиент) уступают записям с ts. Подробности — в merge.py.
+  function srsNewer(x, y) {
+    var tx = x.ts, ty = y.ts;
+    if (tx !== undefined && ty !== undefined) {
+      return ty > tx || (ty === tx && y.box > x.box);
+    }
+    if (ty !== undefined) return true;
+    if (tx !== undefined) return false;
+    return y.box > x.box || (y.box === x.box && y.due > x.due);
   }
   function mergeSrs(a, b) {
     a = a || {}; b = b || {};
@@ -53,23 +84,24 @@
     Object.keys(a).forEach(function (k) { ids[k] = 1; });
     Object.keys(b).forEach(function (k) { ids[k] = 1; });
     Object.keys(ids).forEach(function (qid) {
-      var x = validSrs(a[qid]) ? a[qid] : null;
-      var y = validSrs(b[qid]) ? b[qid] : null;
-      if (!x && y) out[qid] = { box: y.box, due: y.due };
-      else if (x && !y) out[qid] = { box: x.box, due: x.due };
-      else if (x && y) {
-        out[qid] = (y.box > x.box || (y.box === x.box && y.due > x.due))
-          ? { box: y.box, due: y.due } : { box: x.box, due: x.due };
-      }
+      var x = validSrs(a[qid]) ? normSrs(a[qid]) : null;
+      var y = validSrs(b[qid]) ? normSrs(b[qid]) : null;
+      if (!x && y) out[qid] = y;
+      else if (x && !y) out[qid] = x;
+      else if (x && y) out[qid] = srsNewer(x, y) ? y : x;
     });
     return out;
   }
   function mergeProgress(a, b) {
     a = a || {}; b = b || {};
+    // ключ дня обязан быть датой YYYY-MM-DD (иначе длина ключа ничем не
+    // ограничена — см. DAY_RE в merge.py); счётчик клампим сверху
     var days = {};
     [a.days || {}, b.days || {}].forEach(function (src) {
       Object.keys(src).forEach(function (d) {
+        if (!DAY_RE.test(d)) return;
         var n = parseInt(src[d], 10); if (isNaN(n)) return;
+        n = Math.max(0, Math.min(MAX_DAY_COUNT, n));
         days[d] = Math.max(days[d] || 0, n);
       });
     });
@@ -79,7 +111,8 @@
     var streak = Math.max(num(a, "streak"), num(b, "streak"));
     var best = Math.max(num(a, "best"), num(b, "best"), streak);
     var goal = num(b, "goal") || num(a, "goal") || 15;
-    var lastA = a.lastDay || "", lastB = b.lastDay || "";
+    var dayOrEmpty = function (v) { return (typeof v === "string" && DAY_RE.test(v)) ? v : ""; };
+    var lastA = dayOrEmpty(a.lastDay), lastB = dayOrEmpty(b.lastDay);
     var last = (lastA > lastB ? lastA : lastB) || null;
     var out = { goal: Math.max(5, Math.min(100, goal)), days: days, streak: streak, best: best };
     if (last) {
@@ -140,6 +173,21 @@
     if (state.progress) lsSet(PROG_KEY, state.progress);
     if (state.pl_progress) lsSet(PL_PROG_KEY, state.pl_progress);
   }
+  // Ответ сервера ВСЕГДА применяем через слияние с текущим локальным состоянием,
+  // а не перезаписью. Причины две:
+  //   1) пока запрос летел, пользователь мог ответить ещё на вопрос — снапшот,
+  //      отправленный на сервер, уже устарел, и перезапись стирала бы этот ответ;
+  //   2) сервер режет входящее по потолкам (MAX_SRS_KEYS и т.п.) и возвращает
+  //      состояние без отброшенных ключей — перезапись удаляла бы их у клиента
+  //      навсегда, хотя потолок задуман как «не приму», а не «сотри у себя».
+  function mergeIntoLocal(state) {
+    var loc = localState();
+    applyMerged({
+      srs: mergeSrs(loc.srs, state.srs),
+      progress: mergeProgress(loc.progress, state.progress),
+      pl_progress: mergePlProgress(loc.pl_progress, state.pl_progress),
+    });
+  }
 
   var Sync = {
     enabled: !!(initData && global.fetch),
@@ -151,12 +199,7 @@
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (j) {
           if (!j || !j.state) return false;
-          var loc = localState();
-          applyMerged({
-            srs: mergeSrs(loc.srs, j.state.srs),
-            progress: mergeProgress(loc.progress, j.state.progress),
-            pl_progress: mergePlProgress(loc.pl_progress, j.state.pl_progress),
-          });
+          mergeIntoLocal(j.state);
           return true;
         })
         .catch(function () { return false; });   // офлайн — тихо остаёмся на localStorage
@@ -169,9 +212,12 @@
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Init-Data": initData },
         body: JSON.stringify(localState()),
+        // финальный push при сворачивании Mini App должен пережить выгрузку
+        // страницы (иначе последние ответы не доедут до сервера)
+        keepalive: true,
       })
         .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) { if (j && j.state) applyMerged(j.state); return !!j; })
+        .then(function (j) { if (j && j.state) mergeIntoLocal(j.state); return !!j; })
         .catch(function () { return false; });
     },
 

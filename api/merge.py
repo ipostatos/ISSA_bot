@@ -7,8 +7,12 @@
 максимум; для дней активности — объединение. Агрегированную статистику здесь
 НЕ суммируем (двойной счёт), оставляем серверную как есть.
 
+ИСКЛЮЧЕНИЕ из «лучшего» — SRS (волна A, находка о потере сбросов). Там
+«лучшее» = более СВЕЖЕЕ, а не более выученное: сброс коробки после ошибки
+обязан пережить синхронизацию с устройством, которое об ошибке не знает.
+
 Синхронизируем три пространства:
-  srs         — issa_srs_v1:         { qid: {box, due} }
+  srs         — issa_srs_v1:         { qid: {box, due, ts} }
   progress    — issa_progress_v1:    { goal, days:{ "YYYY-MM-DD": n }, streak,
                                        best, lastDay, frozenUsed, flags }
   pl_progress — issa_pl_progress_v1: { lic: {solved:{qid:1}, bestCorrect, bestTotal} }
@@ -16,6 +20,8 @@
 from __future__ import annotations
 
 import logging
+import math
+import re
 
 log = logging.getLogger("issa-api.merge")
 
@@ -46,12 +52,31 @@ MAX_FLAGS = 64          # бейджей 14; запас на 4× новых до
 MAX_PL_LICENSES = 16    # сейчас 2 (zeglarz, sternik)
 MAX_PL_SOLVED = 2000    # на лицензию; самый большой польский банк — 460
 
+# Ключ дня активности: строго YYYY-MM-DD. Без этой проверки длина ключа ничем
+# не ограничена (потолок был только по ЧИСЛУ ключей), и подписанный клиент мог
+# растить состояние сотнями мегабайт по четверти мегабайта за запрос.
+DAY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+MAX_DAY_COUNT = 100_000     # ответов за день; заведомо недостижимо человеком
+# Верхняя граница ts (мс): 2100-01-01. Отсекает мусор и «вечно свежие» записи.
+MAX_TS_MS = 4_102_444_800_000
+
 
 def merge_srs(server: dict | None, incoming: dict | None) -> dict:
-    """Для каждого вопроса берём более «выученное» состояние.
+    """Для каждого вопроса берём более СВЕЖЕЕ состояние.
 
-    Критерий: выше box — лучше. При равном box берём более поздний due
-    (его уже отодвинули дальше = недавнее верное повторение).
+    Почему не «более выученное» (как было до волны A): при критерии «выше box»
+    ошибка, сделанная на телефоне (box 4 → 0), проигрывала устаревшей записи
+    box 4 с планшета — сброс молча откатывался, и вопрос уходил на 21 день
+    вместо скорого повтора. Теперь побеждает запись с более поздним ts.
+
+    Совместимость со старыми записями (без ts):
+      • обе с ts        → больший ts; при равном ts — выше box;
+      • только одна с ts → побеждает она (её писал уже обновлённый клиент);
+      • ни одной с ts    → прежнее правило (выше box, при равном — больший due).
+    Средний случай сознательно ошибается в сторону ЛИШНЕГО повторения: если
+    устройство на старом коде дало верный ответ, мы можем оставить более раннюю
+    коробку, и вопрос повторится раньше нужного. Обратная ошибка (потерять
+    сброс и не показать забытый вопрос три недели) для обучения куда дороже.
 
     Потолок MAX_SRS_KEYS применяется только к НОВЫМ ключам из incoming: всё,
     что уже лежит на сервере, переносится без ограничений (см. политику вверху
@@ -63,14 +88,14 @@ def merge_srs(server: dict | None, incoming: dict | None) -> dict:
     # 1) серверное состояние — целиком, без потолка (ничего не удаляем)
     for qid, a in server.items():
         if _valid_srs(a):
-            out[qid] = {"box": int(a["box"]), "due": int(a["due"])}
+            out[qid] = _norm_srs(a)
     # 2) входящее — детерминированным порядком, новые ключи под потолком
     over_len = over_cap = 0
     for qid in sorted(incoming):
         b = incoming[qid]
         if not _valid_srs(b):
             continue
-        b = {"box": int(b["box"]), "due": int(b["due"])}
+        b = _norm_srs(b)
         a = out.get(qid)
         if a is None:
             if len(qid) > MAX_KEY_LEN:
@@ -80,7 +105,7 @@ def merge_srs(server: dict | None, incoming: dict | None) -> dict:
                 over_cap += 1
                 continue
             out[qid] = b
-        elif b["box"] > a["box"] or (b["box"] == a["box"] and b["due"] > a["due"]):
+        elif _srs_newer(a, b):
             out[qid] = b
     if over_len or over_cap:
         log.warning("merge_srs: отброшено из incoming — %d по длине ключа, %d по потолку "
@@ -94,17 +119,28 @@ def merge_progress(server: dict | None, incoming: dict | None) -> dict:
     server = server or {}
     incoming = incoming or {}
 
-    # дни активности: объединяем, при совпадении берём больший счётчик
+    # дни активности: объединяем, при совпадении берём больший счётчик.
+    # Ключ обязан быть датой YYYY-MM-DD: иначе длина ключа ничем не ограничена
+    # (потолок был только по их числу) — см. DAY_RE. Мусорные ключи отбрасываем
+    # из ОБОИХ источников, включая серверный: легальный клиент их не создаёт,
+    # а сохранять их — значит хранить чужой мусор вечно.
     days: dict = {}
+    bad_days = 0
     for src in (server.get("days") or {}, incoming.get("days") or {}):
         if not isinstance(src, dict):
             continue
         for day, n in src.items():
-            try:
-                n = int(n)
-            except (TypeError, ValueError):
+            if not isinstance(day, str) or not DAY_RE.match(day):
+                bad_days += 1
                 continue
+            n = _num(n)
+            if n is None:
+                continue
+            n = max(0, min(MAX_DAY_COUNT, int(n)))
             days[day] = max(days.get(day, 0), n)
+    if bad_days:
+        log.warning("merge_progress: отброшено %d дней активности с некорректным ключом "
+                    "(ожидается YYYY-MM-DD)", bad_days)
     # держим компактно — последние MAX_HEATMAP_DAYS дней
     if len(days) > MAX_HEATMAP_DAYS:
         for day in sorted(days)[:-MAX_HEATMAP_DAYS]:
@@ -120,9 +156,13 @@ def merge_progress(server: dict | None, incoming: dict | None) -> dict:
     best = max(num(server, "best"), num(incoming, "best"), streak)
     goal = num(incoming, "goal") or num(server, "goal") or 15
 
-    # lastDay — лексикографически больший (формат YYYY-MM-DD сортируется как дата)
-    last_s = server.get("lastDay") or ""
-    last_i = incoming.get("lastDay") or ""
+    # lastDay — лексикографически больший (формат YYYY-MM-DD сортируется как дата).
+    # Тот же DAY_RE: иначе это ещё один неограниченный по длине ключ в состоянии.
+    def day_or_empty(v) -> str:
+        return v if isinstance(v, str) and DAY_RE.match(v) else ""
+
+    last_s = day_or_empty(server.get("lastDay"))
+    last_i = day_or_empty(incoming.get("lastDay"))
     last_day = max(last_s, last_i) or None
 
     out = {
@@ -260,10 +300,41 @@ def merge_state(server: dict | None, incoming: dict | None) -> dict:
     }
 
 
+def _num(v):
+    """Число или None. bool отсекаем (в JS `typeof true !== "number"` — держим
+    паритет), NaN/Infinity тоже: json.loads их принимает, а int(NaN) роняет
+    запрос в 500."""
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return None
+    if not math.isfinite(v):
+        return None
+    return v
+
+
 def _valid_srs(s) -> bool:
-    return (
-        isinstance(s, dict)
-        and isinstance(s.get("box"), (int, float))
-        and isinstance(s.get("due"), (int, float))
-        and 0 <= s["box"] <= 5
-    )
+    if not isinstance(s, dict):
+        return False
+    box, due = _num(s.get("box")), _num(s.get("due"))
+    return box is not None and due is not None and 0 <= box <= 5
+
+
+def _norm_srs(s: dict) -> dict:
+    """Привести запись к {box, due[, ts]} — ts только если он осмысленный."""
+    out = {"box": int(s["box"]), "due": int(s["due"])}
+    ts = _num(s.get("ts"))
+    if ts is not None and 0 < ts <= MAX_TS_MS:
+        out["ts"] = int(ts)
+    return out
+
+
+def _srs_newer(a: dict, b: dict) -> bool:
+    """Свежее ли b, чем a (обе записи уже нормализованы). См. merge_srs."""
+    ta, tb = a.get("ts"), b.get("ts")
+    if ta is not None and tb is not None:
+        return tb > ta or (tb == ta and b["box"] > a["box"])
+    if tb is not None:
+        return True         # b писал обновлённый клиент, a — старый
+    if ta is not None:
+        return False
+    # обе старые: прежнее правило «более выученное»
+    return b["box"] > a["box"] or (b["box"] == a["box"] and b["due"] > a["due"])
