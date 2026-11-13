@@ -18,7 +18,9 @@ set -euo pipefail
 main() {
 
 APP_DIR=/opt/issa-bot
-SERVICE=issa-bot
+# Бот и API живут в одном дереве и одном .venv: обновлять только бота значило
+# оставлять API на старом коде до ручного рестарта (аудит, LOW).
+SERVICES="issa-bot issa-api"
 
 cd "$APP_DIR"
 echo "→ git pull (от issa)"
@@ -29,12 +31,16 @@ sudo -u issa git -C "$APP_DIR" pull --ff-only
 echo "→ обновление зависимостей (от issa, строго из requirements.txt)"
 # Только -r requirements.txt: разовых `pip install <пакет>` в деплое быть не
 # должно, иначе версия на проде меняется молча (см. историю с edge-tts).
-sudo -u issa "$APP_DIR/.venv/bin/pip" install -q -r "$APP_DIR/requirements.txt"
+sudo -u issa "$APP_DIR/.venv/bin/pip" install -q -r "$APP_DIR/requirements.txt"                                                -r "$APP_DIR/api/requirements.txt"
 
-echo "→ перезапуск сервиса (единственный шаг, которому нужен root)"
-systemctl restart "$SERVICE"
+echo "→ перезапуск сервисов (единственный шаг, которому нужен root)"
+for svc in $SERVICES; do
+  systemctl restart "$svc"
+done
 sleep 2
-systemctl --no-pager status "$SERVICE" | head -5
+for svc in $SERVICES; do
+  systemctl --no-pager status "$svc" | head -3
+done
 
 echo "→ смоук (health, auth API)"
 # Деплой без проверки = деплой вслепую. Код выхода смоука — код выхода скрипта.

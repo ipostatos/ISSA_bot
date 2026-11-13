@@ -1,14 +1,7 @@
 // Кросс-проверка правила двенадцатых (index.html) против tides.py.
-const TWELFTHS = [1,2,3,3,2,1];
-function heightAfterLw(hw, lw, hours){
-  const rng = hw - lw;
-  let h = Math.max(0, Math.min(6, hours));
-  const full = Math.floor(h), frac = h - full;
-  let water = lw;
-  for (let i=0; i<full; i++) water += rng*TWELFTHS[i]/12;
-  if (full < 6) water += rng*TWELFTHS[full]/12*frac;
-  return water;
-}
+// Исполняется НАСТОЯЩАЯ heightAfterLw из index.html, а не копия.
+import { pageCode } from "./_page_code.mjs";
+const { heightAfterLw } = pageCode("index.html", ["TWELFTHS", "heightAfterLw"]);
 let fail = 0;
 const near = (g,e,m) => { if (Math.abs(g-e) > 1e-9){ console.log(`FAIL ${m}: ${g} != ${e}`); fail++; } };
 

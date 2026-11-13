@@ -4,13 +4,13 @@ API синхронизации прогресса между устройств�
 путь `/api/*` → локальный `127.0.0.1:4100` (FastAPI/uvicorn + SQLite).
 
 ```
-https://issa-46-224-220-94.sslip.io/        → статика Mini App (как было)
-https://issa-46-224-220-94.sslip.io/api/*   → этот API (127.0.0.1:4100)
+https://<домен-mini-app>/        → статика Mini App (как было)
+https://<домен-mini-app>/api/*   → этот API (127.0.0.1:4100)
 ```
 
-> ⚠️ Блок `api.nestingcenter.io` в Caddy НЕ трогаем.
+> ⚠️ Блоки других сайтов в Caddyfile на этом сервере не трогаем.
 
-Синхронизируются только `issa_srs_v1` и `issa_progress_v1`. Подлинность
+Синхронизируются `issa_srs_v1`, `issa_progress_v1`, `issa_pl_progress_v1` и `issa_quiz_session_v1`. Подлинность
 пользователя — по Telegram `initData` (HMAC), `user_id` берётся только оттуда.
 BOT_TOKEN — из общего `/opt/issa-bot/.env`.
 
@@ -39,10 +39,10 @@ curl -s http://127.0.0.1:4100/api/health       # {"ok":true,"schema":1}
 ## 3. Caddy — добавить маршрут /api/* в СУЩЕСТВУЮЩИЙ блок Mini App
 
 Открой Caddyfile (обычно `/etc/caddy/Caddyfile`). Найди блок сайта
-`issa-46-224-220-94.sslip.io { ... }` и добавь в НЕГО (до общей раздачи статики):
+`<домен-mini-app> { ... }` и добавь в НЕГО (до общей раздачи статики):
 
 ```caddy
-issa-46-224-220-94.sslip.io {
+<домен-mini-app> {
     # ── НОВОЕ: API синхронизации ──
     handle /api/* {
         reverse_proxy 127.0.0.1:4100
@@ -56,7 +56,7 @@ issa-46-224-220-94.sslip.io {
 
 > Важно: `handle /api/*` должен идти ВЫШЕ `file_server`, иначе статика перехватит
 > запросы. Если у тебя уже структура с `handle`/`route` — просто добавь блок
-> `handle /api/*` первым. Блок `api.nestingcenter.io` оставь без изменений.
+> `handle /api/*` первым. Блоки других сайтов оставь без изменений.
 
 Применить:
 ```bash
@@ -67,9 +67,9 @@ sudo systemctl reload caddy
 ## 4. Проверка снаружи
 
 ```bash
-curl -s https://issa-46-224-220-94.sslip.io/api/health   # {"ok":true,"schema":1}
+curl -s https://<домен-mini-app>/api/health   # {"ok":true,"schema":1}
 # без initData state должен дать 401:
-curl -s -o /dev/null -w "%{http_code}\n" https://issa-46-224-220-94.sslip.io/api/state
+curl -s -o /dev/null -w "%{http_code}\n" https://<домен-mini-app>/api/state
 ```
 
 Затем переоткрой Mini App на двух устройствах под одним аккаунтом Telegram:
@@ -170,7 +170,7 @@ bash /opt/issa-bot/deploy/smoke.sh
 ```bash
 bash /opt/issa-bot/deploy/smoke.sh                    # локально (127.0.0.1:4100 + домен)
 # или против другого домена:
-BASE=https://issa-46-224-220-94.sslip.io bash /opt/issa-bot/deploy/smoke.sh
+BASE=https://<домен-mini-app> bash /opt/issa-bot/deploy/smoke.sh
 ```
 
 Код выхода ≠0, если хоть одна проверка упала. Токены/initData не печатаются.

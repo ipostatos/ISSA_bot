@@ -255,12 +255,13 @@ if (!D){
   if (!btns.length) return;
 
   // Резервный путь, если API/openInvoice недоступны: deep-link в чат с ботом.
-  const qsBot = new URLSearchParams(location.search).get("bot");
-  const BOT = (qsBot || "issa_test_bot").replace(/^@/, "");
+  // Имя бота фиксированное: раньше бралось из ?bot= и позволяло ссылкой
+  // увести человека в любого бота (открытый редирект).
+  const BOT = "issa_test_bot";
   function fallbackDeepLink(){
     const link = "https://t.me/" + BOT + "?start=donate";
     if (tg && tg.openTelegramLink) tg.openTelegramLink(link);
-    else window.open(link, "_blank");
+    else window.open(link, "_blank", "noopener");
     note.textContent = I18N.t("aboutDonateChat");
   }
 

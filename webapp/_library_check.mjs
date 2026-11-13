@@ -47,6 +47,21 @@ for (const f of catalog) {
   ok(!f.includes("/") && deployed.includes(f), `деплой публикует «${f}» туда, где её ищет читалка`);
 }
 
+// pdf.js 3.11.174 уязвим к CVE-2024-4367 (исправлено в 4.2.67): вредоносный
+// шрифт в PDF приводил к eval произвольного JS в origin Mini App. Смягчение —
+// isEvalSupported:false в КАЖДОМ вызове getDocument. Пока версия ниже 4.2.67,
+// пропажа флага — провал (обновление pdf.js на 4.x — отдельная работа: другая
+// сборка, ES-модули).
+const pdfVer = (read("vendor/pdfjs/pdf.min.js").match(/version="(\d+)\.(\d+)\.(\d+)"/) || []).slice(1).map(Number);
+ok(pdfVer.length === 3, `версия pdf.js определяется (${pdfVer.join(".")})`);
+const patched = pdfVer[0] > 4 || (pdfVer[0] === 4 && (pdfVer[1] > 2 || (pdfVer[1] === 2 && pdfVer[2] >= 67)));
+const calls = [...reader.matchAll(/getDocument\(\{([\s\S]*?)\}\)/g)].map((x) => x[1]);
+ok(calls.length > 0, "в reader.html есть вызов getDocument");
+if (!patched) {
+  ok(calls.every((c) => /isEvalSupported\s*:\s*false/.test(c)),
+     "pdf.js < 4.2.67: каждый getDocument с isEvalSupported:false (CVE-2024-4367)");
+}
+
 if (fails) {
   console.log(`\n✗ library: ${fails} провал(ов)`);
   process.exit(1);

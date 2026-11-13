@@ -152,16 +152,47 @@ for key, (_, _, steps) in content.KNOTS.items():
         detail6 = f"{key}: {nums}"
 check("6.  Узлы: шаги в правильном порядке", order_ok, detail6)
 
-# 7. quiz is_anonymous=False
-bot_src = (BASE / "bot.py").read_text(encoding="utf-8")
-anon_false = "is_anonymous=False" in bot_src
-check("7.  Quiz-poll с is_anonymous=False", anon_false)
-
-# 8. прогресс переживает перезапуск (запись→чтение)
+# Бот грузим один раз; его файлы состояния (прогресс, опросы, экзамены) —
+# во временный каталог. Раньше пункты 8–9 писали тестовый файл в настоящий
+# progress/ — на сервере это боевой каталог пользователей.
+import asyncio
 import importlib.util
+import tempfile
 spec = importlib.util.spec_from_file_location("botmod", BASE / "bot.py")
 bot = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bot)
+_audit_tmp = tempfile.TemporaryDirectory()
+_tmp = Path(_audit_tmp.name)
+bot.PROGRESS_DIR = _tmp / "progress"
+bot.PROGRESS_DIR.mkdir()
+bot._POLLS_FILE = _tmp / "active_polls.json"
+bot._EXAMS_FILE = _tmp / "exams.json"
+bot.ACTIVE_POLLS.clear()
+bot.EXAMS.clear()
+
+
+# 7. quiz-poll неанонимный: ИСПОЛНЯЕМ send_quiz с заглушкой Telegram (раньше
+# здесь грепался исходник — строка в комментарии прошла бы проверку). Без
+# is_anonymous=False ответ на опрос не приходит боту, и прогресс не считается.
+class _FakeBot:
+    def __init__(self):
+        self.sent = []
+
+    async def send_poll(self, **kw):
+        self.sent.append(kw)
+        msg = type("M", (), {})()
+        msg.poll = type("P", (), {"id": f"audit-{len(self.sent)}"})()
+        return msg
+
+
+_fb = _FakeBot()
+asyncio.run(bot.send_quiz(_fb, 999000111, 999000111, QUESTIONS[0], mode="train"))
+_kw = _fb.sent[-1] if _fb.sent else {}
+check("7.  Quiz-poll: type=quiz, is_anonymous=False (исполнение send_quiz)",
+      _kw.get("type") == "quiz" and _kw.get("is_anonymous") is False,
+      f"type={_kw.get('type')!r} is_anonymous={_kw.get('is_anonymous')!r}")
+
+# 8. прогресс переживает перезапуск (запись→чтение)
 uid = 999000111
 p = {"seen": ["x"], "wrong": ["y"], "stats": {"answered": 3, "correct": 2},
      "tasks": {"solved": 1, "attempts": 2, "streak": 1, "best": 1}}

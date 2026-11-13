@@ -20,8 +20,10 @@ Telegram-бот для тренировки тестов ISSA Inshore Skipper + 
 """
 
 import asyncio
+import html
 import json
 import logging
+import math
 import os
 import random
 import time
@@ -33,6 +35,7 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import (
     CallbackQuery,
+    ErrorEvent,
     FSInputFile,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -538,6 +541,15 @@ def _truncate(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
+def review_line(q: dict) -> str:
+    """Строка разбора ошибки. Бот шлёт HTML (parse_mode по умолчанию), поэтому
+    тема, текст вопроса и ответ экранируются: «<», «>» или «&» в банке (q-200)
+    иначе роняют всё сообщение разбора — человек не видит свои ошибки."""
+    right = q["options"][q["answer"]]
+    return (f"• [{html.escape(str(q['topic']))}] {html.escape(str(q['q']))}\n"
+            f"  ✔️ {html.escape(str(right))}")
+
+
 async def send_quiz(
     bot: Bot,
     chat_id: int,
@@ -602,6 +614,24 @@ async def send_quiz(
 # ──────────────────────────── Хэндлеры команд ────────────────────────────
 
 dp = Dispatcher()
+
+
+@dp.errors()
+async def on_handler_error(event: ErrorEvent) -> bool:
+    """Последний рубеж: исключение в любом хендлере.
+
+    Без этого упавший обработчик колбэка оставлял на кнопке вечный спиннер
+    (Telegram ждёт answer()), а человек не понимал, нажалось ли. Логируем с
+    трассой и гасим спиннер; само исключение дальше не пробрасываем.
+    """
+    log.exception("handler error: %s", event.exception, exc_info=event.exception)
+    cb = event.update.callback_query
+    if cb is not None:
+        try:
+            await cb.answer()
+        except Exception:  # noqa: BLE001 — колбэк мог устареть, это не важно
+            pass
+    return True
 
 # Бот рассчитан на ЛИЧНЫЕ чаты: прогресс, экзамен и quiz привязаны к одному
 # пользователю. В группах модель ответов на poll работает иначе, поэтому
@@ -1026,8 +1056,7 @@ async def finish_exam(bot: Bot, chat_id: int, user_id: int) -> None:
     blocks = [header, t("error_review_header", lang)]
     for qid in wrong:
         q = QUESTIONS_BY_ID[qid]
-        correct_opt = q["options"][q["answer"]]
-        blocks.append(f"• [{q['topic']}] {q['q']}\n  ✔️ {correct_opt}")
+        blocks.append(review_line(q))
     blocks.append(t("added_to_mistakes", lang))
     blocks.append("\n" + t("disclaimer", lang))
 
@@ -1319,7 +1348,7 @@ async def cb_glossary_cat(cb: CallbackQuery) -> None:
 async def cb_glossary_term(cb: CallbackQuery) -> None:
     lang = user_lang(cb.from_user.id)
     rest = cb.data[len("gl:t:"):]  # <key>:<idx>
-    key, idx = rest.rsplit(":", 1)
+    key, _, idx = rest.rpartition(":")      # подделанный callback без «:» не роняет хендлер
     cat = glossary.KEY_CATEGORY.get(key)
     items = glossary.YACHTING_GLOSSARY.get(cat, []) if cat else []
     try:
@@ -1632,6 +1661,11 @@ def compute_marine(kind: str, text: str, lang: str = "ru") -> str:
     некорректны.
     """
     nums = _marine_numbers(text)
+    # «9999…9» из сотни цифр даёт inf, и расчёт падал OverflowError мимо
+    # обработчика ValueError — человек оставался в режиме ввода без ответа.
+    # Скорости, мили и часы в реальной навигации далеко меньше миллиона.
+    if any(not math.isfinite(n) or abs(n) > 1e6 for n in nums):
+        raise ValueError(t("err_number_too_big", lang))
     if kind == "t":
         if len(nums) < 2:
             raise ValueError(t("err_need_speed_dist", lang))
@@ -1696,7 +1730,7 @@ def compute_marine(kind: str, text: str, lang: str = "ru") -> str:
 async def cb_calc_dir(cb: CallbackQuery) -> None:
     lang = user_lang(cb.from_user.id)
     code = cb.data[len("calc:dir:"):]  # напр. "TC"
-    src, dst = code[0], code[1]
+    src, dst = (code[0], code[1]) if len(code) == 2 else ("", "")
     if src not in calc.POINTS or dst not in calc.POINTS or src == dst:
         await cb.answer(t("unknown_direction", lang))
         return
@@ -1839,7 +1873,9 @@ async def on_webapp_data(message: Message) -> None:
         head = t("webapp_exam_head", lang, correct=correct, counted=counted, pct=pct,
                  tline=tline, verdict=verdict, **{"pass": EXAM_PASS_PERCENT})
     else:
-        label = mode.split(":", 1)[1] if mode.startswith("topic:") else t("random_label", lang)
+        # mode приходит из Mini App (web_app_data) — это ввод клиента, а бот шлёт
+        # HTML: без экранирования «topic:<b» роняет сообщение с результатом.
+        label = html.escape(mode.split(":", 1)[1]) if mode.startswith("topic:") else t("random_label", lang)
         head = t("webapp_train_head", lang, label=label, correct=correct, counted=counted, pct=pct)
 
     wrong = [QUESTIONS_BY_ID[qid] for qid in parsed["wrong_ids"]]
@@ -1850,7 +1886,7 @@ async def on_webapp_data(message: Message) -> None:
 
     blocks = [head, t("error_review_header", lang)]
     for q in wrong:
-        blocks.append(f"• [{q['topic']}] {q['q']}\n  ✔️ {q['options'][q['answer']]}")
+        blocks.append(review_line(q))
     blocks.append(t("added_to_mistakes", lang))
 
     chunk, parts = "", []

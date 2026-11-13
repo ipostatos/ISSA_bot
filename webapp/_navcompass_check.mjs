@@ -2,13 +2,10 @@
 // Логика ДОЛЖНА совпадать с боевыми задачами (nav_tasks.py): вниз T→C West +, East −.
 // Слайдер: значение>0 = West (+), значение<0 = East (−) → просто прибавляем к курсу.
 
-// ── копия логики из navtasks.html (window.tvmdcNorm / window.tvmdcCompass) ──
-const tvmdcNorm = v => ((Math.round(v) % 360) + 360) % 360;
-function tvmdcCompass(trueCourse, varSigned, devSigned){
-  const magnetic = tvmdcNorm(trueCourse + varSigned);
-  const compass  = tvmdcNorm(magnetic + devSigned);
-  return { magnetic, compass };
-}
+// Исполняются НАСТОЯЩИЕ window.tvmdcNorm / window.tvmdcCompass из navtasks.html.
+import { pageCode } from "./_page_code.mjs";
+const window = {};
+const { tvmdcNorm, tvmdcCompass } = pageCode("navtasks.html", ["tvmdcNorm", "tvmdcCompass"], { window });
 // перевод «градусы + сторона» в знак слайдера (West +, East −)
 const signed = (deg, dir) => dir === "W" ? deg : -deg;
 

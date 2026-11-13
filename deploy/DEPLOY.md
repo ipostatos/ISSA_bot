@@ -105,8 +105,8 @@ journalctl -u issa-bot -f      # живой лог (Ctrl+C для выхода)
 ```bash
 cd /opt/issa-bot
 sudo -u issa git pull
-sudo -u issa /opt/issa-bot/.venv/bin/pip install -r requirements.txt   # если менялись зависимости
-systemctl restart issa-bot                                            # единственный шаг от root
+sudo -u issa /opt/issa-bot/.venv/bin/pip install -r requirements.txt -r api/requirements.txt
+systemctl restart issa-bot issa-api                                   # единственный шаг от root
 ```
 
 > Правило: всё, что пишет в `/opt/issa-bot` (git, pip, генерация данных), —
@@ -114,7 +114,10 @@ systemctl restart issa-bot                                            # един
 > каталоги раздачи. Разовых `pip install <пакет>` в деплое быть не должно:
 > версии фиксируются в `requirements.txt`.
 
-Или одной строкой — скрипт `deploy/update.sh` (см. ниже).
+Или одной строкой — `sudo bash /opt/issa-bot/deploy/update.sh`: те же шаги для
+бота и API плюс смоук в конце. Если скрипт на сервере старше этой версии
+(без обёртки `main()`), сначала сделайте `sudo -u issa git pull` вручную:
+старый скрипт подменяет сам себя посреди выполнения.
 
 ---
 
@@ -130,7 +133,8 @@ systemctl restart issa-bot                                            # един
 ## Прогресс пользователей
 
 Хранится в `/opt/issa-bot/progress/*.json` — переживает перезапуски.
-Делайте бэкап этой папки, если важна статистика пользователей.
+Ежедневный бэкап `deploy/backup_db.sh` архивирует эту папку вместе с базой
+синхронизации; восстановление — `deploy/DEPLOY_API.md`, «Восстановление».
 
 ## ⚠️ Безопасность токена
 

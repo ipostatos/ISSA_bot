@@ -110,8 +110,6 @@
 
     /* ── prompt/alert (нативные диалоги) ── */
     promptGoal:{ ru: "Дневная цель — сколько вопросов в день? (5–100)", pl: "Cel dzienny — ile pytań dziennie? (5–100)", ua: "Денна ціль — скільки питань на день? (5–100)", en: "Daily goal — how many questions per day? (5–100)" },
-    promptDate:{ ru: "Дата экзамена (ГГГГ-ММ-ДД), пусто — убрать:", pl: "Data egzaminu (RRRR-MM-DD), pusto — usuń:", ua: "Дата іспиту (РРРР-ММ-ДД), пусто — прибрати:", en: "Exam date (YYYY-MM-DD), empty — remove:" },
-    badDate:   { ru: "Формат: ГГГГ-ММ-ДД, например 2026-08-15", pl: "Format: RRRR-MM-DD, np. 2026-08-15", ua: "Формат: РРРР-ММ-ДД, напр. 2026-08-15", en: "Format: YYYY-MM-DD, e.g. 2026-08-15" },
 
     /* ── profile.html ── */
     pTitle:    { ru: "Профиль", pl: "Profil", ua: "Профіль", en: "Profile" },
@@ -263,6 +261,8 @@
     calcErrSpeedPos:{ ru: "Скорость должна быть > 0.", pl: "Prędkość musi być > 0.", ua: "Швидкість має бути > 0.", en: "Speed must be > 0." },
     calcErrTimePos:{ ru: "Время должно быть > 0.", pl: "Czas musi być > 0.", ua: "Час має бути > 0.", en: "Time must be > 0." },
     calcHM:       { ru: "{h} ч {m} мин", pl: "{h} h {m} min", ua: "{h} год {m} хв", en: "{h} h {m} min" },
+    hmLess:       { ru: "меньше", pl: "mniej", ua: "менше", en: "less" },
+    hmMore:       { ru: "больше", pl: "więcej", ua: "більше", en: "more" },
     calcAnsTravel:{ ru: "Время в пути: {n} ч ({hm})", pl: "Czas w drodze: {n} h ({hm})", ua: "Час у дорозі: {n} год ({hm})", en: "Travel time: {n} h ({hm})" },
     calcAnsDist:  { ru: "Дистанция: {d} NM", pl: "Dystans: {d} NM", ua: "Дистанція: {d} NM", en: "Distance: {d} NM" },
     calcAnsSpeed: { ru: "Средняя скорость: {v} узла", pl: "Prędkość średnia: {v} w", ua: "Середня швидкість: {v} вуз.", en: "Average speed: {v} kn" },
@@ -345,11 +345,9 @@
     quizResume:   { ru: "Есть незавершённый тест:", pl: "Jest niedokończony test:", ua: "Є незавершений тест:", en: "There's an unfinished test:" },
     quizContinue: { ru: "Продолжить", pl: "Kontynuuj", ua: "Продовжити", en: "Continue" },
     quizRestart:  { ru: "Начать заново", pl: "Zacznij od nowa", ua: "Почати заново", en: "Start over" },
-    quizReviewSub:{ ru: "вопросы к повторению по расписанию", pl: "pytania do powtórki wg harmonogramu", ua: "питання до повторення за розкладом", en: "questions due for review" },
     quizReviewDue:{ ru: "{n} к повторению · закреплено {learned}", pl: "{n} do powtórki · utrwalono {learned}", ua: "{n} до повторення · закріплено {learned}", en: "{n} to review · learned {learned}" },
     quizReviewDone:{ ru: "на сегодня всё повторено · закреплено {learned}", pl: "na dziś wszystko powtórzone · utrwalono {learned}", ua: "на сьогодні все повторено · закріплено {learned}", en: "all reviewed for today · learned {learned}" },
     quizMistakes: { ru: "Работа над ошибками", pl: "Praca nad błędami", ua: "Робота над помилками", en: "Mistakes practice" },
-    quizMistakesSub:{ ru: "вопросы, где ошибся не раз", pl: "pytania, w których mylisz się nieraz", ua: "питання, де помилявся не раз", en: "questions you've missed more than once" },
     quizMistakesN:{ ru: "{n} трудных · 2 верных подряд закрепляют", pl: "{n} trudnych · 2 poprawne z rzędu utrwalają", ua: "{n} важких · 2 правильні поспіль закріплюють", en: "{n} tricky · 2 correct in a row master them" },
     quizPath:     { ru: "Путь обучения", pl: "Ścieżka nauki", ua: "Шлях навчання", en: "Learning path" },
     quizPathSub:  { ru: "Темы по порядку, от основ к экзамену", pl: "Tematy po kolei, od podstaw do egzaminu", ua: "Теми по порядку, від основ до екзамену", en: "Topics in order, from basics to exam" },

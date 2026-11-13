@@ -15,11 +15,13 @@ npm/vite/dist) — нужен только **HTTPS-хостинг** (Telegram о
 
 ## Развёрнуто (текущий сервер)
 
-Хостинг — Caddy на том же VPS, домен **sslip.io** (HTTPS из коробки):
+Хостинг — Caddy на том же VPS, HTTPS из коробки. Ниже `<домен-mini-app>` —
+адрес Mini App (боевой адрес в репозитории не публикуется: он раскрывает
+IP сервера):
 
-- Стартовый экран: `https://issa-46-224-220-94.sslip.io`
-- Тесты: `https://issa-46-224-220-94.sslip.io/quiz.html`
-- Калькулятор: `https://issa-46-224-220-94.sslip.io/calc.html`
+- Стартовый экран: `https://<домен-mini-app>`
+- Тесты: `https://<домен-mini-app>/quiz.html`
+- Калькулятор: `https://<домен-mini-app>/calc.html`
 
 **Публикация / обновление** (на сервере, заменяет заглушку):
 
@@ -28,15 +30,15 @@ sudo bash /opt/issa-bot/deploy/update_webapp.sh
 ```
 
 **BotFather** → /mybots → бот → Bot Settings → Menu Button → Configure menu
-button → URL: `https://issa-46-224-220-94.sslip.io` (стартовый экран).
+button → URL: `https://<домен-mini-app>` (стартовый экран).
 
 **Кнопки внутри бота** (опционально, чтобы запускать приложения из чата) — в
 `.env`:
 
 ```bash
-WEBAPP_HOME_URL=https://issa-46-224-220-94.sslip.io
-WEBAPP_URL=https://issa-46-224-220-94.sslip.io/calc.html
-WEBAPP_QUIZ_URL=https://issa-46-224-220-94.sslip.io/quiz.html
+WEBAPP_HOME_URL=https://<домен-mini-app>
+WEBAPP_URL=https://<домен-mini-app>/calc.html
+WEBAPP_QUIZ_URL=https://<домен-mini-app>/quiz.html
 ```
 
 Когда задан `WEBAPP_HOME_URL`, главное меню бота показывает кнопку

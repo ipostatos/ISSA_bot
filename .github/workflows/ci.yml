@@ -52,6 +52,9 @@ jobs:
       - name: Content pipeline tests (стабильные id, поля, сторож id)
         run: python test_content_pipeline.py
 
+      - name: Bot hardening tests (подделанные колбэки, HTML-экранирование, калькулятор)
+        run: python test_bot_hardening.py
+
       - name: Sync API tests (HMAC initData + merge + endpoints)
         run: |
           pip install -r api/requirements.txt

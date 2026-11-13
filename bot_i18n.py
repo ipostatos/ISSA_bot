@@ -1004,6 +1004,12 @@ TR = {
         "en": ("{title}\n\nEnter {need}\nOn one line, space-separated.\n"
                "Example: <code>{example}</code>"),
     },
+    "err_number_too_big": {
+        "ru": "Слишком большое число. Введите реальные значения, например «5.5 13.2».",
+        "pl": "Za duża liczba. Podaj realne wartości, np. „5.5 13.2”.",
+        "ua": "Завелике число. Введіть реальні значення, наприклад «5.5 13.2».",
+        "en": "Number too large. Enter real values, e.g. “5.5 13.2”.",
+    },
     "err_need_speed_dist": {
         "ru": "Нужны скорость и дистанция, например «5.5 13.2».",
         "pl": "Potrzeba prędkości i dystansu, np. „5.5 13.2”.",

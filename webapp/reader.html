@@ -119,7 +119,7 @@ const file = safeBookPath(rawFile);
 // внешняя ссылка для «скачать», если встроенный рендер не справится
 $("dl").onclick = () => {
   const url = new URL(file, location.href).href;
-  if (tg && tg.openLink) tg.openLink(url); else window.open(url, "_blank");
+  if (tg && tg.openLink) tg.openLink(url); else window.open(url, "_blank", "noopener");
 };
 
 function fail(msg){
@@ -130,7 +130,7 @@ function fail(msg){
     `<a id="ext">${I18N.t("rdExternal")}</a>`;
   $("ext").onclick = () => {
     const url = new URL(file, location.href).href;
-    if (tg && tg.openLink) tg.openLink(url); else window.open(url, "_blank");
+    if (tg && tg.openLink) tg.openLink(url); else window.open(url, "_blank", "noopener");
   };
 }
 

@@ -1,25 +1,9 @@
-// Кросс-проверка JS-математики Mini App против эталона.
-// Логика идентична <script> в index.html.
-const POINTS = ["T","M","C"];
-const NAME = {T:"True", M:"Magnetic", C:"Compass"};
-const norm360 = x => ((x % 360) + 360) % 360;
-
-function step(a,b,cur,val,dir,down){
-  let s; if(down) s=(dir==="E")?-1:+1; else s=(dir==="E")?+1:-1;
-  return { result: norm360(cur + s*val) };
-}
-function solve(src,dst,course,vr,vrDir,dv,dvDir){
-  const i=POINTS.indexOf(src), j=POINTS.indexOf(dst), down=j>i;
-  let cur=norm360(course); const order=[];
-  if(down) for(let k=i;k<j;k++) order.push([POINTS[k],POINTS[k+1]]);
-  else     for(let k=i;k>j;k--) order.push([POINTS[k],POINTS[k-1]]);
-  for(const [a,b] of order){
-    const isVar=(a+b).includes("T");
-    const val=isVar?vr:dv, dir=isVar?vrDir:dvDir;
-    cur=step(a,b,cur,val,dir,down).result;
-  }
-  return Math.round(cur);
-}
+// Кросс-проверка JS-математики Mini App против эталона calc.py / nav_tasks.py.
+// Исполняются НАСТОЯЩИЕ solve/step/norm360 из index.html (через _page_code.mjs),
+// а не копия: до волны E тест держал свою копию и не видел правок страницы.
+import { pageCode } from "./_page_code.mjs";
+const page = pageCode("index.html", ["POINTS", "NAME", "norm360", "step", "solve"]);
+const solve = (...args) => page.solve(...args).answer;
 
 // Эталонные ответы должны совпасть с calc.py / nav_tasks.py
 const cases = [

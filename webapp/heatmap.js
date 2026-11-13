@@ -92,10 +92,12 @@
         html += "</div>";
       }
       html += "</div>";
-      html += '<div class="hm-legend">меньше'
+      // легенда — на языке интерфейса (раньше «меньше/больше» были зашиты по-русски)
+      var tr = function (k, fb) { return (global.I18N && global.I18N.t) ? global.I18N.t(k) : fb; };
+      html += '<div class="hm-legend">' + tr("hmLess", "меньше")
         + '<span class="hm-c"></span><span class="hm-c l1"></span>'
         + '<span class="hm-c l2"></span><span class="hm-c l3"></span>'
-        + '<span class="hm-c l4"></span>больше</div>';
+        + '<span class="hm-c l4"></span>' + tr("hmMore", "больше") + '</div>';
 
       container.innerHTML = html;
       // прокрутить к свежим дням (вправо)

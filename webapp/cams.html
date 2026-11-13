@@ -81,7 +81,7 @@
   ];
 
   function openExt(url){
-    if (tg && tg.openLink) tg.openLink(url); else window.open(url, "_blank");
+    if (tg && tg.openLink) tg.openLink(url); else window.open(url, "_blank", "noopener");
   }
 
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){

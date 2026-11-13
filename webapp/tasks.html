@@ -129,14 +129,22 @@ function pick(){
 
 function fmt(x){ return String(Math.round(x*100)/100).replace(".", ","); }
 
+// Разбор и проверка ответа — чистые функции: их же исполняет _tasks_check.mjs.
+function parseAnswer(input){
+  const raw = String(input).trim().replace(",", ".")
+                .replace("ч","").replace("м","").replace("h","").trim();
+  return parseFloat(raw);
+}
+function answerOk(val, task){
+  return Math.abs(val - task.answer) <= task.tol + 1e-9;
+}
+
 function check(){
   if (!cur) return;
-  const raw = $("inp").value.trim().replace(",", ".")
-                .replace("ч","").replace("м","").replace("h","").trim();
-  const val = parseFloat(raw);
+  const val = parseAnswer($("inp").value);
   const fb = $("fb");
   if (Number.isNaN(val)){ fb.className = "fb bad"; fb.textContent = I18N.t("taskNaN"); return; }
-  const ok = Math.abs(val - cur.answer) <= cur.tol + 1e-9;
+  const ok = answerOk(val, cur);
   if (ok){
     streak++; fb.className = "fb ok";
     fb.innerHTML = `${window.Icons?Icons.svg("check-circle"):""} ${I18N.t("taskCorrect", {a: fmt(cur.answer), unit: cur.unit})}`;
