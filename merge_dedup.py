@@ -25,6 +25,8 @@ import unicodedata
 from difflib import SequenceMatcher
 from pathlib import Path
 
+from bank_ids import historic_ids, reconcile_ids
+
 BASE_DIR = Path(__file__).parent
 SOURCES_DIR = BASE_DIR / "sources"
 QUESTIONS_FILE = BASE_DIR / "questions.json"
@@ -297,6 +299,9 @@ def collect_all() -> list[dict]:
             "expl": jq.get("expl", ""),
             "study": jq.get("study", ""),
             "_src": "questions.json",
+            # исходный словарь целиком: id и поля, о которых скрипт не знает
+            # (why/ref/difficulty/…), выходят из скрипта без потерь
+            "_orig": jq,
         })
     if SOURCES_DIR.exists():
         for csv_path in sorted(SOURCES_DIR.glob("*.csv")):
@@ -359,12 +364,44 @@ def find_near_dupes(unique: list[dict], threshold: float):
     return near
 
 
-def assign_ids(unique: list[dict]) -> None:
-    counters: dict[str, int] = {}
+def assign_ids(unique: list[dict]) -> dict:
+    """Стабильные id: вопрос из questions.json сохраняет свой, новый — получает
+    следующий номер q-NNN после максимума за всю историю банка.
+
+    Раньше id строились из позиции внутри темы, и одна пересборка молча
+    перенумеровывала прогресс всех пользователей (docs/CONTENT_PIPELINE.md,
+    «Иммутабельность id»).
+    """
+    existing = [it["_orig"] for it in unique if it.get("_orig") and it["_orig"].get("id")]
     for it in unique:
-        base = slug(it["topic"])
-        counters[base] = counters.get(base, 0) + 1
-        it["id"] = f"{base}-{counters[base]:03}"
+        if it.get("_orig") and it["_orig"].get("id"):
+            it["id"] = str(it["_orig"]["id"])
+    fresh = [it for it in unique if not it.get("id")]
+    historic = historic_ids(BASE_DIR, "questions.json")
+    stats = reconcile_ids(existing, fresh, extra_known_ids=historic)
+    return {"kept": len(unique) - len(fresh) + stats["kept"], "new": stats["new"]}
+
+
+def output_item(it: dict) -> dict:
+    """Итоговый словарь вопроса. Существующий — исходный словарь целиком плюс
+    обогащённые expl/study; новый — только известные поля."""
+    if it.get("_orig"):
+        out = dict(it["_orig"])
+        out["id"] = it["id"]
+        if it.get("expl") and not out.get("expl"):
+            out["expl"] = it["expl"]
+        if it.get("study") and not out.get("study"):
+            out["study"] = it["study"]
+        return out
+    return {
+        "id": it["id"],
+        "topic": it["topic"],
+        "q": it["q"],
+        "options": it["options"],
+        "answer": it["answer"],
+        "expl": it["expl"],
+        **({"study": it["study"]} if it.get("study") else {}),
+    }
 
 
 # ──────────────────────────── main ────────────────────────────
@@ -399,7 +436,7 @@ def main() -> None:
         collapsed_count = len(drop_ids)
         # пересчитать группы для отчёта уже не нужно — отчёт покажет, что было свёрнуто
 
-    assign_ids(unique)
+    id_stats = assign_ids(unique)
 
     # ── Отчёт ──
     lines = []
@@ -418,6 +455,7 @@ def main() -> None:
     if args.collapse_semantic:
         lines.append(f"Смысловых дублей свёрнуто: {collapsed_count}")
     lines.append(f"Уникальных вопросов:    {len(unique)}")
+    lines.append(f"id сохранено: {id_stats['kept']}, выдано новых: {id_stats['new']}")
 
     lines.append("\nРаспределение по темам (после дедупа):")
     for t, n in Counter(it["topic"] for it in unique).most_common():
@@ -465,15 +503,7 @@ def main() -> None:
         print("\n[dry-run] questions.json НЕ изменён.")
         return
 
-    out = [{
-        "id": it["id"],
-        "topic": it["topic"],
-        "q": it["q"],
-        "options": it["options"],
-        "answer": it["answer"],
-        "expl": it["expl"],
-        **({"study": it["study"]} if it.get("study") else {}),
-    } for it in unique]
+    out = [output_item(it) for it in unique]
     QUESTIONS_FILE.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n✅ Записано {len(out)} вопросов в {QUESTIONS_FILE}")
 

@@ -6,6 +6,10 @@
 точные и смысловые дубли (та же логика, что в merge_dedup.py), назначает id,
 балансирует по темам до целевого размера и пишет questions.json.
 
+Существующие вопросы выходят без изменений: тот же id и все их поля
+(why/ref/difficulty/…). Новые получают id q-NNN после максимума за всю
+историю банка (bank_ids.py) и сохраняют поля сверх базовых.
+
 Запуск:
     python integrate_generated.py generated.json [--target 500]
 """
@@ -21,7 +25,10 @@ QUESTIONS_FILE = BASE_DIR / "questions.json"
 
 # Переиспользуем нормализацию и подпись факта из merge_dedup.
 sys.path.insert(0, str(BASE_DIR))
-from merge_dedup import norm_key, fact_signature, slug  # noqa: E402
+from merge_dedup import norm_key, fact_signature  # noqa: E402
+from bank_ids import historic_ids, reconcile_ids  # noqa: E402
+
+BASE_FIELDS = ("topic", "q", "options", "answer", "expl")
 
 
 def load_existing() -> list[dict]:
@@ -65,13 +72,15 @@ def main() -> None:
 
     added, drop_dupe, drop_invalid = [], 0, 0
     for it in new_items:
-        q = {
+        # неизвестные поля генератора (why/ref/difficulty/…) — passthrough
+        q = {k: v for k, v in it.items() if k not in BASE_FIELDS and k != "id"}
+        q.update({
             "topic": (it.get("topic") or "Прочее").strip(),
             "q": (it.get("q") or "").strip(),
             "options": [str(o).strip() for o in it.get("options", [])][:4],
             "answer": it.get("answer", 0),
             "expl": (it.get("expl") or "").strip(),
-        }
+        })
         if not valid(q):
             drop_invalid += 1
             continue
@@ -96,23 +105,13 @@ def main() -> None:
         combined.append(q)
         per_topic_existing[q["topic"]] += 1
 
-    # Назначаем id заново (стабильно по темам).
-    counters = defaultdict(int)
-    for q in combined:
-        base = slug(q["topic"])
-        counters[base] += 1
-        q["id"] = f"{base}-{counters[base]:03}"
-
-    # Финальная форма (study сохраняем, если был).
-    out = []
-    for q in combined:
-        item = {
-            "id": q["id"], "topic": q["topic"], "q": q["q"],
-            "options": q["options"], "answer": q["answer"], "expl": q.get("expl", ""),
-        }
-        if q.get("study"):
-            item["study"] = q["study"]
-        out.append(item)
+    # Существующие (первые len(existing)) сохраняют id и словарь целиком;
+    # новым — id из монотонного распределителя. Перенумерация запрещена.
+    fresh = combined[len(existing):]
+    reconcile_ids(existing, fresh, extra_known_ids=historic_ids(BASE_DIR, "questions.json"))
+    out = [dict(q) for q in existing] + [
+        {"id": q["id"], **{k: v for k, v in q.items() if k != "id"}} for q in fresh
+    ]
 
     from collections import Counter
     dist = Counter(q["topic"] for q in out)

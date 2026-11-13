@@ -1456,10 +1456,10 @@
   "id": "st-111",
   "license": "sternik",
   "topic": "Двигатели и силовые агрегаты",
-  "q": "Wymiana wirnika pompy wodnej w silniku zaburtowym eksploatowanym na :\nЗамена крыльчатки водяного насоса на подвесном моторе, работающем в море:",
+  "q": "Wymiana wirnika pompy wodnej w silniku zaburtowym eksploatowanym na morzu:\nЗамена крыльчатки водяного насоса на подвесном моторе, работающем в море:",
   "options": [
-   "może być bezproblemowo wykonana przez sternika na wodzie, jeśli zajdzie potrzeba\nможет быть легко сделано рулевым на воде, если необходимо Б. должно быть выполнено в сервисе, при осмотре двигателя, мин. каждые 2 года",
-   "powinna być wykonywana w serwisie, podczas przeglądu silnika, min. co 2 lata",
+   "może być bezproblemowo wykonana przez sternika na wodzie, jeśli zajdzie potrzeba\nможет быть легко сделано рулевым на воде, если необходимо",
+   "powinna być wykonywana w serwisie, podczas przeglądu silnika, min. co 2 lata\nдолжно быть выполнено в сервисе, при осмотре двигателя, мин. каждые 2 года",
    "nie jest konieczna, gdyż wirnik jest przewidziany na całe życie\" silnika\nне требуется, поскольку Ротор рассчитан на всю жизнь двигателя"
   ],
   "answer": 0,
@@ -2002,9 +2002,9 @@
   "id": "st-153",
   "license": "sternik",
   "topic": "Сведения по спасению",
-  "q": "Krwawienie żylne charakteryzuje się: A intensywnym wypływaniem jasnej krwi\nВенозное кровотечение характеризуется:",
+  "q": "Krwawienie żylne charakteryzuje się:\nВенозное кровотечение характеризуется:",
   "options": [
-   "интенсивным выделением светлой крови",
+   "intensywnym wypływaniem jasnej krwi\nинтенсивным выделением светлой крови",
    "powolnym wypływaniem ciemnej krwi\nмедленным вытеканием темной крови",
    "przedostawaniem się krwi do wnętrza ciała\nпопаданием крови внутрь тела"
   ],
@@ -2843,8 +2843,8 @@
   "topic": "Лоция",
   "q": "Przedstawiony znak lub światło oznacza:\nИзображенный знак или свет означает:",
   "options": [
-   "zakaz poruszania się skuterów wodnych\nзапрет на передвижение гидроциклов Б. запрет на создание волн",
-   "zakaz wytwarzania fali",
+   "zakaz poruszania się skuterów wodnych\nзапрет на передвижение гидроциклов",
+   "zakaz wytwarzania fali\nзапрет на создание волн",
    "zakaz poruszania się statków o napędzie mechanicznym\nзапрет на передвижение судов с механическим приводом"
   ],
   "answer": 0,
@@ -2955,8 +2955,8 @@
   "topic": "Лоция",
   "q": "Przedstawiony znak oznacza:\nИзображенный знак означает:",
   "options": [
-   "zakaz wodowania i wciągania statków na brzeg\nзапрет на спуск и подъем судов на берег Б. запрет оставлять лодки на прицепах",
-   "zakaz pozostawiania łodzi na przyczepach",
+   "zakaz wodowania i wciągania statków na brzeg\nзапрет на спуск и подъем судов на берег",
+   "zakaz pozostawiania łodzi na przyczepach\nзапрет оставлять лодки на прицепах",
    "zakaz przejazdu przez bród\nзапрет на проезд через брод"
   ],
   "answer": 0,
@@ -3221,8 +3221,8 @@
   "topic": "Лоция",
   "q": "Przedstawiony znak oznacza:\nИзображенный знак означает:",
   "options": [
-   "granicę szlaku żeglownego oddaloną od prawego brzegu w odległości 40 m; statki powinny przechodzić wodległości od brzegu większej niż 40 m\nграницы судоходного пути, удаленные от правого берега на расстоянии 40 м; суда должны проходить водораздел от берега на расстоянии более, чем 40 м Б. требование о соблюдении расстояния от берега не более 40 м",
-   "nakaz utrzymania odległości od brzegu nie większej niż 40 m",
+   "granicę szlaku żeglownego oddaloną od prawego brzegu w odległości 40 m; statki powinny przechodzić w odległości od brzegu większej niż 40 m\nграницы судоходного пути, удаленные от правого берега на расстоянии 40 м; суда должны проходить на расстоянии от берега более 40 м",
+   "nakaz utrzymania odległości od brzegu nie większej niż 40 m\nтребование о соблюдении расстояния от берега не более 40 м",
    "miejsca do cumowania na odcinku 40 m\nпричалы на участке 40 м"
   ],
   "answer": 0,
@@ -4697,9 +4697,9 @@
   "id": "st-353",
   "license": "sternik",
   "topic": "Метеорологические сведения",
-  "q": "Wiatr wiejący z prędkością 40 węzłów oznacza: A znakomite warunki do żeglugi turystycznej\nВетер, дующий со скоростью 40 узлов, означает:",
+  "q": "Wiatr wiejący z prędkością 40 węzłów oznacza:\nВетер, дующий со скоростью 40 узлов, означает:",
   "options": [
-   "отличные условия для туристического плавания",
+   "znakomite warunki do żeglugi turystycznej\nотличные условия для туристического плавания",
    "sztorm\nшторм",
    "cyklon tropikalny o niszczącej sile\nтропический циклон разрушительной силы"
   ],
@@ -5283,7 +5283,7 @@
   "id": "st-398",
   "license": "sternik",
   "topic": "Метеорологические сведения",
-  "q": "Sygnał dźwiękowy zamierzam Cię wzpryedyic wydluy Twojej prawej burty\" to:\nЗвуковой сигнал \"намерен обойти по правому борту\" - это:",
+  "q": "Sygnał dźwiękowy \"zamierzam Cię wyprzedzić wzdłuż Twojej prawej burty\" to:\nЗвуковой сигнал \"намерен обойти по правому борту\" - это:",
   "options": [
    "jeden krótki\nодин короткий звуковой сигнал",
    "dwa długie i dwa krótkie\nдва длинных и два коротких звуковых сигнала",
@@ -5961,9 +5961,9 @@
   "topic": "Метеорологические сведения",
   "q": "Kiedy światła statku powinny być zapalone?\nВ какое время должны быть включены огни на судне?",
   "options": [
-   "od zachodu do wschodu słońca i przy ograniczonej widoczności\nот заката до восхода солнца и при ограниченной видимости Б. от заката до восхода солнца С 18:00 до 06:00.",
-   "od zachodu do wschodu słońca",
-   "Od 18:00 do 06:00."
+   "od zachodu do wschodu słońca i przy ograniczonej widoczności\nот заката до восхода солнца и при ограниченной видимости",
+   "od zachodu do wschodu słońca\nот заката до восхода солнца",
+   "Od 18:00 do 06:00.\nС 18:00 до 06:00."
   ],
   "answer": 0,
   "ref": "Sternik motorowodny — 460 pytań (PL/RU)"
@@ -6027,8 +6027,8 @@
   "q": "Bandera w czasie postoju jachtu w porcie podniesiona jest na rufie:\nФлаг в порту поднимается на корме во время стоянки яхты:",
   "options": [
    "od wschodu do zachodu słońca\nот восхода до заката",
-   "całą dobę\nкруглосуточно C . с 08:00 до заката",
-   "od 08:00 do zachodu słońca"
+   "całą dobę\nкруглосуточно",
+   "od 08:00 do zachodu słońca\nс 08:00 до заката"
   ],
   "answer": 1,
   "ref": "Sternik motorowodny — 460 pytań (PL/RU)"

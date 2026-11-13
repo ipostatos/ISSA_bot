@@ -17,6 +17,17 @@ solved польских лицензий. Прежний assign_ids строил
   ПОКА ПРЕДУПРЕЖДЕНИЕ — удаление вопроса (станет ошибкой после реестра
               отставленных id, следующий этап).
 
+Ключ вопроса = текст + картинка. В Sternik десятки вопросов с одинаковым
+текстом («Przedstawiony znak oznacza:») различаются только полем image;
+по одному тексту перестановка картинок между ними проходила бы молча, хотя
+для человека это ровно «вопрос переехал на чужой id» (волна C, 13.11.2026).
+
+Смена правильного ответа при НЕизменённых вариантах (тот же id, тот же
+текст, те же options, другой answer) — ошибка, если правка не подтверждена
+в scripts/answer_fixes.json: {"<id>": "<текст нового правильного варианта>"}.
+Это ловит съехавший индекс при пересборке банка и оставляет путь для
+осознанной правки ключа.
+
 Намеренно НЕ сравниваем «хеш текста при id» — это запретило бы правку опечаток
 и вернуло бы отклонённую модель хеш-id.
 
@@ -63,6 +74,19 @@ def canon(text: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+def qkey(q: dict) -> str:
+    """Ключ соответствия: текст + картинка (у ISSA картинок нет — только текст)."""
+    img = str(q.get("image") or "").strip()
+    return canon(q.get("q", "")) + ("|" + img if img else "")
+
+
+def load_answer_fixes(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return {str(k): canon(v) for k, v in data.items() if not str(k).startswith("_")}
+
+
 def load_questions(raw: str, label: str) -> list[dict]:
     data = json.loads(raw)
     if isinstance(data, dict):
@@ -81,7 +105,8 @@ def git_show(repo: Path, rev: str, path: str) -> str | None:
     return r.stdout if r.returncode == 0 else None
 
 
-def check_bank(repo: Path, base: str, path: str, label: str) -> tuple[int, int]:
+def check_bank(repo: Path, base: str, path: str, label: str,
+               answer_fixes: dict[str, str] | None = None) -> tuple[int, int]:
     """Возвращает (ошибок, предупреждений) по одному банку."""
     errors = warnings = 0
 
@@ -114,13 +139,13 @@ def check_bank(repo: Path, base: str, path: str, label: str) -> tuple[int, int]:
         for q in qs:
             qid = str(q.get("id", ""))
             if qid:
-                m[canon(q.get("q", ""))].append(qid)
+                m[qkey(q)].append(qid)
         return m
 
     old_map = text_to_ids(old_qs)
     new_map = text_to_ids(new_qs)
-    old_by_id = {str(q.get("id", "")): canon(q.get("q", "")) for q in old_qs}
-    new_by_id = {str(q.get("id", "")): canon(q.get("q", "")) for q in new_qs}
+    old_by_id = {str(q.get("id", "")): qkey(q) for q in old_qs}
+    new_by_id = {str(q.get("id", "")): qkey(q) for q in new_qs}
 
     # ── ГЛАВНЫЙ инвариант: неизменённый текст не может сменить id ──
     moved: list[tuple[str, str, str]] = []
@@ -150,6 +175,34 @@ def check_bank(repo: Path, base: str, path: str, label: str) -> tuple[int, int]:
         if len(moved) > 10:
             print(f"      … и ещё {len(moved) - 10}")
         errors += len(moved)
+
+    # ── смена правильного ответа при тех же вариантах ──
+    fixes = answer_fixes or {}
+    old_full = {str(q.get("id", "")): q for q in old_qs}
+    flipped = []
+    for q in new_qs:
+        qid = str(q.get("id", ""))
+        o = old_full.get(qid)
+        if not o or qkey(o) != qkey(q):
+            continue
+        if [canon(x) for x in o.get("options", [])] != [canon(x) for x in q.get("options", [])]:
+            continue                      # варианты правились — это другой случай
+        if o.get("answer") == q.get("answer"):
+            continue
+        opts = q.get("options", [])
+        a = q.get("answer")
+        new_right = canon(opts[a]) if isinstance(a, int) and 0 <= a < len(opts) else ""
+        if fixes.get(qid) == new_right and new_right:
+            print(f"  · {label}: {qid} — правильный ответ изменён осознанно (answer_fixes.json)")
+            continue
+        flipped.append((qid, o.get("answer"), a))
+    if flipped:
+        print(f"  ✗ {label}: {len(flipped)} вопрос(ов) сменили правильный ответ при тех же вариантах:")
+        for qid, a0, a1 in flipped[:10]:
+            print(f"      {qid}: answer {a0} → {a1}")
+        print("    Если это исправление ключа — внесите id и ТЕКСТ нового правильного варианта"
+              " в scripts/answer_fixes.json.")
+        errors += len(flipped)
 
     # ── информация и предупреждения ──
     edited = [qid for qid, t in new_by_id.items()
@@ -195,8 +248,9 @@ def main() -> int:
     print(f"База сравнения: {base[:12]}")
 
     total_err = total_warn = 0
+    fixes = load_answer_fixes(repo / "scripts" / "answer_fixes.json")
     for path, label in BANKS:
-        e, w = check_bank(repo, base, path, label)
+        e, w = check_bank(repo, base, path, label, fixes)
         total_err += e
         total_warn += w
 

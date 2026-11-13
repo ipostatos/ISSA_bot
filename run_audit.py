@@ -11,6 +11,9 @@
  9. экзамен из 100 не повторяет вопрос
 10. разбор ошибок не превышает лимит Telegram
 11. .env не попадает в архив (в .gitignore)
+12. польские банки Żeglarz/Sternik (webapp/questions_*.json): структура,
+    mojibake, формат «PL\nRU», приклеенный перевод соседнего варианта,
+    картинки, id; потерянные диакритики — предупреждение со списком id
 
 Запуск:  python run_audit.py
 Выход: код 0 если всё OK, иначе 1.
@@ -55,8 +58,9 @@ print(f"\n=== АУДИТ: {len(QUESTIONS)} вопросов ===\n")
 
 # 1. Валидность + битая кириллица + пустые
 def has_mojibake(s):
-    # типичные mojibake-последовательности UTF-8-as-cp1251/latin1
-    return bool(re.search(r"[ÐÑ][\x80-\xBF]|Ã[\x80-\xBF]|�", s))
+    # типичные mojibake-последовательности UTF-8-as-cp1251/latin1;
+    # Ä/Å + продолжение — польские буквы (ą ł ś ż …), прочитанные как latin1/cp1252
+    return bool(re.search(r"[ÐÑ][\x80-\xBF]|[ÃÄÅ][\x80-\xBF]|Ä[…‡™]|Å[‚›º¼„]|�", s))
 
 empty = [q["id"] for q in QUESTIONS if not q.get("q", "").strip()
          or any(not str(o).strip() for o in q.get("options", []))]
@@ -200,6 +204,61 @@ check("10. Разбор ошибок не превышает лимит TG", max
 gitignore = (BASE / ".gitignore")
 env_ignored = gitignore.exists() and ".env" in gitignore.read_text(encoding="utf-8")
 check("11. .env в .gitignore", env_ignored)
+
+# 12. Польские банки (до волны C 610 вопросов были вне пред-релизного контроля)
+WEBAPP = BASE / "webapp"
+# ASCII-формы, которых нет в правильном польском: слово потеряло диакритику
+# (wzdłuż→wzdluz, się→sie …). Только ПРЕДУПРЕЖДЕНИЕ: экзаменационный лист PZŻ
+# сам содержит опечатки, полная вычитка — задача владельца.
+PL_STRIPPED = {
+    "sie", "nalezy", "miedzy", "wzdluz", "dookola", "swiatlo", "swiatla", "mgle",
+    "okolo", "zwrocic", "pomoca", "wiekszy", "wieksza", "glowna", "polaczenie",
+    "skrzyzowanie", "rownoleznik", "szczegolow", "iloscia", "niezwlocznie",
+    "zajety", "bialymi", "biale", "byc", "moze", "mozna", "jesli", "rowniez",
+    "ktory", "ktora", "ktore", "gdyz", "takze", "wiecej", "predkosc", "zeglugi",
+    "pradu", "ladzie", "ciala", "spytac", "cieszyc", "zarzadce", "minac",
+}
+# «… Б. запрет …» — в русскую половину приклеен перевод соседнего варианта
+GLUED = re.compile(r"\s[БВГC]\s?\.\s+[а-яё]")
+
+
+def pl_fields(q):
+    return [q.get("q", "")] + [str(o) for o in q.get("options", [])]
+
+
+for fname, prefix in (("questions_zeglarz.json", "zj-"), ("questions_sternik.json", "st-")):
+    bank = json.loads((WEBAPP / fname).read_text(encoding="utf-8"))
+    tag = f"12. {fname[len('questions_'):-len('.json')]}"
+    bad_struct = [q.get("id") for q in bank
+                  if not q.get("q", "").strip() or not 2 <= len(q.get("options", [])) <= 4
+                  or not isinstance(q.get("answer"), int)
+                  or not 0 <= q["answer"] < len(q.get("options", []))
+                  or len({norm(o) for o in q.get("options", [])}) < len(q.get("options", []))]
+    check(f"{tag}: структура (текст, 2–4 различных варианта, answer в границах)",
+          not bad_struct, f"{bad_struct[:5]}" if bad_struct else f"{len(bank)} вопросов")
+    ids = [q.get("id", "") for q in bank]
+    bad_id = [i for i, c in Counter(ids).items() if c > 1 or not str(i).startswith(prefix)]
+    check(f"{tag}: id уникальны и с префиксом {prefix}", not bad_id, f"{bad_id[:5]}" if bad_id else "")
+    moji_pl = [q["id"] for q in bank if any(has_mojibake(f) for f in pl_fields(q))]
+    check(f"{tag}: нет mojibake", not moji_pl, f"{moji_pl[:5]}" if moji_pl else "")
+    # формат экзаменационного листа: «польский\nрусский», обе половины непустые
+    not_hybrid = sorted({q["id"] for q in bank for f in pl_fields(q)
+                         if len(f.split("\n")) != 2 or not all(x.strip() for x in f.split("\n"))})
+    check(f"{tag}: каждое поле — «PL\\nRU», обе половины непустые",
+          not not_hybrid, f"{not_hybrid[:10]}" if not_hybrid else "")
+    glued = sorted({q["id"] for q in bank for f in pl_fields(q) if GLUED.search(f)})
+    check(f"{tag}: нет приклеенного перевода соседнего варианта («… Б. …»)",
+          not glued, f"{glued[:10]}" if glued else "")
+    bad_img = [q["id"] for q in bank if q.get("image")
+               and (not (WEBAPP / q["image"]).is_file() or (WEBAPP / q["image"]).stat().st_size == 0)]
+    check(f"{tag}: картинки на месте и непустые", not bad_img,
+          f"{bad_img[:5]}" if bad_img else f"{sum(1 for q in bank if q.get('image'))} шт")
+    stripped = sorted({q["id"] for q in bank for f in pl_fields(q)
+                       for w in re.findall(r"[^\W\d_]+", f.split("\n")[0].lower()) if w in PL_STRIPPED})
+    line = (f"⚠️  {tag}: возможна потеря диакритики в {len(stripped)} вопрос(ах) — "
+            f"предупреждение, к вычитке: {', '.join(stripped)}" if stripped
+            else f"{PASS} {tag}: потерь диакритики по словарю не найдено")
+    sys.stdout.buffer.write((line + "\n").encode(sys.stdout.encoding or "utf-8", "replace"))
 
 # Итог
 print()

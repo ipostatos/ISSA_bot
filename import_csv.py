@@ -14,22 +14,15 @@ ID присваивается автоматически: <slug-темы>-<но�
 
 import csv
 import json
-import re
 import sys
-import unicodedata
 from pathlib import Path
+
+from bank_ids import IdAllocator, historic_ids
 
 BASE_DIR = Path(__file__).parent
 QUESTIONS_FILE = BASE_DIR / "questions.json"
 
 LETTER_TO_IDX = {"A": 0, "B": 1, "C": 2, "D": 3, "А": 0, "Б": 1, "В": 2, "Г": 3}
-
-
-def slugify(text: str) -> str:
-    text = unicodedata.normalize("NFKD", text)
-    text = text.encode("ascii", "ignore").decode("ascii").lower()
-    text = re.sub(r"[^a-z0-9]+", "-", text).strip("-")
-    return text or "q"
 
 
 def parse_answer(value: str, n_options: int) -> int:
@@ -52,7 +45,10 @@ def main() -> None:
 
     questions = json.loads(QUESTIONS_FILE.read_text(encoding="utf-8"))
     existing_texts = {q["q"].strip().lower() for q in questions}
-    existing_ids = {q["id"] for q in questions}
+    # Новые id — только вперёд от максимума за всю историю банка: id удалённого
+    # вопроса мог остаться в прогрессе людей (bank_ids.py).
+    alloc = IdAllocator([q["id"] for q in questions]
+                        + sorted(historic_ids(QUESTIONS_FILE.parent, "questions.json")))
 
     added, skipped = 0, 0
     with open(csv_path, encoding="utf-8-sig", newline="") as f:
@@ -79,13 +75,7 @@ def main() -> None:
                 skipped += 1
                 continue
             topic = (row.get("topic") or "Прочее").strip()
-            base = slugify(topic)
-            n = 1
-            new_id = f"{base}-imp-{n:03}"
-            while new_id in existing_ids:
-                n += 1
-                new_id = f"{base}-imp-{n:03}"
-            existing_ids.add(new_id)
+            new_id = alloc.new()
             existing_texts.add(q_text.lower())
             questions.append({
                 "id": new_id,

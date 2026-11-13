@@ -609,11 +609,11 @@
  {
   "id": "zj-051",
   "license": "zeglarz",
-  "q": "Jaka temperatura wychłodzena wnętrza ciala może doprowadzić do hipotermii glebokej prowadzącej do śmeirci biologicznej?\nКакая температура охлаждения внутренних органов может привести к глубокому переохлаждению, ведущему к биологической смерти?",
+  "q": "Jaka temperatura wychłodzenia wnętrza ciała może doprowadzić do hipotermii głębokiej prowadzącej do śmierci biologicznej?\nКакая температура охлаждения внутренних органов может привести к глубокому переохлаждению, ведущему к биологической смерти?",
   "options": [
-   "35 0 C,\n35 0 C,",
-   "33 0 C,\n33 0 C,",
-   "22-27 0 C.\n22-27 0 C."
+   "35°C,\n35°C,",
+   "33°C,\n33°C,",
+   "22–27°C.\n22–27°C."
   ],
   "answer": 2,
   "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
@@ -1386,9 +1386,9 @@
   "license": "zeglarz",
   "q": "Zakres skali Beauforta to:\nДиапазон шкалы Бофорта составляет:",
   "options": [
-   "0°- 9 °,\n0°- 9°,",
-   "0°- 10°,\n0°- 10°,",
-   "0°- 12 °.\n0°- 12°."
+   "0–9,\n0–9,",
+   "0–10,\n0–10,",
+   "0–12.\n0–12."
   ],
   "answer": 2,
   "ref": "Żeglarz jachtowy — 150 pytań (PL/RU)"
