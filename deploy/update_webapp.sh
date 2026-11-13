@@ -164,7 +164,7 @@ mkdir -p "$DST/vendor/pdfjs"
 cp -f "$SRC/vendor/pdfjs/pdf.min.js"        "$DST/vendor/pdfjs/" 2>/dev/null && echo "  pdf.min.js"
 cp -f "$SRC/vendor/pdfjs/pdf.worker.min.js" "$DST/vendor/pdfjs/" 2>/dev/null && echo "  pdf.worker.min.js"
 
-echo "→ копируем Leaflet (карта ветра, локально; тайлы CARTO — внешние)"
+echo "→ копируем Leaflet (карта ветра, локально; тайлы Esri — внешние)"
 mkdir -p "$DST/vendor/leaflet"
 cp -f "$SRC/vendor/leaflet/leaflet.js"  "$DST/vendor/leaflet/" 2>/dev/null && echo "  leaflet.js"
 cp -f "$SRC/vendor/leaflet/leaflet.css" "$DST/vendor/leaflet/" 2>/dev/null && echo "  leaflet.css"

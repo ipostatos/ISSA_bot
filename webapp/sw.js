@@ -100,5 +100,5 @@ self.addEventListener("fetch", function (e) {
   if (url.hostname === "telegram.org" && url.pathname.indexOf("telegram-web-app") !== -1) {
     e.respondWith(staleWhileRevalidate(req));
   }
-  // Остальное внешнее (тайлы CARTO, Open-Meteo, донат-ссылки) — не трогаем.
+  // Остальное внешнее (тайлы Esri, Open-Meteo, донат-ссылки) — не трогаем.
 });

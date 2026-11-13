@@ -105,9 +105,12 @@ document.title = title;
 // БЕЗОПАСНОСТЬ: разрешаем ТОЛЬКО свои книги из books/ (same-origin, без обхода
 // каталога). Иначе reader.html?file=https://evil/x.pdf грузил бы чужой PDF в
 // origin мини-аппа (кража initData/localStorage через CVE pdf.js). Формат:
-// "books/<имя>.pdf" — только латиница/цифры/подчёркивание/дефис, без "..".
+// "<имя>.pdf" (так передаёт каталог book.html, файлы лежат в корне Mini App)
+// или "books/<имя>.pdf" — только латиница/цифры/подчёркивание/дефис, без "..".
+// До 13.11.2026 разрешался только "books/…", а каталог передавал "book.pdf" —
+// читалка отвергала все книги.
 function safeBookPath(f){
-  if (!/^books\/[A-Za-z0-9_-]+\.pdf$/.test(f)) return "";
+  if (!/^(books\/)?[A-Za-z0-9_-]+\.pdf$/.test(f)) return "";
   if (f.indexOf("..") !== -1) return "";
   return f;
 }

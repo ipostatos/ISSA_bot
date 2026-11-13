@@ -76,7 +76,7 @@
   .spots-empty{ font-size:var(--fs-xs); color:var(--hint); padding:2px 0 var(--sp-2) }
   .save-row{ margin-top:10px; text-align:right }
 
-  /* — карта ветра (Leaflet + CARTO dark, стрелки на canvas) — */
+  /* — карта ветра (Leaflet + Esri Dark Gray, стрелки на canvas) — */
   .map-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px }
   .map-head .h2{ margin:0 }
   .map-wrap{ position:relative; width:100%; height:320px; border-radius:var(--r-md);
@@ -96,7 +96,7 @@
   .tl-row input[type=range]{ flex:1; accent-color:var(--accent) }
   .tl-label{ font-size:var(--fs-xs); color:var(--hint); min-width:96px; text-align:right;
     font-variant-numeric:tabular-nums }
-  /* компактная атрибуция (лицензионное требование CARTO/OSM) */
+  /* компактная атрибуция (лицензионное требование Esri/OSM) */
   .leaflet-control-attribution{ font-size:9px !important; background:rgba(0,0,0,.5) !important;
     color:var(--hint) !important }
   .leaflet-control-attribution a{ color:var(--hint) !important }
@@ -516,7 +516,7 @@ function renderHourly(f){
 }
 
 // ─────────────────────────── Карта ветра (Windy-стиль) ───────────────────────────
-// Карта берегов — Leaflet + CARTO dark-тайлы. Стрелки ветра рисуем сами на
+// Карта берегов — Leaflet + тёмные тайлы Esri. Стрелки ветра рисуем сами на
 // canvas-слое поверх карты: тянем сетку N×N точек из Open-Meteo (1 запрос),
 // цвет/длину стрелки задаёт сила ветра, поворот — направление «куда дует».
 var wmap = null, windCanvas = null, partCanvas = null;
@@ -580,9 +580,16 @@ function showWindMap(spot){
   if (!wmap){
     wmap = L.map("windMap", { zoomControl:true, attributionControl:true,
       scrollWheelZoom:true }).setView([spot.lat, spot.lon], 8);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom:18, subdomains:"abcd",
-      attribution:'&copy; OpenStreetMap &copy; CARTO'
+    // Подложка Esri Dark Gray (без ключа). CARTO basemaps с ноября 2026 отдают
+    // без API-ключа заглушку «API KEY REQUIRED» вместо карты.
+    // Тайлы Esri существуют до z16, дальше Leaflet растягивает z16.
+    var ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/";
+    L.tileLayer(ESRI + "World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom:18, maxNativeZoom:16,
+      attribution:'Esri, HERE, Garmin, &copy; OpenStreetMap contributors'
+    }).addTo(wmap);
+    L.tileLayer(ESRI + "World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom:18, maxNativeZoom:16                       // подписи поверх подложки
     }).addTo(wmap);
     windCanvas = $("windCanvas");
     partCanvas = $("partCanvas");
