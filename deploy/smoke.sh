@@ -44,8 +44,41 @@ if [ -n "$WEB_BASE" ]; then
   echo "== Статика ($WEB_BASE) =="
   check "home 200"               200 "$WEB_BASE/"
   check "quiz 200"               200 "$WEB_BASE/quiz.html"
+  check "reader 200"             200 "$WEB_BASE/reader.html"
+  check "weather 200"            200 "$WEB_BASE/weather.html"
 else
-  echo "== Статика — пропущена (задай BASE=https://… для проверки) =="
+  echo "== Статика по HTTP — пропущена (задай BASE=https://… для проверки) =="
+fi
+
+# Опубликованные файлы на диске (DST — каталог раздачи Caddy). Ловит «страница
+# есть, а то, что она грузит, не скопировано»: книги каталога, pdf.js, Leaflet,
+# данные экзаменов. Книги берём из самого каталога book.html, а не из списка
+# здесь — добавил книгу в каталог, забыл положить PDF → смоук красный.
+DST="${DST:-/opt/issa-bot/miniapp}"
+if [ -d "$DST" ]; then
+  echo "== Опубликованные файлы ($DST) =="
+  need() {  # need "файл относительно DST"
+    if [ -s "$DST/$1" ]; then
+      echo "  OK  $1"
+    else
+      echo "  FAIL $1 — нет или пустой"
+      fails=$((fails + 1))
+    fi
+  }
+  for f in index.html quiz.html book.html reader.html weather.html exam_pl.html \
+           quiz_data.js zeglarz_data.js sternik_data.js \
+           vendor/pdfjs/pdf.min.js vendor/pdfjs/pdf.worker.min.js \
+           vendor/leaflet/leaflet.js vendor/leaflet/leaflet.css; do
+    need "$f"
+  done
+  books="$(grep -oE 'file: *"[^"]+\.pdf"' "$DST/book.html" 2>/dev/null | sed -E 's/.*"([^"]+)"/\1/' || true)"
+  if [ -z "$books" ]; then
+    echo "  FAIL каталог книг пуст или не читается ($DST/book.html)"
+    fails=$((fails + 1))
+  fi
+  for b in $books; do need "$b"; done
+else
+  echo "== Опубликованные файлы — пропущено ($DST нет) =="
 fi
 
 # health должен содержать ok:true (контентная проверка, без секретов)

@@ -78,9 +78,9 @@ def git(repo, *args):
     subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True)
 
 
-def run_guard(repo):
+def run_guard(repo, base="HEAD^"):
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
-    r = subprocess.run([sys.executable, str(GUARD), "--repo", str(repo), "--base", "HEAD^"],
+    r = subprocess.run([sys.executable, str(GUARD), "--repo", str(repo), "--base", base],
                        capture_output=True, text=True, encoding="utf-8", env=env)
     return r.returncode, r.stdout
 
@@ -94,7 +94,7 @@ ST = [
 ]
 
 
-def scenario(mutate, fixes=None):
+def scenario(mutate, fixes=None, base="HEAD^"):
     with tempfile.TemporaryDirectory() as d:
         repo = Path(d)
         git(repo, "init", "-q")
@@ -115,7 +115,7 @@ def scenario(mutate, fixes=None):
             (repo / "scripts" / "answer_fixes.json").write_text(json.dumps(fixes), encoding="utf-8")
         git(repo, "add", "-A")
         git(repo, "commit", "-q", "--allow-empty", "-m", "change")
-        return run_guard(repo)
+        return run_guard(repo, base)
 
 
 def swap_images(qs):
@@ -148,6 +148,8 @@ code, out = scenario(fix_typo)
 ok(code == 0, "правка опечатки под тем же id — PASS")
 code, out = scenario(renumber)
 ok(code == 1, "перенумерация неизменённого вопроса — FAIL")
+code, out = scenario(lambda qs: None, base="0123456789abcdef0123456789abcdef01234567")
+ok(code == 1 and "НЕ выполнена" in out, "база не резолвится (force-push) — FAIL, а не молчаливый PASS")
 
 print()
 if fails:

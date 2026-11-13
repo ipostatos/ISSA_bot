@@ -242,8 +242,12 @@ def main() -> int:
     r = subprocess.run(["git", "-C", str(repo), "rev-parse", "--verify", f"{args.base}^{{commit}}"],
                        capture_output=True, text=True)
     if r.returncode != 0:
-        print(f"⚠ база «{args.base}» не резолвится (первый коммит?) — сравнивать не с чем, PASS")
-        return 0
+        # Раньше здесь был PASS, и force-push (база из события исчезла из
+        # истории) проходил сторож зелёным, не проверив ничего. Нет базы —
+        # нет доказательства стабильности: падаем и говорим, что передать.
+        print(f"✗ база «{args.base}» не резолвится — сравнивать не с чем, проверка НЕ выполнена.")
+        print("  Передайте существующую ревизию: --base <SHA> (в CI при force-push — HEAD^).")
+        return 1
     base = r.stdout.strip()
     print(f"База сравнения: {base[:12]}")
 

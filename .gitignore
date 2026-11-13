@@ -30,6 +30,8 @@ webapp/books/
 # Нейроозвучка: генерируется build_audio_tts.py при деплое (десятки МБ mp3).
 webapp/tts/
 webapp/tts_index.js
+# кэш mp3 на сервере (deploy/update_webapp.sh → $APP_DIR/tts_cache)
+tts_cache/
 # Личная Obsidian-вики (контекст для LLM) — не публикуем. Лежит вне репо
 # (../.cursor-context), но игнорируем и на случай копирования внутрь.
 .cursor-context/

@@ -6,14 +6,19 @@ on:
   pull_request:
     branches: [main]
 
+# Только чтение: CI ничего не пишет в репозиторий. Токен с правом записи —
+# лишняя поверхность для любого скомпрометированного шага/action.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
         with:
           python-version: "3.12"
 
@@ -171,6 +176,7 @@ jobs:
           node webapp/_sw_check.mjs
           node webapp/_dialogs_check.mjs
           node webapp/_i18n_check.mjs
+          node webapp/_library_check.mjs
 
   # Волна 1, шаг 0: id вопросов — ключи пользовательского прогресса (SRS,
   # seen/wrong, solved). Сторож не даёт слить перенумерацию: неизменённый текст
@@ -179,7 +185,7 @@ jobs:
   id-stability:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with:
           fetch-depth: 0
 
@@ -197,19 +203,26 @@ jobs:
             echo "база из события недоступна — сравниваю с HEAD^"
             BASE="HEAD^"
           fi
+          # force-push: старый SHA из события исчез из истории. Сторож на
+          # нерезолвящейся базе падает (раньше молча давал PASS), поэтому
+          # откат на HEAD^ делаем здесь — явно и с пометкой в логе.
+          if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "::warning::база $BASE отсутствует в истории (force-push?) — сравниваю с HEAD^"
+            BASE="HEAD^"
+          fi
           python3 scripts/check_question_id_stability.py --base "$BASE"
 
   secret-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
       - name: Scan for leaked Telegram bot tokens
         run: |
-          # Токен бота: <digits>:<35 base64-символов>. Ищем по всему репо.
-          if grep -REn '[0-9]{8,10}:[A-Za-z0-9_-]{35}' \
-               --include='*.py' --include='*.json' --include='*.md' \
-               --include='*.txt' --include='*.yml' . ; then
+          # Токен бота: <digits>:<35 base64-символов>. Ищем по ВСЕМ отслеживаемым
+          # текстовым файлам: прежний --include не видел .js/.html/.sh/.service,
+          # а токен в webapp/*.js или deploy/*.sh утёк бы так же. -I — без бинарных.
+          if git ls-files -z | xargs -0 grep -IEn '[0-9]{8,10}:[A-Za-z0-9_-]{35}' ; then
             echo "::error::Похоже на токен Telegram в репозитории!"
             exit 1
           fi

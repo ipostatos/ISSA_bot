@@ -12,6 +12,11 @@
 #   sudo find /opt/issa-bot/.venv ! -user issa | wc -l     # должно быть 0
 set -euo pipefail
 
+# Всё тело — в функции: скрипт обновляет сам себя через git pull, а bash
+# дочитывает файл по ходу выполнения. Без обёртки после pull исполняется смесь
+# старой и новой версий (так 2026-07-15 сломался update_webapp.sh).
+main() {
+
 APP_DIR=/opt/issa-bot
 SERVICE=issa-bot
 
@@ -30,4 +35,11 @@ echo "→ перезапуск сервиса (единственный шаг, 
 systemctl restart "$SERVICE"
 sleep 2
 systemctl --no-pager status "$SERVICE" | head -5
+
+echo "→ смоук (health, auth API)"
+# Деплой без проверки = деплой вслепую. Код выхода смоука — код выхода скрипта.
+bash "$APP_DIR/deploy/smoke.sh"
 echo "✅ готово"
+
+}
+main "$@"
